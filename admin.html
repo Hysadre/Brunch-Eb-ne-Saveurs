@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f0a06">
 <title>Admin · Brunch Ébène &amp; Saveurs</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -68,8 +69,6 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .login-hint { font-size: 12px; color: #8a6648; margin-top: 14px; }
-  .login-hint code { background: #3a2818; padding: 2px 8px; border-radius: 6px; color: #fbbf24; }
   .login-error { color: #f87171; font-size: 13px; margin-top: 8px; min-height: 16px; }
 
   /* Dashboard */
@@ -107,51 +106,54 @@
     border: none;
     display: inline-flex; align-items: center; gap: 6px;
     text-decoration: none;
+    transition: opacity .15s;
   }
-  .btn-primary {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: white;
-  }
-  .btn-secondary {
-    background: #1a1108;
-    color: #f5ede1;
-    border: 1px solid #3a2818;
-  }
-  .btn-danger {
-    background: transparent;
-    color: #f87171;
-    border: 1px solid #3a2818;
-  }
-  .btn-success {
-    background: rgba(22, 163, 74, 0.15);
-    color: #22c55e;
-    border: 1px solid rgba(22, 163, 74, 0.3);
-  }
+  .btn:hover { opacity: .9; }
+  .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+  .btn-secondary { background: #1a1108; color: #f5ede1; border: 1px solid #3a2818; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #3a2818; }
 
-  /* Mode indicator */
   .mode-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(251, 191, 36, 0.1);
-    color: #fbbf24;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(251, 191, 36, 0.1); color: #fbbf24;
     border: 1px solid rgba(251, 191, 36, 0.2);
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
     margin-left: 10px;
   }
-  .mode-pill.live {
-    background: rgba(22, 163, 74, 0.1);
-    color: #22c55e;
-    border-color: rgba(22, 163, 74, 0.3);
-  }
+  .mode-pill.live { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
   .mode-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .mode-pill.live .dot { animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 18px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #d4a574;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   /* Stats */
   .stats {
@@ -170,12 +172,12 @@
   .stat-value { font-size: 26px; font-weight: 800; margin-top: 6px; letter-spacing: -0.5px; color: #fff; }
   .stat-sub { font-size: 12px; color: #22c55e; margin-top: 2px; font-weight: 600; }
   .stat.accent .stat-value { color: #fbbf24; }
-  .stat.danger .stat-sub { color: #fb923c; }
+  .stat.warning .stat-value { color: #fb923c; }
+  .stat.danger .stat-value { color: #f87171; }
 
   /* Filters */
   .filters {
-    display: flex;
-    gap: 8px;
+    display: flex; gap: 8px;
     margin-bottom: 14px;
     flex-wrap: wrap;
   }
@@ -199,26 +201,22 @@
     overflow: hidden;
   }
   .table-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; min-width: 800px; }
-  th, td {
-    padding: 12px 14px;
-    text-align: left;
-    font-size: 14px;
-    border-bottom: 1px solid #3a2818;
-  }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #3a2818; }
   th {
     background: #14100a;
-    font-size: 12px;
+    font-size: 11px;
     color: #d4a574;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 700;
-    position: sticky;
-    top: 0;
+    position: sticky; top: 0;
   }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #14100a; }
   td { color: #f5ede1; }
+  .highlight { background: rgba(251, 191, 36, 0.08) !important; }
+
   .badge {
     display: inline-block;
     padding: 3px 10px;
@@ -227,18 +225,31 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    cursor: pointer;
   }
   .badge-paid { background: rgba(22, 163, 74, 0.15); color: #22c55e; }
   .badge-pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
 
-  .empty {
-    padding: 60px 20px;
-    text-align: center;
+  .action-btn {
+    background: transparent;
+    border: 1px solid #3a2818;
     color: #d4a574;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-right: 4px;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all .15s;
   }
-  .empty svg { color: #5a4028; margin-bottom: 12px; }
-  .empty h3 { margin: 0 0 6px; color: #fff; }
+  .action-btn:hover { border-color: #f97316; color: #f97316; }
+  .action-btn.validate { color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+  .action-btn.validate:hover { background: rgba(22, 163, 74, 0.15); }
+  .action-btn.unvalidate { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
+  .action-btn.unvalidate:hover { background: rgba(251, 191, 36, 0.15); }
+  .action-btn.delete { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+  .action-btn.delete:hover { background: rgba(248, 113, 113, 0.15); }
 
   .method-pill {
     display: inline-block;
@@ -251,9 +262,78 @@
     text-transform: capitalize;
   }
 
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: #d4a574;
+  }
+  .empty h3 { margin: 0 0 6px; color: #fff; }
+
+  /* Analyse */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .chart-card {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .chart-card h3 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .chart-card.wide { grid-column: 1 / -1; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal h3 { margin: 0 0 8px; color: #fff; font-size: 18px; }
+  .modal p { margin: 0 0 18px; color: #d4a574; font-size: 14px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; font-size: 14px; }
+  .modal-cancel { background: #3a2818; color: #f5ede1; }
+  .modal-confirm { background: #ef4444; color: white; }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 30px;
+    transform: translateX(-50%) translateY(20px);
+    background: #16a34a; color: white;
+    padding: 12px 18px; border-radius: 12px;
+    font-size: 14px; font-weight: 700;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 200;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #ef4444; }
+
   @media (max-width: 600px) {
     .header h1 { font-size: 18px; }
     .stat-value { font-size: 22px; }
+    .chart-wrap { height: 240px; }
   }
 </style>
 </head>
@@ -270,7 +350,6 @@
     <input type="password" id="pwd" placeholder="••••••" autocomplete="off">
     <button id="loginBtn">Se connecter</button>
     <div class="login-error" id="loginError"></div>
-    <div class="login-hint">💡 Code démo : <code>ebene2026</code></div>
   </div>
 </div>
 
@@ -280,7 +359,6 @@
     <h1>🌴 Brunch <span class="accent">Ébène &amp; Saveurs</span> <span class="mode-pill" id="modePill"><span class="dot"></span><span id="modeText">DÉMO</span></span></h1>
     <div class="header-actions">
       <button class="btn btn-secondary" id="refreshBtn">↻ Actualiser</button>
-      <button class="btn btn-secondary" id="addDemo">+ Démo</button>
       <button class="btn btn-primary" id="exportBtn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export Excel
@@ -289,72 +367,122 @@
     </div>
   </div>
 
-  <div class="stats" id="stats"></div>
-
-  <div class="filters">
-    <input type="text" id="search" placeholder="🔍 Nom, email, n° résa...">
-    <select id="filterMethod">
-      <option value="">Tous les paiements</option>
-      <option value="revolut">Revolut</option>
-      <option value="wero">Wero</option>
-      <option value="cb">CB</option>
-      <option value="virement">Virement</option>
-    </select>
-    <select id="filterStatus">
-      <option value="">Tous statuts</option>
-      <option value="confirmé">✓ Payé</option>
-      <option value="en attente vérification">⏳ En attente</option>
-    </select>
-    <select id="filterTicket">
-      <option value="">Toutes formules</option>
-      <option value="standard">Standard</option>
-      <option value="duo">Duo</option>
-      <option value="trio">Trio</option>
-      <option value="groupe">Groupe</option>
-    </select>
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="resa">📋 Réservations</div>
+    <div class="tab" data-tab="analyse">📊 Analyse</div>
   </div>
 
-  <div class="table-wrap">
-    <div class="table-scroll">
-      <table id="resTable">
-        <thead>
-          <tr>
-            <th>N° Résa</th>
-            <th>Date</th>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Formule</th>
-            <th>Places</th>
-            <th>Total</th>
-            <th>Paiement</th>
-            <th>Statut</th>
-          </tr>
-        </thead>
-        <tbody id="resBody"></tbody>
-      </table>
+  <!-- ===== TAB: Réservations ===== -->
+  <div class="tab-panel active" id="panel-resa">
+    <div class="stats" id="stats"></div>
+
+    <div class="filters">
+      <input type="text" id="search" placeholder="🔍 Nom, email, n° résa...">
+      <select id="filterMethod">
+        <option value="">Tous les paiements</option>
+        <option value="revolut">Revolut</option>
+        <option value="wero">Wero</option>
+        <option value="virement">Virement</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">Tous statuts</option>
+        <option value="confirmé">✓ Payé</option>
+        <option value="en attente vérification">⏳ En attente</option>
+      </select>
+      <select id="filterTicket">
+        <option value="">Toutes formules</option>
+        <option value="standard">Standard</option>
+        <option value="duo">Duo</option>
+        <option value="trio">Trio</option>
+        <option value="groupe">Groupe</option>
+      </select>
     </div>
-    <div class="empty" id="empty" style="display:none;">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <h3>Aucune réservation pour le moment</h3>
-      <p>Les nouvelles réservations s'afficheront ici en temps réel.</p>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>N° Résa</th>
+              <th>Date</th>
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Tél</th>
+              <th>Formule</th>
+              <th>Places</th>
+              <th>Total</th>
+              <th>Paiement</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="empty" style="display:none;">
+        <h3>Aucune réservation pour le moment</h3>
+        <p>Les nouvelles réservations s'afficheront ici en temps réel.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: Analyse ===== -->
+  <div class="tab-panel" id="panel-analyse">
+    <div class="stats" id="statsAnalyse"></div>
+
+    <div class="charts-grid">
+      <div class="chart-card wide">
+        <h3>📈 Évolution des réservations (cumulé)</h3>
+        <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🎫 Répartition par formule</h3>
+        <div class="chart-wrap"><canvas id="chartFormules"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>💳 Moyens de paiement</h3>
+        <div class="chart-wrap"><canvas id="chartPaiements"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>✅ Taux de paiement</h3>
+        <div class="chart-wrap"><canvas id="chartStatuts"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📅 Réservations par jour</h3>
+        <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Modal de confirmation suppression -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>⚠️ Supprimer cette réservation ?</h3>
+    <p id="modalText">Cette action est irréversible. La réservation ne pourra pas être récupérée.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancel">Annuler</button>
+      <button class="modal-confirm" id="modalConfirm">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓</div>
+
 <script>
   // 🔧 CONFIG
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
-  const ADMIN_PWD = 'BrunchEbene2026!'; // ⚠️ DOIT correspondre à ADMIN_TOKEN sur Render !
+  const ADMIN_PWD = 'BrunchEbene2026!';
   const CAPACITY = 200;
+  const REVENUE_TARGET = 7000;
 
   // --- Auth ---
   document.getElementById('loginBtn').addEventListener('click', tryLogin);
   document.getElementById('pwd').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
   function tryLogin() {
-    const v = document.getElementById('pwd').value;
-    if (v === ADMIN_PWD) {
+    if (document.getElementById('pwd').value === ADMIN_PWD) {
       sessionStorage.setItem('admin_ok', '1');
       showDashboard();
     } else {
@@ -367,23 +495,34 @@
   function showDashboard() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('dashboard').classList.add('show');
-    // Set mode pill
     const pill = document.getElementById('modePill');
     const text = document.getElementById('modeText');
-    if (API_URL) {
-      pill.classList.add('live');
-      text.textContent = 'LIVE';
-    } else {
-      text.textContent = 'DÉMO (localStorage)';
+    if (API_URL) { pill.classList.add('live'); text.textContent = 'LIVE'; }
+    else text.textContent = 'DÉMO';
+
+    // Pre-fill search si ?id= dans l'URL
+    const urlId = new URLSearchParams(window.location.search).get('id');
+    if (urlId) {
+      document.getElementById('search').value = urlId;
     }
+
     render();
-    // Auto-refresh toutes les 30s en mode LIVE
     if (API_URL) setInterval(render, 30000);
   }
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
-    sessionStorage.removeItem('admin_ok');
-    location.reload();
+    sessionStorage.removeItem('admin_ok'); location.reload();
+  });
+
+  // --- Tabs ---
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+      if (t.dataset.tab === 'analyse') renderAnalyse();
+    });
   });
 
   // --- Data ---
@@ -397,20 +536,59 @@
     return JSON.parse(localStorage.getItem('reservations') || '[]');
   }
 
+  async function updateStatus(id, newStatus) {
+    if (API_URL) {
+      try {
+        const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_PWD },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return true;
+      } catch(e) { console.error(e); toast('Erreur API', true); return false; }
+    }
+    const local = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const r = local.find(x => x.bookingId === id);
+    if (r) { r.status = newStatus; localStorage.setItem('reservations', JSON.stringify(local)); }
+    return true;
+  }
+
+  async function deleteReservation(id) {
+    if (API_URL) {
+      try {
+        const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'X-Admin-Token': ADMIN_PWD }
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return true;
+      } catch(e) { console.error(e); toast('Erreur API', true); return false; }
+    }
+    const local = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const filtered = local.filter(x => x.bookingId !== id);
+    localStorage.setItem('reservations', JSON.stringify(filtered));
+    return true;
+  }
+
+  let CACHE = [];
+
   async function render() {
-    const all = await getReservations();
-    renderStats(all);
-    renderTable(all);
+    CACHE = await getReservations();
+    renderStats(CACHE);
+    renderTable(CACHE);
   }
 
   function renderStats(data) {
     const total = data.length;
-    const totalRevenue = data.reduce((s, r) => s + (r.total || 0), 0);
-    const totalPlaces = data.reduce((s, r) => s + (r.qty || 0), 0);
+    const paid = data.filter(r => r.status === 'confirmé');
+    const pending = data.filter(r => r.status !== 'confirmé');
+    const placesPaid = paid.reduce((s, r) => s + (r.qty || 0), 0);
+    const placesPending = pending.reduce((s, r) => s + (r.qty || 0), 0);
+    const revenuePaid = paid.reduce((s, r) => s + (r.total || 0), 0);
     const today = new Date().toISOString().slice(0,10);
     const todayCount = data.filter(r => (r.timestamp || '').slice(0,10) === today).length;
-    const pending = data.filter(r => r.status !== 'confirmé').length;
-    const fillPct = Math.round(totalPlaces/CAPACITY*100);
+    const fillPct = Math.round(placesPaid/CAPACITY*100);
 
     document.getElementById('stats').innerHTML = `
       <div class="stat">
@@ -419,19 +597,19 @@
         <div class="stat-sub">+${todayCount} aujourd'hui</div>
       </div>
       <div class="stat accent">
-        <div class="stat-label">Places vendues</div>
-        <div class="stat-value">${totalPlaces}<span style="font-size:14px; color:#8a6648;"> / ${CAPACITY}</span></div>
-        <div class="stat-sub">${Math.max(0, CAPACITY - totalPlaces)} restantes</div>
+        <div class="stat-label">Places confirmées</div>
+        <div class="stat-value">${placesPaid}<span style="font-size:14px; color:#8a6648;"> / ${CAPACITY}</span></div>
+        <div class="stat-sub">${Math.max(0, CAPACITY - placesPaid)} restantes</div>
       </div>
       <div class="stat accent">
-        <div class="stat-label">Recettes</div>
-        <div class="stat-value">${totalRevenue.toFixed(0)} €</div>
-        <div class="stat-sub">Objectif : 7 000 €</div>
+        <div class="stat-label">Recettes encaissées</div>
+        <div class="stat-value">${revenuePaid.toFixed(0)} €</div>
+        <div class="stat-sub">Objectif : ${REVENUE_TARGET.toLocaleString('fr-FR')} €</div>
       </div>
-      <div class="stat ${pending > 5 ? 'danger' : ''}">
+      <div class="stat warning">
         <div class="stat-label">En attente paiement</div>
-        <div class="stat-value">${pending}</div>
-        <div class="stat-sub">${fillPct}% de remplissage</div>
+        <div class="stat-value">${pending.length}</div>
+        <div class="stat-sub">${placesPending} places à confirmer</div>
       </div>
     `;
   }
@@ -441,6 +619,7 @@
     const m = document.getElementById('filterMethod').value;
     const s = document.getElementById('filterStatus').value;
     const t = document.getElementById('filterTicket').value;
+    const urlId = new URLSearchParams(window.location.search).get('id');
 
     const filtered = all.filter(r => {
       if (m && r.paymentMethod !== m) return false;
@@ -457,112 +636,305 @@
     const empty = document.getElementById('empty');
 
     if (!filtered.length) {
-      body.innerHTML = '';
+      body.innerHTML = all.length ? `<tr><td colspan="11" style="text-align:center; color:#8a6648; padding: 30px;">Aucun résultat pour ces filtres</td></tr>` : '';
       empty.style.display = all.length ? 'none' : 'block';
-      if (all.length && !filtered.length) {
-        body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#8a6648; padding: 30px;">Aucun résultat pour ces filtres</td></tr>`;
-      }
       return;
     }
     empty.style.display = 'none';
+
+    // Sort: en attente en premier, puis par date desc
+    filtered.sort((a, b) => {
+      const pa = a.status === 'confirmé' ? 1 : 0;
+      const pb = b.status === 'confirmé' ? 1 : 0;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
 
     body.innerHTML = filtered.map(r => {
       const d = new Date(r.timestamp);
       const dateStr = d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
       const isPaid = r.status === 'confirmé';
+      const isHighlight = urlId && r.bookingId === urlId;
       return `
-        <tr>
+        <tr class="${isHighlight ? 'highlight' : ''}">
           <td><code style="font-size:12px; color:#fbbf24;">${r.bookingId}</code></td>
           <td>${dateStr}</td>
           <td><strong>${r.prenom} ${r.nom}</strong></td>
           <td><a href="mailto:${r.email}" style="color:#d4a574; text-decoration:none;">${r.email}</a></td>
-          <td><a href="tel:${r.telephone}" style="color:#d4a574; text-decoration:none;">${r.telephone}</a></td>
+          <td><a href="https://wa.me/${r.telephone.replace(/[^0-9]/g,'').replace(/^0/,'33')}" style="color:#22c55e; text-decoration:none;" title="WhatsApp">${r.telephone}</a></td>
           <td>${r.ticketName}</td>
           <td><strong>${r.qty}</strong></td>
-          <td><strong style="color:#fbbf24;">${r.total.toFixed(2).replace('.', ',')} €</strong></td>
+          <td><strong style="color:#fbbf24;">${(r.total||0).toFixed(2).replace('.', ',')} €</strong></td>
           <td><span class="method-pill">${r.paymentMethod || '—'}</span></td>
-          <td><span class="badge ${isPaid ? 'badge-paid' : 'badge-pending'}" data-id="${r.bookingId}">${isPaid ? '✓ Payé' : '⏳ En attente'}</span></td>
+          <td><span class="badge ${isPaid ? 'badge-paid' : 'badge-pending'}">${isPaid ? '✓ Payé' : '⏳ En attente'}</span></td>
+          <td>
+            ${isPaid
+              ? `<button class="action-btn unvalidate" data-action="unvalidate" data-id="${r.bookingId}">↶ Annuler</button>`
+              : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`
+            }
+            <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}">🗑️</button>
+          </td>
         </tr>
       `;
     }).join('');
 
-    // Click status to toggle paid/pending (en local pour la démo)
-    document.querySelectorAll('.badge[data-id]').forEach(b => {
+    // Wire up action buttons
+    body.querySelectorAll('.action-btn').forEach(b => {
       b.addEventListener('click', async () => {
+        const action = b.dataset.action;
         const id = b.dataset.id;
-        const local = JSON.parse(localStorage.getItem('reservations') || '[]');
-        const r = local.find(x => x.bookingId === id);
-        if (r) {
-          r.status = r.status === 'confirmé' ? 'en attente vérification' : 'confirmé';
-          localStorage.setItem('reservations', JSON.stringify(local));
-          render();
+        if (action === 'validate') {
+          if (await updateStatus(id, 'confirmé')) { toast('✓ Réservation validée'); render(); }
+        } else if (action === 'unvalidate') {
+          if (await updateStatus(id, 'en attente vérification')) { toast('↶ Statut remis en attente'); render(); }
+        } else if (action === 'delete') {
+          openDeleteModal(id, b.dataset.name);
         }
       });
     });
   }
 
-  document.getElementById('search').addEventListener('input', render);
-  document.getElementById('filterMethod').addEventListener('change', render);
-  document.getElementById('filterStatus').addEventListener('change', render);
-  document.getElementById('filterTicket').addEventListener('change', render);
+  document.getElementById('search').addEventListener('input', () => renderTable(CACHE));
+  document.getElementById('filterMethod').addEventListener('change', () => renderTable(CACHE));
+  document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
+  document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('refreshBtn').addEventListener('click', render);
 
-  // --- Export Excel (CSV format, ouvre dans Excel) ---
-  document.getElementById('exportBtn').addEventListener('click', async () => {
-    const data = await getReservations();
+  // --- Modal suppression ---
+  let pendingDeleteId = null;
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('modalText').innerHTML = `Tu vas supprimer la réservation de <strong style="color:#fbbf24;">${name}</strong> (${id}).<br>Cette action est irréversible.`;
+    document.getElementById('modal').classList.add('show');
+  }
+  document.getElementById('modalCancel').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('show');
+    pendingDeleteId = null;
+  });
+  document.getElementById('modalConfirm').addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    if (await deleteReservation(pendingDeleteId)) {
+      toast('🗑️ Réservation supprimée');
+      document.getElementById('modal').classList.remove('show');
+      pendingDeleteId = null;
+      render();
+    }
+  });
+
+  // --- Export Excel ---
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const data = CACHE;
     if (!data.length) { alert('Aucune réservation à exporter'); return; }
-
-    const headers = ['N° Résa', 'Date résa', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Formule', 'Places', 'Prix unitaire', 'Total', 'Moyen paiement', 'Allergies / Message', 'Statut'];
+    const headers = ['N° Résa','Date résa','Prénom','Nom','Email','Téléphone','Formule','Places','Prix unitaire','Total','Moyen paiement','Allergies / Message','Statut'];
     const rows = data.map(r => [
-      r.bookingId,
-      new Date(r.timestamp).toLocaleString('fr-FR'),
-      r.prenom, r.nom, r.email, r.telephone,
-      r.ticketName, r.qty,
-      r.ticketPrice.toFixed(2).replace('.', ','),
-      r.total.toFixed(2).replace('.', ','),
-      r.paymentMethod || '',
-      (r.message || '').replace(/[\r\n]+/g, ' '),
-      r.status || ''
+      r.bookingId, new Date(r.timestamp).toLocaleString('fr-FR'),
+      r.prenom, r.nom, r.email, r.telephone, r.ticketName, r.qty,
+      (r.ticketPrice||0).toFixed(2).replace('.', ','),
+      (r.total||0).toFixed(2).replace('.', ','),
+      r.paymentMethod || '', (r.message || '').replace(/[\r\n]+/g, ' '), r.status || ''
     ]);
-
-    const escape = (v) => {
-      const s = String(v ?? '');
-      return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
-    const csv = '﻿' + [headers, ...rows].map(r => r.map(escape).join(';')).join('\n');
+    const esc = (v) => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const csv = '﻿' + [headers, ...rows].map(r => r.map(esc).join(';')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `brunch-ebene-reservations-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `brunch-ebene-reservations-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
   });
 
-  // --- Données démo ---
-  document.getElementById('addDemo').addEventListener('click', () => {
-    const demos = [
-      {prenom:'Audrey', nom:'Konan', email:'audrey.k@gmail.com', telephone:'0612345678', ticketId:'duo', ticketName:'Duo', ticketPrice:35, qty:2, paymentMethod:'revolut', message:'', status:'confirmé'},
-      {prenom:'Solange', nom:'Diabaté', email:'solange.d@example.fr', telephone:'0698765432', ticketId:'standard', ticketName:'Standard', ticketPrice:35, qty:1, paymentMethod:'wero', message:'Sans porc svp', status:'confirmé'},
-      {prenom:'Débora', nom:'Mensah', email:'debora.m@yahoo.fr', telephone:'0654321098', ticketId:'trio', ticketName:'Trio', ticketPrice:35, qty:3, paymentMethod:'cb', message:'', status:'en attente vérification'},
-      {prenom:'Kevin', nom:'Boateng', email:'kevin.b@outlook.com', telephone:'0687654321', ticketId:'standard', ticketName:'Standard', ticketPrice:35, qty:1, paymentMethod:'virement', message:'', status:'en attente vérification'},
-      {prenom:'Joëlle', nom:'Aké', email:'joelle.a@gmail.com', telephone:'0612129090', ticketId:'duo', ticketName:'Duo', ticketPrice:35, qty:2, paymentMethod:'revolut', message:'Allergie arachide', status:'confirmé'},
-      {prenom:'Rocky', nom:'Owusu', email:'rocky.o@gmail.com', telephone:'0623456789', ticketId:'trio', ticketName:'Trio', ticketPrice:35, qty:3, paymentMethod:'revolut', message:'', status:'confirmé'},
-      {prenom:'Christelle', nom:'Yao', email:'chris.y@gmail.com', telephone:'0698123456', ticketId:'standard', ticketName:'Standard', ticketPrice:35, qty:1, paymentMethod:'wero', message:'', status:'confirmé'},
-    ];
-    const existing = JSON.parse(localStorage.getItem('reservations') || '[]');
-    demos.forEach((d, i) => {
-      existing.push({
-        ...d,
-        total: d.ticketPrice * d.qty,
-        timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-        bookingId: 'EBN-' + (Date.now()-i*1000).toString(36).toUpperCase(),
-        paidAt: new Date().toISOString()
-      });
+  // --- Toast ---
+  function toast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', isError);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ============ ANALYSE ============
+  let charts = {};
+  function renderAnalyse() {
+    const data = CACHE;
+    const paid = data.filter(r => r.status === 'confirmé');
+    const pending = data.filter(r => r.status !== 'confirmé');
+    const placesPaid = paid.reduce((s, r) => s + (r.qty || 0), 0);
+    const placesPending = pending.reduce((s, r) => s + (r.qty || 0), 0);
+    const revenuePaid = paid.reduce((s, r) => s + (r.total || 0), 0);
+    const revenuePotential = pending.reduce((s, r) => s + (r.total || 0), 0);
+    const avgBasket = paid.length ? (revenuePaid / paid.length) : 0;
+    const fillRate = Math.round(placesPaid / CAPACITY * 100);
+    const convRate = data.length ? Math.round(paid.length / data.length * 100) : 0;
+
+    document.getElementById('statsAnalyse').innerHTML = `
+      <div class="stat accent">
+        <div class="stat-label">Recettes confirmées</div>
+        <div class="stat-value">${revenuePaid.toFixed(0)} €</div>
+        <div class="stat-sub">${Math.round(revenuePaid/REVENUE_TARGET*100)}% de l'objectif</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Recettes potentielles</div>
+        <div class="stat-value">${(revenuePaid + revenuePotential).toFixed(0)} €</div>
+        <div class="stat-sub">+${revenuePotential.toFixed(0)} € en attente</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Panier moyen</div>
+        <div class="stat-value">${avgBasket.toFixed(2).replace('.', ',')} €</div>
+        <div class="stat-sub">${paid.length} résa payées</div>
+      </div>
+      <div class="stat accent">
+        <div class="stat-label">Taux remplissage</div>
+        <div class="stat-value">${fillRate}%</div>
+        <div class="stat-sub">${placesPaid} / ${CAPACITY} places</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Taux conversion</div>
+        <div class="stat-value">${convRate}%</div>
+        <div class="stat-sub">paiements validés</div>
+      </div>
+    `;
+
+    setTimeout(() => {
+      drawEvolution(data);
+      drawFormules(paid);
+      drawPaiements(paid);
+      drawStatuts(data);
+      drawParJour(data);
+    }, 50);
+  }
+
+  function destroyChart(id) {
+    if (charts[id]) { charts[id].destroy(); charts[id] = null; }
+  }
+
+  const baseColors = {
+    standard: '#f97316', duo: '#fbbf24', trio: '#22c55e', groupe: '#06b6d4',
+    revolut: '#000000', wero: '#FFD400', cb: '#475569', virement: '#16a34a',
+    paid: '#22c55e', pending: '#fbbf24'
+  };
+
+  Chart.defaults.color = '#d4a574';
+  Chart.defaults.borderColor = '#3a2818';
+  Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, system-ui, sans-serif';
+
+  function drawEvolution(data) {
+    destroyChart('evolution');
+    const sorted = [...data].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const labels = [];
+    const cumPlaces = [];
+    const cumRevenue = [];
+    let p = 0, r = 0;
+    const byDay = {};
+    sorted.forEach(x => {
+      const day = (x.timestamp || '').slice(0,10);
+      if (!byDay[day]) byDay[day] = { places: 0, revenue: 0 };
+      byDay[day].places += (x.qty || 0);
+      if (x.status === 'confirmé') byDay[day].revenue += (x.total || 0);
     });
-    localStorage.setItem('reservations', JSON.stringify(existing));
-    render();
-  });
+    const days = Object.keys(byDay).sort();
+    days.forEach(d => {
+      p += byDay[d].places; r += byDay[d].revenue;
+      labels.push(new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short'}));
+      cumPlaces.push(p); cumRevenue.push(r);
+    });
+
+    if (!labels.length) {
+      labels.push('Aujourd\'hui'); cumPlaces.push(0); cumRevenue.push(0);
+    }
+
+    charts.evolution = new Chart(document.getElementById('chartEvolution'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Places cumulées', data: cumPlaces, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', tension: 0.3, fill: true, yAxisID: 'y' },
+          { label: 'Recettes confirmées (€)', data: cumRevenue, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.3, fill: true, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#f5ede1' } } },
+        scales: {
+          y: { position: 'left', title: { display: true, text: 'Places', color: '#d4a574' }, grid: { color: '#3a2818' } },
+          y1: { position: 'right', title: { display: true, text: '€', color: '#d4a574' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  function drawFormules(data) {
+    destroyChart('formules');
+    const counts = { Standard: 0, Duo: 0, Trio: 0, Groupe: 0 };
+    data.forEach(r => {
+      const id = (r.ticketId || 'standard').charAt(0).toUpperCase() + (r.ticketId || 'standard').slice(1);
+      if (counts[id] !== undefined) counts[id]++; else counts.Groupe++;
+    });
+    charts.formules = new Chart(document.getElementById('chartFormules'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(counts),
+        datasets: [{
+          data: Object.values(counts),
+          backgroundColor: ['#f97316', '#fbbf24', '#22c55e', '#06b6d4'],
+          borderWidth: 0
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f5ede1' } } } }
+    });
+  }
+
+  function drawPaiements(data) {
+    destroyChart('paiements');
+    const counts = { revolut: 0, wero: 0, virement: 0, autre: 0 };
+    data.forEach(r => {
+      const m = r.paymentMethod;
+      if (counts[m] !== undefined) counts[m]++; else counts.autre++;
+    });
+    charts.paiements = new Chart(document.getElementById('chartPaiements'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Revolut', 'Wero', 'Virement', 'Autre'],
+        datasets: [{
+          data: Object.values(counts),
+          backgroundColor: ['#000000', '#FFD400', '#16a34a', '#475569'],
+          borderWidth: 2,
+          borderColor: '#1a1108'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f5ede1' } } } }
+    });
+  }
+
+  function drawStatuts(data) {
+    destroyChart('statuts');
+    const paid = data.filter(r => r.status === 'confirmé').length;
+    const pending = data.length - paid;
+    charts.statuts = new Chart(document.getElementById('chartStatuts'), {
+      type: 'doughnut',
+      data: {
+        labels: ['✓ Payé', '⏳ En attente'],
+        datasets: [{ data: [paid, pending], backgroundColor: ['#22c55e', '#fbbf24'], borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#f5ede1' } } } }
+    });
+  }
+
+  function drawParJour(data) {
+    destroyChart('parJour');
+    const byDay = {};
+    data.forEach(r => {
+      const day = (r.timestamp || '').slice(0,10);
+      if (!byDay[day]) byDay[day] = 0;
+      byDay[day]++;
+    });
+    const labels = Object.keys(byDay).sort();
+    const values = labels.map(d => byDay[d]);
+    const niceLabels = labels.map(d => new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short'}));
+    charts.parJour = new Chart(document.getElementById('chartParJour'), {
+      type: 'bar',
+      data: { labels: niceLabels.length ? niceLabels : ['—'], datasets: [{ label: 'Résa', data: values.length ? values : [0], backgroundColor: '#f97316' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' } } } }
+    });
+  }
 </script>
 </body>
 </html>
