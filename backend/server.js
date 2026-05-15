@@ -20,7 +20,6 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import nodemailer from 'nodemailer';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,9 +28,10 @@ const DATA_FILE = path.join(__dirname, 'reservations.json');
 // 🔧 CONFIG — à mettre dans les variables d'environnement en prod
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'ebene2026';
 const PORT = process.env.PORT || 3000;
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const ORGANIZER_EMAIL = process.env.ORGANIZER_EMAIL || 'abayoassi@gmail.com';
+// Resend sender — utilise onboarding@resend.dev sans vérification de domaine
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Brunch Ébène & Saveurs <onboarding@resend.dev>';
 const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
@@ -63,17 +63,35 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ----- Email -----
-let transporter = null;
-if (SMTP_USER && SMTP_PASS) {
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: SMTP_USER, pass: SMTP_PASS }
+// ----- Email via Resend (API HTTPS, compatible Render Free) -----
+async function resendSend({ to, subject, html, text }) {
+  if (!RESEND_API_KEY) {
+    console.warn('⚠️  RESEND_API_KEY non configurée — email non envoyé');
+    return;
+  }
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text
+    })
   });
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`Resend ${r.status}: ${err}`);
+  }
+  return r.json();
 }
 
 async function sendConfirmationEmail(booking) {
-  if (!transporter || !booking.email) return;
+  if (!booking.email) return;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(booking.bookingId)}&size=300x300`;
   const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
 
@@ -103,23 +121,22 @@ async function sendConfirmationEmail(booking) {
       </p>
     </div>
     <div style="padding: 16px 24px; text-align: center; font-size: 12px; color: #8a6648;">
-      Une question ? Réponds simplement à cet email.
+      Une question ? +33 6 68 29 50 77 (WhatsApp)
     </div>
   </div>`;
 
-  await transporter.sendMail({
-    from: `Brunch Ébène & Saveurs <${SMTP_USER}>`,
+  // Email au client
+  await resendSend({
     to: booking.email,
     subject: `🌴 Ta réservation pour ${EVENT.name}`,
     html
   });
 
   // Notif admin
-  await transporter.sendMail({
-    from: `Réservations <${SMTP_USER}>`,
+  await resendSend({
     to: ORGANIZER_EMAIL,
     subject: `🎫 +${booking.qty} (${booking.ticketName}) — ${booking.prenom} ${booking.nom}`,
-    text: `Nouvelle réservation :\n\n${JSON.stringify(booking, null, 2)}`
+    text: `Nouvelle réservation à valider :\n\n${JSON.stringify(booking, null, 2)}\n\nDashboard admin : https://brunch-eb-ne-saveurs.onrender.com/admin (ou ton URL GitHub Pages)`
   });
 }
 
