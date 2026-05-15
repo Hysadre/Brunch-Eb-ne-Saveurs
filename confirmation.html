@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f0a06">
+<title>Réservation confirmée · Brunch Ébène &amp; Saveurs</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: #0f0a06;
+    color: #f5ede1;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 24px 20px 40px; }
+
+  .success-hero {
+    text-align: center;
+    padding: 40px 20px 28px;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #16a34a 100%);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .success-hero::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 60%);
+    pointer-events: none;
+  }
+  .check {
+    width: 80px; height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+    animation: pop .5s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+    z-index: 1;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .check svg { width: 44px; height: 44px; color: #16a34a; }
+  .success-title { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px; position: relative; z-index: 1; color: white; }
+  .success-sub { font-size: 15px; opacity: .95; margin: 0; position: relative; z-index: 1; color: white; }
+
+  .pending-banner {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .pending-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+  .ticket-card {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 20px;
+    margin-top: 18px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ticket-top {
+    padding: 22px 22px 16px;
+    background: linear-gradient(135deg, #1a1108, #2a1810);
+  }
+  .ticket-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #fbbf24; font-weight: 700; }
+  .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #fff; }
+  .ticket-name .accent {
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-style: italic;
+  }
+  .ticket-meta { display: flex; gap: 18px; flex-wrap: wrap; }
+  .ticket-meta .lab { font-size: 11px; color: #d4a574; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #fff; }
+
+  .ticket-stub {
+    position: relative;
+    padding: 22px;
+    border-top: 2px dashed #3a2818;
+  }
+  .ticket-stub::before, .ticket-stub::after {
+    content: "";
+    position: absolute;
+    top: -14px;
+    width: 28px; height: 28px;
+    background: #0f0a06;
+    border-radius: 50%;
+  }
+  .ticket-stub::before { left: -14px; }
+  .ticket-stub::after { right: -14px; }
+
+  .qr-wrap {
+    background: white;
+    padding: 16px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-wrap svg, .qr-wrap img { width: 100%; max-width: 220px; height: auto; }
+
+  .booking-id {
+    text-align: center;
+    margin-top: 14px;
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fbbf24;
+  }
+  .booking-id-label {
+    text-align: center;
+    font-size: 11px;
+    color: #d4a574;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .info-card {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 14px;
+  }
+  .info-card h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .info-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #f5ede1;
+  }
+  .info-row svg { color: #f97316; flex: 0 0 18px; }
+  .info-row .v { font-weight: 600; color: #fbbf24; }
+
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .btn {
+    width: 100%;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    text-decoration: none;
+    transition: transform .1s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn-primary {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white; border: none;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
+  }
+  .btn-secondary {
+    background: #1a1108;
+    color: #f5ede1;
+    border: 1.5px solid #3a2818;
+  }
+
+  .footer-note {
+    text-align: center;
+    color: #8a6648;
+    font-size: 13px;
+    margin-top: 24px;
+    line-height: 1.6;
+  }
+  .footer-note a { color: #fbbf24; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="success-hero">
+    <div class="check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1 class="success-title">Réservation enregistrée !</h1>
+    <p class="success-sub" id="subtext">Ton billet est prêt 🎉</p>
+  </div>
+
+  <div class="pending-banner" id="pendingBanner">
+    <strong>⏳ Confirmation du paiement en attente</strong>
+    Une fois ton paiement vérifié, tu recevras un email de confirmation définitive. En général, ça prend quelques minutes (jusqu'à 24h pour un virement).
+  </div>
+
+  <div class="ticket-card">
+    <div class="ticket-top">
+      <div class="ticket-eyebrow">🌴 Billet électronique</div>
+      <div class="ticket-name">Brunch <span class="accent">Ébène &amp; Saveurs</span></div>
+      <div class="ticket-meta">
+        <div class="item">
+          <div class="lab">Date</div>
+          <div class="val">Sam. 22 août 2026</div>
+        </div>
+        <div class="item">
+          <div class="lab">Heure</div>
+          <div class="val">12h00</div>
+        </div>
+        <div class="item">
+          <div class="lab">Formule</div>
+          <div class="val" id="ticketType">—</div>
+        </div>
+        <div class="item">
+          <div class="lab">Places</div>
+          <div class="val" id="ticketQty">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="ticket-stub">
+      <div class="qr-wrap" id="qr"></div>
+      <div class="booking-id" id="bookingId">—</div>
+      <div class="booking-id-label">Numéro de réservation</div>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <h3>📍 Informations pratiques</h3>
+    <div class="info-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="v">Salle de Ronchin, 59790 Ronchin (Lille)</span>
+    </div>
+    <div class="info-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Rendez-vous à partir de <span class="v">12h00</span></span>
+    </div>
+    <div class="info-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <span>Email envoyé à <span class="v" id="userEmail">—</span></span>
+    </div>
+    <div class="info-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+      <span>Présente ce QR à l'entrée (un bracelet te sera remis)</span>
+    </div>
+    <div class="info-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3m-9 13h12"/></svg>
+      <span>Tenue chic / wax fortement encouragée 👗</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="downloadBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Télécharger mon billet
+    </button>
+    <a href="index.html" class="btn btn-secondary">Faire une autre réservation</a>
+  </div>
+
+  <p class="footer-note">
+    Une question ? Contacte-nous par <a href="https://wa.me/33668295077">WhatsApp</a><br>
+    Hâte de te voir au brunch 🍽️🎉
+  </p>
+</div>
+
+<script>
+  const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
+  if (!booking) { window.location.href = 'index.html'; }
+
+  document.getElementById('ticketType').textContent = booking.ticketName;
+  document.getElementById('ticketQty').textContent = booking.qty;
+  document.getElementById('bookingId').textContent = booking.bookingId;
+  document.getElementById('userEmail').textContent = booking.email;
+  document.getElementById('subtext').textContent =
+    `Merci ${booking.prenom} ! Ta réservation de ${booking.total.toFixed(2).replace('.', ',')} € est enregistrée.`;
+
+  // QR placeholder
+  function makeFakeQR(text) {
+    let seed = 0;
+    for (let i=0; i<text.length; i++) seed = (seed*31 + text.charCodeAt(i)) >>> 0;
+    function rng() { seed = (seed*1103515245 + 12345) >>> 0; return seed; }
+    const size = 25, cell = 10;
+    let svg = `<svg viewBox="0 0 ${size*cell} ${size*cell}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="white"/>`;
+    for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
+      const corner = (x<7&&y<7)||(x>=size-7&&y<7)||(x<7&&y>=size-7);
+      if (corner) {
+        const inFrame = (x===0||x===6||y===0||y===6)||(x===size-7||x===size-1||y===size-7)||(y===size-1);
+        const inDot = (x>=2&&x<=4&&y>=2&&y<=4) || (x>=size-5&&x<=size-3&&y>=2&&y<=4) || (x>=2&&x<=4&&y>=size-5&&y<=size-3);
+        if (inFrame||inDot) svg += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="black"/>`;
+      } else if ((rng() & 1) === 0) {
+        svg += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="black"/>`;
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+  document.getElementById('qr').innerHTML = makeFakeQR(booking.bookingId);
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const ticketText = `
+🌴 BRUNCH ÉBÈNE & SAVEURS — Billet électronique
+================================================
+Date  : Samedi 22 août 2026 · 12h00
+Lieu  : Salle de Ronchin, 59790 Ronchin (Lille)
+
+Nom         : ${booking.prenom} ${booking.nom}
+Email       : ${booking.email}
+Téléphone   : ${booking.telephone}
+Formule     : ${booking.ticketName}
+Nombre de places : ${booking.qty}
+Total payé  : ${booking.total.toFixed(2)} €
+
+N° de réservation : ${booking.bookingId}
+
+Présente ce billet (ou son N°) à l'entrée.
+Un bracelet te sera remis pour accéder au buffet.
+
+Contact : +33 6 68 29 50 77 (WhatsApp)
+`.trim();
+    const blob = new Blob([ticketText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `billet-brunch-${booking.bookingId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>

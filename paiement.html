@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f0a06">
+<title>Paiement · Brunch Ébène &amp; Saveurs</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: #0f0a06;
+    color: #f5ede1;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 0 20px 40px; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 0 14px;
+  }
+  .back {
+    width: 40px; height: 40px;
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #fbbf24;
+    text-decoration: none;
+  }
+  .topbar h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; color: #fff; }
+
+  .progress {
+    display: flex; gap: 6px;
+    margin-bottom: 18px;
+  }
+  .step { flex: 1; height: 4px; background: #3a2818; border-radius: 99px; }
+  .step.done { background: #f97316; }
+
+  .card {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 14px;
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #fff;
+  }
+  .card-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px;
+  }
+  .card-section-title h2 { margin: 0; }
+  .card-section-sub {
+    font-size: 13px;
+    color: #d4a574;
+    margin: 0 0 16px;
+  }
+
+  .recap-row {
+    display: flex; justify-content: space-between; padding: 8px 0;
+    font-size: 15px;
+  }
+  .recap-row .k { color: #d4a574; }
+  .recap-row .v { font-weight: 600; color: #f5ede1; }
+  .recap-divider { height: 1px; background: #3a2818; margin: 8px 0; }
+  .recap-total { font-size: 22px; font-weight: 800; }
+  .recap-total span:last-child { color: #fbbf24; }
+
+  /* PAYMENT OPTIONS — XXL & TRÈS VISIBLES */
+  .payment-option {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 16px;
+    border: 2px solid #3a2818;
+    border-radius: 18px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all .2s ease;
+    background: #0f0a06;
+    position: relative;
+  }
+  .payment-option:hover { border-color: #5a4028; transform: translateY(-1px); }
+  .payment-option.selected {
+    border-color: #f97316;
+    background: linear-gradient(135deg, #241408, #1a1108);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+  }
+  .payment-option:last-child { margin-bottom: 0; }
+  .pay-radio {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2.5px solid #5a4028;
+    flex: 0 0 24px;
+    position: relative;
+  }
+  .payment-option.selected .pay-radio { border-color: #f97316; }
+  .payment-option.selected .pay-radio::after {
+    content: "";
+    position: absolute; inset: 3px;
+    background: #f97316;
+    border-radius: 50%;
+  }
+  .pay-logo {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    color: white;
+    flex: 0 0 56px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .pay-logo.revolut { background: #000; font-size: 22px; }
+  .pay-logo.wero    {
+    background: #FFD400;
+    color: #000;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .pay-logo.cb      {
+    background: linear-gradient(135deg, #1e293b, #475569);
+    font-size: 11px;
+  }
+  .pay-logo.virement{ background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 22px; }
+  .pay-info { flex: 1; min-width: 0; }
+  .pay-name { font-weight: 800; font-size: 17px; color: #fff; }
+  .pay-desc { font-size: 13px; color: #d4a574; margin-top: 3px; }
+  .pay-badge {
+    display: inline-block;
+    background: rgba(22, 163, 74, 0.2);
+    color: #22c55e;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-left: 8px;
+    text-transform: uppercase;
+  }
+  .pay-badge.fast {
+    background: rgba(249, 115, 22, 0.2);
+    color: #fb923c;
+  }
+
+  /* Inline payment details panel */
+  .pay-details {
+    display: none;
+    margin-top: -4px;
+    margin-bottom: 12px;
+    padding: 16px;
+    background: #0a0604;
+    border-radius: 14px;
+    border: 1px dashed #5a4028;
+    font-size: 14px;
+    animation: slideDown .25s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .pay-details.show { display: block; }
+  .pay-details .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; gap: 10px; flex-wrap: wrap; }
+  .pay-details .row .k { color: #d4a574; font-size: 13px; }
+  .pay-details .row .v { font-weight: 700; color: #f5ede1; text-align: right; word-break: break-all; }
+  .copy-btn {
+    background: #3a2818;
+    border: none;
+    color: #fbbf24;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background .15s;
+  }
+  .copy-btn:active { background: #5a4028; }
+
+  .pay-action-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    text-decoration: none;
+    transition: transform .1s;
+  }
+  .pay-action-btn:active { transform: scale(.98); }
+  .pay-action-btn.wero { background: #FFD400; color: #000; }
+  .pay-action-btn.cb { background: linear-gradient(135deg, #1e293b, #475569); }
+
+  .qr-block {
+    text-align: center;
+    margin-top: 14px;
+    padding: 14px;
+    background: white;
+    border-radius: 12px;
+  }
+  .qr-block svg, .qr-block img { width: 180px; height: 180px; }
+  .qr-caption { text-align: center; color: #d4a574; font-size: 13px; margin-top: 10px; }
+
+  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .field label { font-size: 13px; font-weight: 600; color: #d4a574; }
+  .field input {
+    background: #14100a;
+    border: 1.5px solid #3a2818;
+    color: #f5ede1;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .field input:focus { outline: none; border-color: #f97316; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .total-bar {
+    position: sticky;
+    bottom: 0;
+    margin: 20px -20px 0;
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: rgba(15, 10, 6, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #3a2818;
+  }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 17px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .1s, opacity .15s;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+
+  .secured {
+    text-align: center;
+    font-size: 12px;
+    color: #8a6648;
+    margin-top: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 100px;
+    transform: translateX(-50%) translateY(20px);
+    background: #16a34a; color: white;
+    padding: 12px 18px; border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 100;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .info-note {
+    font-size: 13px;
+    color: #d4a574;
+    background: rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .info-note strong { color: #fbbf24; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a href="index.html" class="back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <h1>Paiement</h1>
+  </div>
+
+  <div class="progress">
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Récapitulatif</h2>
+    <div id="recap"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-section-title">
+      <h2>💳 Choisis ton moyen de paiement</h2>
+    </div>
+    <p class="card-section-sub">4 options disponibles · paiement sécurisé</p>
+
+    <!-- REVOLUT -->
+    <label class="payment-option selected" data-method="revolut">
+      <span class="pay-radio"></span>
+      <span class="pay-logo revolut">R</span>
+      <div class="pay-info">
+        <div class="pay-name">Revolut <span class="pay-badge fast">Recommandé</span></div>
+        <div class="pay-desc">Paiement instantané · sans frais</div>
+      </div>
+    </label>
+    <div class="pay-details show" data-panel="revolut">
+      <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-revolut"></span></div>
+      <div class="row"><span class="k">Référence (à indiquer dans la note)</span><span class="v" id="ref-revolut"></span></div>
+      <a href="https://revolut.me/abayoa" target="_blank" rel="noopener" class="pay-action-btn" id="revolutBtn">
+        Payer avec Revolut →
+      </a>
+      <div class="info-note">
+        <strong>💡 Comment faire :</strong><br>
+        1. Clique sur le bouton → tu arrives sur le lien Revolut.<br>
+        2. Indique le montant et ajoute la <strong>référence</strong> en note.<br>
+        3. Reviens ici et clique sur "J'ai payé".
+      </div>
+    </div>
+
+    <!-- WERO -->
+    <label class="payment-option" data-method="wero">
+      <span class="pay-radio"></span>
+      <span class="pay-logo wero">wero</span>
+      <div class="pay-info">
+        <div class="pay-name">Wero <span class="pay-badge">Instantané</span></div>
+        <div class="pay-desc">Avec ton numéro de téléphone</div>
+      </div>
+    </label>
+    <div class="pay-details" data-panel="wero">
+      <div class="row">
+        <span class="k">Numéro Wero</span>
+        <span class="v">+33 6 68 29 50 77 <button class="copy-btn" data-copy="+33668295077">Copier</button></span>
+      </div>
+      <div class="row"><span class="k">Montant</span><span class="v" id="amt-wero"></span></div>
+      <div class="row"><span class="k">Référence (obligatoire)</span><span class="v" id="ref-wero"></span></div>
+      <div class="info-note">
+        <strong>💡 Ouvre ton app bancaire</strong> → Wero → envoie le montant exact au numéro ci-dessus en mettant la référence en note.
+      </div>
+    </div>
+
+    <!-- VIREMENT -->
+    <label class="payment-option" data-method="virement">
+      <span class="pay-radio"></span>
+      <span class="pay-logo virement">€</span>
+      <div class="pay-info">
+        <div class="pay-name">Virement bancaire (SEPA)</div>
+        <div class="pay-desc">Réception sous 24-48h ouvrées</div>
+      </div>
+    </label>
+    <div class="pay-details" data-panel="virement">
+      <div class="row">
+        <span class="k">IBAN</span>
+        <span class="v" style="font-family: monospace; font-size: 13px;">FR76 1234 5678 9012 3456 7890 123 <button class="copy-btn" data-copy="FR7612345678901234567890123">Copier</button></span>
+      </div>
+      <div class="row"><span class="k">BIC</span><span class="v">REVOFRP2 <button class="copy-btn" data-copy="REVOFRP2">Copier</button></span></div>
+      <div class="row"><span class="k">Bénéficiaire</span><span class="v">Brunch Ébène &amp; Saveurs</span></div>
+      <div class="row"><span class="k">Montant</span><span class="v" id="amt-virement"></span></div>
+      <div class="row"><span class="k">Référence (obligatoire)</span><span class="v" id="ref-virement"></span></div>
+      <div class="info-note">
+        ⚠️ <strong>IBAN à remplacer</strong> par tes vraies coordonnées dans le code avant la mise en ligne.
+      </div>
+    </div>
+
+    <!-- CB -->
+    <label class="payment-option" data-method="cb">
+      <span class="pay-radio"></span>
+      <span class="pay-logo cb">CB</span>
+      <div class="pay-info">
+        <div class="pay-name">Carte bancaire</div>
+        <div class="pay-desc">Visa, Mastercard · via lien sécurisé</div>
+      </div>
+    </label>
+    <div class="pay-details" data-panel="cb">
+      <div class="info-note">
+        <strong>🔒 Paiement par carte sécurisé</strong><br>
+        Tu vas être redirigé(e) vers une page de paiement sécurisée pour entrer ta carte bancaire.
+      </div>
+      <button type="button" class="pay-action-btn cb" id="cbBtn">
+        Payer par carte bancaire →
+      </button>
+      <div class="info-note" style="margin-top: 10px;">
+        ⚠️ <em>Pour activer la CB en prod, branche <strong>Stripe Payment Link</strong> ou <strong>Revolut Merchant</strong> et remplace ce bouton par l'URL générée.</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-bar">
+    <button class="btn-primary" id="payBtn">
+      <span id="btnLabel">✓ J'ai payé · Valider <span id="btnAmount"></span></span>
+    </button>
+    <div class="secured">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Paiement sécurisé · Confirmation par email
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Copié !</div>
+
+<script>
+  // 🔧 CONFIG : URL de ton API backend
+  const API_URL = ''; // ex: 'https://brunch-ebene.vercel.app/api'
+
+  const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
+  if (!booking) { window.location.href = 'index.html'; }
+
+  function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+
+  document.getElementById('recap').innerHTML = `
+    <div class="recap-row"><span class="k">Événement</span><span class="v">Brunch Ébène &amp; Saveurs</span></div>
+    <div class="recap-row"><span class="k">Date</span><span class="v">Sam. 22 août 2026</span></div>
+    <div class="recap-row"><span class="k">Lieu</span><span class="v">Ronchin, Lille</span></div>
+    <div class="recap-row"><span class="k">Billet</span><span class="v">${booking.ticketName} × ${booking.qty}</span></div>
+    <div class="recap-row"><span class="k">Au nom de</span><span class="v">${booking.prenom} ${booking.nom}</span></div>
+    <div class="recap-divider"></div>
+    <div class="recap-row recap-total"><span>Total</span><span>${fmt(booking.total)}</span></div>
+  `;
+
+  ['revolut','wero','virement'].forEach(m => {
+    const el = document.getElementById('amt-' + m);
+    if (el) el.textContent = fmt(booking.total);
+    const ref = document.getElementById('ref-' + m);
+    if (ref) ref.textContent = booking.bookingId;
+  });
+  document.getElementById('btnAmount').textContent = '(' + fmt(booking.total) + ')';
+
+  let method = 'revolut';
+  document.querySelectorAll('.payment-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      method = opt.dataset.method;
+      document.querySelectorAll('.pay-details').forEach(p => p.classList.toggle('show', p.dataset.panel === method));
+      // Scroll vers les détails de paiement
+      setTimeout(() => {
+        const detail = document.querySelector(`.pay-details[data-panel="${method}"]`);
+        detail?.scrollIntoView({behavior:'smooth', block:'nearest'});
+      }, 100);
+    });
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(b => {
+    b.addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy);
+        const t = document.getElementById('toast');
+        t.textContent = '✓ ' + b.dataset.copy + ' copié !';
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1800);
+      } catch(err) {}
+    });
+  });
+
+  // CB button — à remplacer par un Stripe Payment Link en prod
+  document.getElementById('cbBtn').addEventListener('click', () => {
+    alert('🔧 Branche ton lien Stripe / Revolut Merchant ici.\nEn prod : window.location.href = "https://buy.stripe.com/...";');
+  });
+
+  // Validation
+  document.getElementById('payBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('payBtn');
+    const label = document.getElementById('btnLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spinner"></span> Validation en cours...';
+
+    booking.paymentMethod = method;
+    booking.status = 'en attente vérification';
+    booking.paidAt = new Date().toISOString();
+
+    // Sauvegarde localStorage (toujours, pour la démo)
+    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+    reservations.push(booking);
+    localStorage.setItem('reservations', JSON.stringify(reservations));
+    localStorage.setItem('currentBooking', JSON.stringify(booking));
+
+    // Push vers l'API si configurée
+    if (API_URL) {
+      try {
+        await fetch(API_URL + '/reservations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(booking)
+        });
+      } catch(e) { console.warn('API push failed', e); }
+    }
+
+    setTimeout(() => { window.location.href = 'confirmation.html'; }, 1500);
+  });
+</script>
+</body>
+</html>
