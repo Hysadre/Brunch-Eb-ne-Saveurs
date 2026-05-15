@@ -429,60 +429,9 @@
     </div>
 
     <div class="card">
-      <h2>🍽️ Au menu</h2>
-      <div class="menu-grid">
-        <div class="menu-col">
-          <h4>Entrées</h4>
-          <ul>
-            <li>Mini-burgers</li>
-            <li>Mignardises</li>
-            <li>Pastels</li>
-            <li>Macédoine</li>
-          </ul>
-        </div>
-        <div class="menu-col">
-          <h4>Plats chauds</h4>
-          <ul>
-            <li>Thiep poisson</li>
-            <li>Méchoui</li>
-            <li>Poulets braisés</li>
-            <li>Poulets grillés</li>
-          </ul>
-        </div>
-        <div class="menu-col">
-          <h4>Accompagnements</h4>
-          <ul>
-            <li>Riz blanc &amp; rouge</li>
-            <li>Attiéké &amp; Aloko</li>
-            <li>Abolo</li>
-            <li>Pommes de terre</li>
-          </ul>
-        </div>
-        <div class="menu-col">
-          <h4>Desserts</h4>
-          <ul>
-            <li>Mignardises sucrées</li>
-            <li>Coco grillé</li>
-            <li>Croquettes</li>
-            <li>Krékré</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>🎉 Ambiance &amp; animations</h2>
-      <div class="features">
-        <div class="feature"><div class="feature-emoji">🥁</div><div class="feature-label">Percussions live</div></div>
-        <div class="feature"><div class="feature-emoji">💃</div><div class="feature-label">Danses afro</div></div>
-        <div class="feature"><div class="feature-emoji">👗</div><div class="feature-label">Défilé wax</div></div>
-        <div class="feature"><div class="feature-emoji">🎭</div><div class="feature-label">Ateliers culturels</div></div>
-        <div class="feature"><div class="feature-emoji">🎧</div><div class="feature-label">DJ afro</div></div>
-        <div class="feature"><div class="feature-emoji">🎁</div><div class="feature-label">Tombola</div></div>
-        <div class="feature"><div class="feature-emoji">📸</div><div class="feature-label">Photobooth</div></div>
-        <div class="feature"><div class="feature-emoji">🍹</div><div class="feature-label">Bissap &amp; cocktails</div></div>
-        <div class="feature"><div class="feature-emoji">🥂</div><div class="feature-label">Champagne</div></div>
-      </div>
+      <p style="margin:0; font-size:14px; line-height:1.6; color:#d4a574;">
+        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#fbbf24;">DJ afro, percussions, danses, défilé wax, photobooth &amp; tombola</strong>. Tenue chic/wax encouragée 🌴
+      </p>
     </div>
 
     <div class="card">
@@ -654,7 +603,7 @@
       qty: state.qty,
       total: UNIT_PRICE * state.qty,
       timestamp: new Date().toISOString(),
-      bookingId: 'EBN-' + Date.now().toString(36).toUpperCase()
+      bookingId: 'EBENE-' + nom.toUpperCase().normalize('NFD').replace(/[^A-Z]/g,'').slice(0,8) + '-' + Date.now().toString(36).toUpperCase().slice(-4)
     };
     localStorage.setItem('currentBooking', JSON.stringify(booking));
     window.location.href = 'paiement.html';

@@ -299,6 +299,64 @@
     line-height: 1.5;
   }
   .info-note strong { color: #fbbf24; }
+
+  /* GROSSE BOÎTE RÉFÉRENCE */
+  .ref-bigbox {
+    background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+  }
+  .ref-bigbox-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #1a1108;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ref-bigbox-code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a1108;
+    background: #fff8e7;
+    border-radius: 12px;
+    padding: 14px 10px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    word-break: break-all;
+    line-height: 1.2;
+    border: 2px dashed #1a1108;
+  }
+  .ref-copy-btn {
+    width: 100%;
+    background: #1a1108;
+    color: #fbbf24;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform .1s, background .15s;
+  }
+  .ref-copy-btn:active { transform: scale(.97); }
+  .ref-copy-btn.copied { background: #16a34a; color: white; }
+  .ref-bigbox-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #1a1108;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 380px) {
+    .ref-bigbox-code { font-size: 18px; }
+  }
 </style>
 </head>
 <body>
@@ -327,6 +385,14 @@
     </div>
     <p class="card-section-sub">4 options disponibles · paiement sécurisé</p>
 
+    <!-- BLOC RÉFÉRENCE ÉNORME -->
+    <div class="ref-bigbox">
+      <div class="ref-bigbox-label">⚠️ À indiquer en note de ton paiement</div>
+      <div class="ref-bigbox-code" id="bigRef">EBENE-XXX</div>
+      <button type="button" class="ref-copy-btn" id="bigRefCopy">📋 Copier la référence</button>
+      <div class="ref-bigbox-hint">Sans cette référence, on ne pourra pas relier ton paiement à ta réservation 🙏</div>
+    </div>
+
     <!-- REVOLUT -->
     <label class="payment-option selected" data-method="revolut">
       <span class="pay-radio"></span>
@@ -338,15 +404,15 @@
     </label>
     <div class="pay-details show" data-panel="revolut">
       <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-revolut"></span></div>
-      <div class="row"><span class="k">Référence (à indiquer dans la note)</span><span class="v" id="ref-revolut"></span></div>
       <a href="https://revolut.me/abayoa" target="_blank" rel="noopener" class="pay-action-btn" id="revolutBtn">
-        Payer avec Revolut →
+        Ouvrir Revolut →
       </a>
       <div class="info-note">
         <strong>💡 Comment faire :</strong><br>
-        1. Clique sur le bouton → tu arrives sur le lien Revolut.<br>
-        2. Indique le montant et ajoute la <strong>référence</strong> en note.<br>
-        3. Reviens ici et clique sur "J'ai payé".
+        1. Copie la <strong>référence</strong> ci-dessus<br>
+        2. Clique "Ouvrir Revolut" → entre le montant<br>
+        3. <strong>Colle la référence en note</strong> du paiement<br>
+        4. Reviens ici et clique "J'ai payé" en bas
       </div>
     </div>
 
@@ -365,9 +431,12 @@
         <span class="v">+33 6 68 29 50 77 <button class="copy-btn" data-copy="+33668295077">Copier</button></span>
       </div>
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-wero"></span></div>
-      <div class="row"><span class="k">Référence (obligatoire)</span><span class="v" id="ref-wero"></span></div>
       <div class="info-note">
-        <strong>💡 Ouvre ton app bancaire</strong> → Wero → envoie le montant exact au numéro ci-dessus en mettant la référence en note.
+        <strong>💡 Comment faire :</strong><br>
+        1. Ouvre ton app bancaire → Wero<br>
+        2. Envoie le montant au numéro ci-dessus<br>
+        3. <strong>Colle la référence en note</strong><br>
+        4. Reviens et clique "J'ai payé"
       </div>
     </div>
 
@@ -388,31 +457,8 @@
       <div class="row"><span class="k">BIC</span><span class="v">REVOFRP2 <button class="copy-btn" data-copy="REVOFRP2">Copier</button></span></div>
       <div class="row"><span class="k">Bénéficiaire</span><span class="v">Brunch Ébène &amp; Saveurs</span></div>
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-virement"></span></div>
-      <div class="row"><span class="k">Référence (obligatoire)</span><span class="v" id="ref-virement"></span></div>
       <div class="info-note">
-        ⚠️ <strong>IBAN à remplacer</strong> par tes vraies coordonnées dans le code avant la mise en ligne.
-      </div>
-    </div>
-
-    <!-- CB -->
-    <label class="payment-option" data-method="cb">
-      <span class="pay-radio"></span>
-      <span class="pay-logo cb">CB</span>
-      <div class="pay-info">
-        <div class="pay-name">Carte bancaire</div>
-        <div class="pay-desc">Visa, Mastercard · via lien sécurisé</div>
-      </div>
-    </label>
-    <div class="pay-details" data-panel="cb">
-      <div class="info-note">
-        <strong>🔒 Paiement par carte sécurisé</strong><br>
-        Tu vas être redirigé(e) vers une page de paiement sécurisée pour entrer ta carte bancaire.
-      </div>
-      <button type="button" class="pay-action-btn cb" id="cbBtn">
-        Payer par carte bancaire →
-      </button>
-      <div class="info-note" style="margin-top: 10px;">
-        ⚠️ <em>Pour activer la CB en prod, branche <strong>Stripe Payment Link</strong> ou <strong>Revolut Merchant</strong> et remplace ce bouton par l'URL générée.</em>
+        ⚠️ <strong>IBAN à remplacer</strong> par tes vraies coordonnées dans le code avant la mise en ligne. <strong>Colle la référence en libellé</strong> du virement.
       </div>
     </div>
   </div>
@@ -452,10 +498,29 @@
   ['revolut','wero','virement'].forEach(m => {
     const el = document.getElementById('amt-' + m);
     if (el) el.textContent = fmt(booking.total);
-    const ref = document.getElementById('ref-' + m);
-    if (ref) ref.textContent = booking.bookingId;
   });
   document.getElementById('btnAmount').textContent = '(' + fmt(booking.total) + ')';
+
+  // Grosse référence en haut
+  document.getElementById('bigRef').textContent = booking.bookingId;
+
+  // Bouton copier la référence
+  const bigRefCopy = document.getElementById('bigRefCopy');
+  bigRefCopy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(booking.bookingId);
+      bigRefCopy.textContent = '✓ Copié !';
+      bigRefCopy.classList.add('copied');
+      const t = document.getElementById('toast');
+      t.textContent = '✓ Référence copiée — colle-la en note de ton paiement';
+      t.classList.add('show');
+      setTimeout(() => {
+        bigRefCopy.textContent = '📋 Copier la référence';
+        bigRefCopy.classList.remove('copied');
+        t.classList.remove('show');
+      }, 2500);
+    } catch(err) {}
+  });
 
   let method = 'revolut';
   document.querySelectorAll('.payment-option').forEach(opt => {
@@ -484,11 +549,6 @@
         setTimeout(() => t.classList.remove('show'), 1800);
       } catch(err) {}
     });
-  });
-
-  // CB button — à remplacer par un Stripe Payment Link en prod
-  document.getElementById('cbBtn').addEventListener('click', () => {
-    alert('🔧 Branche ton lien Stripe / Revolut Merchant ici.\nEn prod : window.location.href = "https://buy.stripe.com/...";');
   });
 
   // Validation
