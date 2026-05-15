@@ -357,6 +357,38 @@
   @media (max-width: 380px) {
     .ref-bigbox-code { font-size: 18px; }
   }
+
+  /* Contact footer */
+  .contact-footer {
+    margin-top: 24px;
+    padding: 18px 0 80px;
+    border-top: 1px solid #3a2818;
+    text-align: center;
+  }
+  .contact-footer-title {
+    font-size: 11px;
+    color: #8a6648;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  .contact-footer-row {
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .contact-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    color: #fbbf24;
+    padding: 8px 14px;
+    border-radius: 99px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
 </style>
 </head>
 <body>
@@ -383,7 +415,7 @@
     <div class="card-section-title">
       <h2>💳 Choisis ton moyen de paiement</h2>
     </div>
-    <p class="card-section-sub">4 options disponibles · paiement sécurisé</p>
+    <p class="card-section-sub">3 options disponibles · paiement sécurisé</p>
 
     <!-- BLOC RÉFÉRENCE ÉNORME -->
     <div class="ref-bigbox">
@@ -460,6 +492,14 @@
       <div class="info-note">
         ⚠️ <strong>IBAN à remplacer</strong> par tes vraies coordonnées dans le code avant la mise en ligne. <strong>Colle la référence en libellé</strong> du virement.
       </div>
+    </div>
+  </div>
+
+  <div class="contact-footer">
+    <div class="contact-footer-title">📞 Un problème avec le paiement ?</div>
+    <div class="contact-footer-row">
+      <a href="https://wa.me/33668295077" class="contact-pill whatsapp">💬 WhatsApp +33 6 68 29 50 77</a>
+      <a href="tel:+33668295077" class="contact-pill">📞 Appeler</a>
     </div>
   </div>
 

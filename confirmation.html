@@ -186,6 +186,50 @@
     line-height: 1.6;
   }
   .footer-note a { color: #fbbf24; text-decoration: none; }
+
+  /* Contact footer commun */
+  .contact-footer {
+    margin-top: 32px;
+    padding: 18px;
+    border-top: 1px solid #3a2818;
+    text-align: center;
+  }
+  .contact-footer-title {
+    font-size: 11px;
+    color: #8a6648;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .contact-footer-row {
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .contact-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    color: #fbbf24;
+    padding: 8px 14px;
+    border-radius: 99px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background .15s;
+  }
+  .contact-pill:active { background: #2a1810; }
+  .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+
+  /* PRINT — pour Sauver en PDF */
+  @media print {
+    body { background: white !important; color: #1a1108 !important; }
+    .app { padding: 0; max-width: none; }
+    .actions, .footer-note, .contact-footer, .pending-banner { display: none !important; }
+    .success-hero { background: linear-gradient(135deg, #16a34a, #22c55e) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ticket-card, .info-card { background: #1a1108 !important; color: #f5ede1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
+    .ticket-top { background: linear-gradient(135deg, #1a1108, #2a1810) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
@@ -260,16 +304,27 @@
 
   <div class="actions">
     <button class="btn btn-primary" id="downloadBtn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Télécharger mon billet
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Sauver mon billet en PDF
     </button>
     <a href="index.html" class="btn btn-secondary">Faire une autre réservation</a>
   </div>
 
   <p class="footer-note">
-    Une question ? Contacte-nous par <a href="https://wa.me/33668295077">WhatsApp</a><br>
     Hâte de te voir au brunch 🍽️🎉
   </p>
+
+  <div class="contact-footer">
+    <div class="contact-footer-title">Une question ?</div>
+    <div class="contact-footer-row">
+      <a href="https://wa.me/33668295077" class="contact-pill whatsapp">
+        💬 WhatsApp : +33 6 68 29 50 77
+      </a>
+      <a href="tel:+33668295077" class="contact-pill">
+        📞 Appeler
+      </a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -283,56 +338,29 @@
   document.getElementById('subtext').textContent =
     `Merci ${booking.prenom} ! Ta réservation de ${booking.total.toFixed(2).replace('.', ',')} € est enregistrée.`;
 
-  // QR placeholder
-  function makeFakeQR(text) {
-    let seed = 0;
-    for (let i=0; i<text.length; i++) seed = (seed*31 + text.charCodeAt(i)) >>> 0;
-    function rng() { seed = (seed*1103515245 + 12345) >>> 0; return seed; }
-    const size = 25, cell = 10;
-    let svg = `<svg viewBox="0 0 ${size*cell} ${size*cell}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="white"/>`;
-    for (let y=0; y<size; y++) for (let x=0; x<size; x++) {
-      const corner = (x<7&&y<7)||(x>=size-7&&y<7)||(x<7&&y>=size-7);
-      if (corner) {
-        const inFrame = (x===0||x===6||y===0||y===6)||(x===size-7||x===size-1||y===size-7)||(y===size-1);
-        const inDot = (x>=2&&x<=4&&y>=2&&y<=4) || (x>=size-5&&x<=size-3&&y>=2&&y<=4) || (x>=2&&x<=4&&y>=size-5&&y<=size-3);
-        if (inFrame||inDot) svg += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="black"/>`;
-      } else if ((rng() & 1) === 0) {
-        svg += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="black"/>`;
-      }
-    }
-    svg += '</svg>';
-    return svg;
-  }
-  document.getElementById('qr').innerHTML = makeFakeQR(booking.bookingId);
+  // Vrai QR code scannable (via qrserver.com — image PNG, marche partout)
+  const qrData = JSON.stringify({
+    event: 'Brunch Ébène & Saveurs',
+    id: booking.bookingId,
+    name: booking.prenom + ' ' + booking.nom,
+    qty: booking.qty,
+    date: '2026-08-22'
+  });
+  const qrImg = document.createElement('img');
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=400x400&margin=10`;
+  qrImg.alt = 'QR de réservation';
+  qrImg.style.maxWidth = '220px';
+  qrImg.style.width = '100%';
+  qrImg.style.height = 'auto';
+  document.getElementById('qr').appendChild(qrImg);
 
+  // Sauver en PDF — déclenche l'impression (l'utilisateur choisit "Enregistrer en PDF")
   document.getElementById('downloadBtn').addEventListener('click', () => {
-    const ticketText = `
-🌴 BRUNCH ÉBÈNE & SAVEURS — Billet électronique
-================================================
-Date  : Samedi 22 août 2026 · 12h00
-Lieu  : Salle de Ronchin, 59790 Ronchin (Lille)
-
-Nom         : ${booking.prenom} ${booking.nom}
-Email       : ${booking.email}
-Téléphone   : ${booking.telephone}
-Formule     : ${booking.ticketName}
-Nombre de places : ${booking.qty}
-Total payé  : ${booking.total.toFixed(2)} €
-
-N° de réservation : ${booking.bookingId}
-
-Présente ce billet (ou son N°) à l'entrée.
-Un bracelet te sera remis pour accéder au buffet.
-
-Contact : +33 6 68 29 50 77 (WhatsApp)
-`.trim();
-    const blob = new Blob([ticketText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `billet-brunch-${booking.bookingId}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // Petit titre pour aider l'utilisateur la 1ère fois
+    const oldTitle = document.title;
+    document.title = `Billet-${booking.bookingId}`;
+    window.print();
+    setTimeout(() => { document.title = oldTitle; }, 500);
   });
 </script>
 </body>
