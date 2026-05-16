@@ -294,10 +294,21 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span>Salle de Ronchin, 59790 Ronchin (Lille)</span>
         </div>
+        <div class="info-row" style="padding-top:0;">
+          <span style="width:18px;"></span>
+          <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+        </div>
         <div class="info-row">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
           <span>Présente ce numéro à l'entrée pour récupérer ton bracelet</span>
         </div>
+      </div>
+
+      <!-- 📤 Bouton partager -->
+      <div style="margin-top: 14px;">
+        <button id="shareBtn" style="width:100%; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          📤 Inviter des amis au brunch
+        </button>
       </div>
 
       <div class="booking-ref-box">
@@ -305,6 +316,28 @@
         <div class="booking-ref-code">${b.bookingId}</div>
       </div>
     `;
+
+    // 📤 Bouton partager
+    setTimeout(() => {
+      const shareBtn = document.getElementById('shareBtn');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+          const shareData = {
+            title: 'Brunch Ébène & Saveurs',
+            text: `Hey ! Je viens au Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Tu viens aussi ?`,
+            url: 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs/'
+          };
+          try {
+            if (navigator.share) {
+              await navigator.share(shareData);
+            } else {
+              await navigator.clipboard.writeText(`${shareData.text}\n\n${shareData.url}`);
+              alert('✓ Lien copié ! Tu peux le coller dans WhatsApp, Insta, etc.');
+            }
+          } catch(e) { if (e.name !== 'AbortError') console.error(e); }
+        });
+      }
+    }, 100);
   }
 
   function renderError(msg) {

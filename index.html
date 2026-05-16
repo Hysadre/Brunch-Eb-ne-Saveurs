@@ -492,7 +492,19 @@
 <body>
 <div class="app">
 
-  <div class="hero">
+  <!-- 🎉 Mode événement passé (visible si date > 22 août 2026 23:59) -->
+  <div id="pastEventBanner" style="display:none; margin: 60px auto 40px; max-width: 480px; text-align: center; padding: 40px 24px;">
+    <div style="font-size: 72px; margin-bottom: 16px;">🌴</div>
+    <h1 style="font-size: 28px; color: #fbbf24; margin: 0 0 16px;">Merci à tous !</h1>
+    <p style="color: #d4a574; font-size: 16px; line-height: 1.6;">
+      Le Brunch Ébène &amp; Saveurs du 22 août 2026 est passé.<br>
+      Merci d'avoir été là 🎉<br><br>
+      <span style="font-size: 14px; color: #8a6648;">À très vite pour la prochaine édition !</span>
+    </p>
+    <a href="https://wa.me/33668295077" style="display: inline-block; margin-top: 24px; background: #16a34a; color: white; text-decoration: none; padding: 12px 22px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Nous contacter</a>
+  </div>
+
+  <div class="hero" id="hero">
     <div class="hero-eyebrow">🌴 Édition 2026</div>
     <h1 class="hero-title">Brunch<br><span class="accent">Ébène &amp; Saveurs</span></h1>
     <div class="hero-tagline">Buffet africain · Culture · Partage · Découverte</div>
@@ -503,7 +515,9 @@
       </div>
       <div class="row">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span>Salle de Ronchin · 59790 Ronchin (Lille)</span>
+        <span>Salle de Ronchin · 59790 Ronchin (Lille)
+          <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="display:inline-block; margin-left:8px; background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; vertical-align: middle;">🗺️ Itinéraire</a>
+        </span>
       </div>
       <div class="row">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -556,11 +570,18 @@
         <span class="qty-value" id="qtyValue">1</span>
         <button type="button" id="qtyPlus" aria-label="Augmenter">+</button>
       </div>
+
+      <!-- 👥 Accompagnants (visible si qty >= 2) -->
+      <div id="accompagnantsSection" style="display:none; margin-top: 18px; padding: 16px; background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 14px;">
+        <div style="font-size: 13px; font-weight: 700; color: #fbbf24; margin-bottom: 4px;">👥 Tes accompagnants</div>
+        <div style="font-size: 12px; color: #d4a574; margin-bottom: 12px;">Pour la liste d'entrée, donne-nous les noms des personnes qui viennent avec toi.</div>
+        <div id="accompagnantsList"></div>
+      </div>
     </div>
 
     <div class="card">
       <p style="margin:0; font-size:14px; line-height:1.6; color:#d4a574;">
-        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#fbbf24;">DJ afro, percussions, danses, défilé wax, photobooth &amp; tombola</strong>. Tenue chic/wax encouragée 🌴
+        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#fbbf24;">DJ afro, percussions, danses, photobooth &amp; tombola</strong> 🌴
       </p>
     </div>
 
@@ -630,7 +651,7 @@
         Salle de Ronchin, 59790 Ronchin (Lille) · Capacité limitée à 200 personnes.
       </p>
       <p>
-        Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, défilé wax, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
+        Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
       </p>
 
       <h3>💰 Tarifs</h3>
@@ -652,7 +673,7 @@
       <h3>🪪 Accès le jour J</h3>
       <p>
         Présente ton billet électronique (QR code reçu par email ou page de réservation) à l'entrée. Un bracelet te sera remis pour la durée de l'événement.<br>
-        Tenue chic / wax fortement encouragée 👗.
+        Viens comme tu te sens bien — on est là pour passer un bon moment ensemble 🌴
       </p>
 
       <h3>🚫 Cas particuliers</h3>
@@ -690,11 +711,21 @@
 </div>
 
 <script>
-  // 🔧 CONFIG : URL de ton API backend (Node.js Express ou Apps Script)
-  // Laisse vide pour mode démo (localStorage uniquement)
+  // 🔧 CONFIG : URL de ton API backend
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
   const CAPACITY = 200;
   const UNIT_PRICE = 35;
+  const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
+
+  // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci
+  if (new Date() >= EVENT_END) {
+    document.getElementById('pastEventBanner').style.display = 'block';
+    document.getElementById('hero').style.display = 'none';
+    document.getElementById('bookingForm').style.display = 'none';
+    document.querySelector('.contact-footer').style.display = 'none';
+    // On stoppe l'exécution du reste du script
+    throw new Error('Event past — script stopped');
+  }
 
   // Mapping qty → formule
   const FORMULAS = {
@@ -734,6 +765,40 @@
       t.classList.toggle('selected', parseInt(t.dataset.places, 10) === n);
     });
     updateTotal();
+    updateAccompagnantsFields();
+  }
+
+  // 👥 Génère dynamiquement les champs accompagnants (qty - 1 invités)
+  function updateAccompagnantsFields() {
+    const section = document.getElementById('accompagnantsSection');
+    const list = document.getElementById('accompagnantsList');
+    const places = state.qty;
+    if (places <= 1) {
+      section.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+    section.style.display = 'block';
+    // Conserve les valeurs déjà saisies si possible
+    const existing = {};
+    list.querySelectorAll('input').forEach(inp => { existing[inp.name] = inp.value; });
+
+    let html = '';
+    for (let i = 1; i < places; i++) {
+      const pName = `acc${i}Prenom`, nName = `acc${i}Nom`;
+      const pVal = existing[pName] || '';
+      const nVal = existing[nName] || '';
+      html += `
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; padding: 10px; background: #0f0a06; border-radius: 10px;">
+          <div style="font-size: 11px; color: #fbbf24; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">👤 Accompagnant ${i}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <input type="text" name="${pName}" placeholder="Prénom" value="${pVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #f5ede1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+            <input type="text" name="${nName}" placeholder="Nom" value="${nVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #f5ede1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+          </div>
+        </div>
+      `;
+    }
+    list.innerHTML = html;
   }
 
   function updateTotal() {
@@ -856,8 +921,36 @@
       return;
     }
 
+    // 👥 Récupère les accompagnants
+    const accompagnants = [];
+    for (let i = 1; i < state.qty; i++) {
+      const p = (document.querySelector(`[name="acc${i}Prenom"]`)?.value || '').trim();
+      const n = (document.querySelector(`[name="acc${i}Nom"]`)?.value || '').trim();
+      if (p || n) accompagnants.push(`${p} ${n}`.trim());
+    }
+    // Validation des accompagnants
+    if (state.qty > 1 && accompagnants.length < state.qty - 1) {
+      alert(`Merci de remplir le prénom + nom de tes ${state.qty - 1} accompagnant(s) — c'est important pour la liste d'entrée 🙏`);
+      document.querySelector('#accompagnantsList input').focus();
+      return;
+    }
+
+    // 🔍 Anti-doublon : vérifie si l'email a déjà une résa active
+    if (API_URL) {
+      try {
+        const r = await fetch(API_URL + '/check-email/' + encodeURIComponent(email));
+        if (r.ok) {
+          const data = await r.json();
+          if (data.exists) {
+            if (!confirm(`⚠️ Tu as déjà ${data.count} réservation${data.count>1?'s':''} active${data.count>1?'s':''} avec cet email (${email}).\n\nContinuer quand même ?`)) return;
+          }
+        }
+      } catch(e) { console.warn('Check email skipped', e); }
+    }
+
     const booking = {
       prenom, nom, email, telephone, message,
+      accompagnants: accompagnants.join(', ') || null,
       ticketId: getCurrentFormulaId(),
       ticketName: getCurrentFormulaName(),
       ticketPrice: UNIT_PRICE,

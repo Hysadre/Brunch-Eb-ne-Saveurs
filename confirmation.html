@@ -301,6 +301,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       <span class="v">Salle de Ronchin, 59790 Ronchin (Lille)</span>
     </div>
+    <div class="info-row" style="padding-top:0;">
+      <span style="width:18px;"></span>
+      <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+    </div>
     <div class="info-row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span>Rendez-vous à partir de <span class="v">12h00</span></span>
@@ -309,14 +313,6 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       <span>Email envoyé à <span class="v" id="userEmail">—</span></span>
     </div>
-    <div class="info-row">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-      <span>Présente ce QR à l'entrée (un bracelet te sera remis)</span>
-    </div>
-    <div class="info-row">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3-3m3 3l3-3m-9 13h12"/></svg>
-      <span>Tenue chic / wax fortement encouragée 👗</span>
-    </div>
   </div>
 
   <div class="actions">
@@ -324,6 +320,10 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       🔎 Suivre l'état de ma réservation
     </a>
+    <button class="btn btn-primary" id="shareBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      📤 Inviter des amis
+    </button>
     <a href="index.html" class="btn btn-secondary">Faire une autre réservation</a>
   </div>
 
@@ -363,6 +363,23 @@
 
   // Remplit le href du bouton "Voir ma réservation"
   document.getElementById('viewBtn').href = ticketUrl;
+
+  // 📤 Bouton "Inviter des amis"
+  document.getElementById('shareBtn').addEventListener('click', async () => {
+    const shareData = {
+      title: 'Brunch Ébène & Saveurs',
+      text: `Hey ! Je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Tu viens aussi ?`,
+      url: SITE_URL + '/'
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text}\n\n${shareData.url}`);
+        alert('✓ Lien copié ! Tu peux le coller dans WhatsApp, Insta, etc.');
+      }
+    } catch(e) { if (e.name !== 'AbortError') console.error(e); }
+  });
 
   // ⚠️ Pas de QR ici : il sera envoyé par mail après validation du paiement
   // ⚠️ Bouton de téléchargement désactivé (plus de QR à télécharger à ce stade)
