@@ -100,11 +100,33 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ----- Email — Brevo (primaire) ou Resend (fallback) -----
+// ----- Email — Resend (primaire, domaine vérifié) ou Brevo (fallback) -----
 async function sendEmail({ to, subject, html, text }) {
   const recipients = (Array.isArray(to) ? to : [to]);
 
-  // 1️⃣ Essai Brevo (gratuit 300/jour, envoie partout)
+  // 1️⃣ Resend (primaire) — domaine cosmakit.com vérifié
+  if (RESEND_API_KEY) {
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: `${FROM_EMAIL_NAME} <${FROM_EMAIL_ADDR}>`,
+          to: recipients,
+          subject,
+          html,
+          text
+        })
+      });
+      if (r.ok) return await r.json();
+      const errText = await r.text();
+      console.warn('Resend failed, trying Brevo:', errText);
+    } catch(e) {
+      console.warn('Resend error, trying Brevo:', e.message);
+    }
+  }
+
+  // 2️⃣ Fallback Brevo (si Resend foire)
   if (BREVO_API_KEY) {
     const body = {
       sender: { name: FROM_EMAIL_NAME, email: FROM_EMAIL_ADDR },
@@ -129,24 +151,7 @@ async function sendEmail({ to, subject, html, text }) {
     return r.json();
   }
 
-  // 2️⃣ Fallback Resend (limité au compte owner)
-  if (RESEND_API_KEY) {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: `${FROM_EMAIL_NAME} <onboarding@resend.dev>`,
-        to: recipients, subject, html, text
-      })
-    });
-    if (!r.ok) {
-      const err = await r.text();
-      throw new Error(`Resend ${r.status}: ${err}`);
-    }
-    return r.json();
-  }
-
-  console.warn('⚠️  Aucune clé email configurée (BREVO_API_KEY ou RESEND_API_KEY) — email non envoyé');
+  console.warn('⚠️  Aucune clé email configurée (RESEND_API_KEY ou BREVO_API_KEY) — email non envoyé');
 }
 
 // Wrapper rétro-compatible
