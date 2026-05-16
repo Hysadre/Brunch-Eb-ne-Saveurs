@@ -204,19 +204,85 @@ async function sendConfirmationEmails(booking) {
   });
 }
 
+// ===== EMAIL DE VALIDATION (quand admin marque "Payé") =====
+async function sendValidationEmail(booking) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=300x300`;
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 36px 24px; text-align: center; color: white;">
+      <div style="display:inline-block; width:80px; height:80px; background:white; border-radius:50%; line-height:80px; font-size:48px; color:#16a34a; margin-bottom:12px;">✓</div>
+      <h1 style="margin: 0; font-size: 26px;">Paiement confirmé !</h1>
+      <p style="margin: 8px 0 0; opacity: .95; font-size:16px;">Ta place est officiellement réservée 🎉</p>
+    </div>
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #f5ede1;">
+        Hello ${booking.prenom},<br><br>
+        On vient de valider ton paiement de <strong style="color: #fbbf24;">${totalFmt} €</strong> pour le <strong>${EVENT.name}</strong>. Tu peux désormais venir tranquille le ${EVENT.date} 🌴
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #f5ede1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">📅 Date</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;">${EVENT.date} · ${EVENT.time}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">📍 Lieu</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${EVENT.place}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">🎫 Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">👥 Places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.qty}</td></tr>
+      </table>
+
+      <div style="text-align: center; padding: 20px; background: white; border-radius: 12px; margin-bottom: 16px;">
+        <img src="${qrUrl}" alt="QR" style="max-width: 200px;">
+        <p style="margin: 12px 0 4px; font-family: monospace; font-size: 16px; font-weight: 700; color: #1a1108;">${booking.bookingId}</p>
+        <p style="margin: 0; font-size: 12px; color: #999;">Présente ce QR à l'entrée</p>
+      </div>
+
+      <a href="${ticketUrl}" style="display:block; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; text-decoration: none; padding: 16px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(22,163,74,0.3);">
+        🎫 Voir mon billet en ligne
+      </a>
+
+      <p style="margin: 20px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.6;">
+        💡 Garde ce mail précieusement.<br>
+        Tu peux re-télécharger ton billet à tout moment via le lien ci-dessus.
+      </p>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <p style="margin: 0 0 10px; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Une question ?</p>
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #fbbf24; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `✅ Paiement confirmé — Ta place est réservée !`,
+    html
+  });
+}
+
 // ============ ROUTES ============
 
 app.get('/', (req, res) => res.send('Brunch Ébène & Saveurs API ✅'));
 
-// Stats publiques (compteur de places sur la home)
+// Stats publiques (compteur de places sur la home + formule la plus populaire)
 app.get('/api/stats', async (req, res) => {
   try {
     const list = await listReservations();
     const paid = list.filter(r => r.status === 'confirmé');
+    // Compte par formule (toutes résa, pas seulement payées, pour la popularité)
+    const formulas = { standard: 0, duo: 0, trio: 0, groupe: 0 };
+    list.forEach(r => {
+      const id = (r.ticketId || 'standard').toLowerCase();
+      if (formulas[id] !== undefined) formulas[id]++;
+      else formulas.groupe++;
+    });
     res.json({
       places: paid.reduce((s, r) => s + (r.qty || 0), 0),
       count: paid.length,
-      revenue: paid.reduce((s, r) => s + (r.total || 0), 0)
+      revenue: paid.reduce((s, r) => s + (r.total || 0), 0),
+      formulas
     });
   } catch (e) {
     console.error('stats error:', e.message);
@@ -283,10 +349,22 @@ app.post('/api/reservations', async (req, res) => {
 app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const before = await findReservation(id);
+    if (!before) return res.status(404).json({ error: 'not found' });
+
     const patch = {};
     if (req.body.status) patch.status = req.body.status;
     if (req.body.status === 'confirmé') patch.paidAt = new Date().toISOString();
     await patchReservation(id, patch);
+
+    // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
+    const wasNotConfirmed = before.status !== 'confirmé';
+    const isNowConfirmed  = req.body.status === 'confirmé';
+    if (wasNotConfirmed && isNowConfirmed) {
+      const updated = { ...before, ...patch };
+      sendValidationEmail(updated).catch(err => console.error('validation email error', err));
+    }
+
     res.json({ ok: true });
   } catch (e) {
     console.error('patch error:', e.message);
