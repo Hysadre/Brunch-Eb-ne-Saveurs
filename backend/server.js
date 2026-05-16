@@ -17,15 +17,17 @@ import express from 'express';
 import cors from 'cors';
 
 // ----- Config -----
-const ADMIN_TOKEN     = process.env.ADMIN_TOKEN || 'BrunchEbene2026!';
-const PORT            = process.env.PORT || 3000;
-const SUPABASE_URL    = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_KEY || '';
-const RESEND_API_KEY  = process.env.RESEND_API_KEY || '';
-const ORGANIZER_EMAIL = process.env.ORGANIZER_EMAIL || 'abayoassi@gmail.com';
-const FROM_EMAIL      = process.env.FROM_EMAIL || 'Brunch Ébène & Saveurs <onboarding@resend.dev>';
-const SITE_URL        = (process.env.SITE_URL || 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs').replace(/\/$/, '');
-const WHATSAPP_NUMBER = '33668295077';
+const ADMIN_TOKEN      = process.env.ADMIN_TOKEN || 'BrunchEbene2026!';
+const PORT             = process.env.PORT || 3000;
+const SUPABASE_URL     = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY     = process.env.SUPABASE_SERVICE_KEY || '';
+const BREVO_API_KEY    = process.env.BREVO_API_KEY || '';
+const RESEND_API_KEY   = process.env.RESEND_API_KEY || ''; // fallback
+const ORGANIZER_EMAIL  = process.env.ORGANIZER_EMAIL || 'abayoassi@gmail.com';
+const FROM_EMAIL_NAME  = process.env.FROM_EMAIL_NAME || 'Brunch Ébène & Saveurs';
+const FROM_EMAIL_ADDR  = process.env.FROM_EMAIL_ADDR || 'abayoassi@gmail.com';
+const SITE_URL         = (process.env.SITE_URL || 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs').replace(/\/$/, '');
+const WHATSAPP_NUMBER  = '33668295077';
 const WHATSAPP_DISPLAY = '+33 6 68 29 50 77';
 
 const EVENT = {
@@ -98,23 +100,57 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ----- Email via Resend -----
-async function resendSend({ to, subject, html, text }) {
-  if (!RESEND_API_KEY) {
-    console.warn('⚠️  RESEND_API_KEY non configurée — email non envoyé');
-    return;
+// ----- Email — Brevo (primaire) ou Resend (fallback) -----
+async function sendEmail({ to, subject, html, text }) {
+  const recipients = (Array.isArray(to) ? to : [to]);
+
+  // 1️⃣ Essai Brevo (gratuit 300/jour, envoie partout)
+  if (BREVO_API_KEY) {
+    const body = {
+      sender: { name: FROM_EMAIL_NAME, email: FROM_EMAIL_ADDR },
+      to: recipients.map(e => ({ email: e })),
+      subject,
+      htmlContent: html
+    };
+    if (text) body.textContent = text;
+    const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`Brevo ${r.status}: ${err}`);
+    }
+    return r.json();
   }
-  const r = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: FROM_EMAIL, to: Array.isArray(to) ? to : [to], subject, html, text })
-  });
-  if (!r.ok) {
-    const err = await r.text();
-    throw new Error(`Resend ${r.status}: ${err}`);
+
+  // 2️⃣ Fallback Resend (limité au compte owner)
+  if (RESEND_API_KEY) {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `${FROM_EMAIL_NAME} <onboarding@resend.dev>`,
+        to: recipients, subject, html, text
+      })
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`Resend ${r.status}: ${err}`);
+    }
+    return r.json();
   }
-  return r.json();
+
+  console.warn('⚠️  Aucune clé email configurée (BREVO_API_KEY ou RESEND_API_KEY) — email non envoyé');
 }
+
+// Wrapper rétro-compatible
+const resendSend = sendEmail;
 
 async function sendConfirmationEmails(booking) {
   if (!booking.email) return;
