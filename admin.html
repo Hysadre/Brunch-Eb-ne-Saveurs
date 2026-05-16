@@ -719,7 +719,27 @@
   document.getElementById('filterMethod').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
-  document.getElementById('refreshBtn').addEventListener('click', render);
+  document.getElementById('refreshBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('refreshBtn');
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = '⏳ Chargement...';
+    btn.disabled = true;
+    const before = CACHE.length;
+    try {
+      await render();
+      const diff = CACHE.length - before;
+      if (diff > 0) {
+        toast(`✓ ${diff} nouvelle${diff>1?'s':''} réservation${diff>1?'s':''}`);
+      } else {
+        toast('✓ À jour');
+      }
+    } catch(e) {
+      toast('Erreur : ' + (e.message || 'connexion'), true);
+    } finally {
+      btn.innerHTML = oldHtml;
+      btn.disabled = false;
+    }
+  });
 
   // --- Modal suppression ---
   let pendingDeleteId = null;

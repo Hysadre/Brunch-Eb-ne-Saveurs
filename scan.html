@@ -69,11 +69,30 @@
 
   #reader {
     width: 100%; max-width: 500px;
+    min-height: 280px;
     border-radius: 16px; overflow: hidden;
     background: #14100a;
     border: 1px solid #3a2818;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
   }
   #reader video { width: 100% !important; height: auto !important; }
+  .reader-placeholder {
+    text-align: center; padding: 30px 20px;
+    color: #d4a574;
+  }
+  .reader-placeholder svg { color: #f97316; }
+  .reader-placeholder h3 { margin: 12px 0 6px; color: #f5ede1; font-size: 16px; }
+  .reader-placeholder p { margin: 0; font-size: 13px; }
+  .start-btn {
+    margin-top: 14px;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white; border: none;
+    padding: 14px 24px; border-radius: 12px;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
 
   .scan-controls { margin-top: 14px; }
   .btn {
@@ -217,9 +236,16 @@
     <a href="admin.html">← Dashboard</a>
   </div>
 
-  <div id="reader"></div>
+  <div id="reader">
+    <div class="reader-placeholder" id="placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <h3>📸 Prêt à scanner</h3>
+      <p>Appuie sur le bouton pour activer la caméra</p>
+      <button class="start-btn" id="startBtn">🎥 Démarrer la caméra</button>
+    </div>
+  </div>
 
-  <div class="scan-controls">
+  <div class="scan-controls" id="scanControls" style="display:none;">
     <button class="btn btn-secondary" id="toggleScanBtn">⏸️ Mettre en pause</button>
   </div>
 
@@ -281,11 +307,27 @@
     document.getElementById('login').style.display = 'none';
     document.getElementById('scannerApp').classList.add('show');
     renderLog();
-    startScanner();
+    // Le scanner ne démarre PAS automatiquement — l'utilisateur clique sur "Démarrer"
+    // (Safari iOS exige un user gesture explicite pour la caméra)
   }
 
+  document.getElementById('startBtn').addEventListener('click', startScanner);
+
   async function startScanner() {
+    const placeholder = document.getElementById('placeholder');
+    const reader = document.getElementById('reader');
+    const startBtn = document.getElementById('startBtn');
+
+    startBtn.disabled = true;
+    startBtn.innerHTML = '⏳ Activation de la caméra...';
+
     try {
+      if (typeof Html5Qrcode !== 'function') {
+        throw new Error('Librairie de scan non chargée. Recharge la page.');
+      }
+      // On vide le reader (enlève le placeholder)
+      placeholder.style.display = 'none';
+
       scanner = new Html5Qrcode('reader');
       await scanner.start(
         { facingMode: 'environment' },
@@ -293,13 +335,22 @@
         onScanSuccess,
         () => {} // ignore les erreurs de frame
       );
+      // Affiche les contrôles
+      document.getElementById('scanControls').style.display = 'block';
     } catch (e) {
-      document.getElementById('reader').innerHTML = `
-        <div style="padding:30px; text-align:center; color:#f87171;">
-          <p>⚠️ Impossible d'accéder à la caméra</p>
-          <p style="font-size:12px; color:#d4a574;">${e.message || e}</p>
-          <p style="font-size:13px; margin-top:14px;">👉 Utilise l'<strong>entrée manuelle</strong> ci-dessous</p>
-        </div>`;
+      console.error('Camera error:', e);
+      placeholder.style.display = 'block';
+      placeholder.innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <h3 style="color:#f87171;">⚠️ Caméra inaccessible</h3>
+        <p style="color:#d4a574;">${e.message || e}</p>
+        <p style="font-size:12px; margin-top:10px;">Vérifie que tu as autorisé l'accès à la caméra dans ton navigateur.</p>
+        <button class="start-btn" id="retryBtn" style="background:#3a2818;">↻ Réessayer</button>
+        <p style="font-size:13px; margin-top:14px; color:#d4a574;">Ou utilise l'<strong style="color:#fbbf24;">entrée manuelle</strong> ci-dessous 👇</p>
+      `;
+      document.getElementById('retryBtn').addEventListener('click', () => {
+        location.reload();
+      });
     }
   }
 
