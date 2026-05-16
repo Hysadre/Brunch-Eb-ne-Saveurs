@@ -233,7 +233,7 @@
     const isPaid = b.status === 'confirmé';
     const statusClass = isPaid ? 'paid' : 'pending';
     const statusIcon = isPaid ? '✓' : '⏳';
-    const statusTitle = isPaid ? 'Billet validé !' : 'Paiement en attente';
+    const statusTitle = isPaid ? 'Réservation confirmée' : 'Paiement en attente';
     const statusSub = isPaid
       ? `Tu es bien sur la liste pour le brunch, ${b.prenom} 🎉`
       : `Ton paiement est en cours de vérification. On valide ça dès que possible !`;

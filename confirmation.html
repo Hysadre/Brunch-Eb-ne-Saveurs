@@ -283,7 +283,13 @@
       </div>
     </div>
     <div class="ticket-stub">
-      <div class="qr-wrap" id="qr"></div>
+      <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 8px;">⏳</div>
+        <p style="margin: 0 0 6px; font-weight: 700; color: #fbbf24;">QR code en attente de validation</p>
+        <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.6;">
+          Ton QR unique te sera envoyé par mail dès que ton <strong>paiement aura été vérifié</strong> (sous 24h).
+        </p>
+      </div>
       <div class="booking-id" id="bookingId">—</div>
       <div class="booking-id-label">Numéro de réservation</div>
     </div>
@@ -316,12 +322,8 @@
   <div class="actions">
     <a href="#" class="btn btn-view" id="viewBtn" target="_blank" rel="noopener">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      🎫 Voir ma réservation en ligne
+      🔎 Suivre l'état de ma réservation
     </a>
-    <button class="btn btn-primary" id="downloadBtn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      📥 Télécharger mon billet (image)
-    </button>
     <a href="index.html" class="btn btn-secondary">Faire une autre réservation</a>
   </div>
 
@@ -361,16 +363,10 @@
 
   // Remplit le href du bouton "Voir ma réservation"
   document.getElementById('viewBtn').href = ticketUrl;
-  const qrImg = document.createElement('img');
-  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=400x400&margin=10`;
-  qrImg.alt = 'QR de réservation';
-  qrImg.crossOrigin = 'anonymous'; // pour que html2canvas puisse le capturer
-  qrImg.style.maxWidth = '220px';
-  qrImg.style.width = '100%';
-  qrImg.style.height = 'auto';
-  document.getElementById('qr').appendChild(qrImg);
 
-  // 📥 Téléchargement en IMAGE PNG (compatible iOS / Android / Desktop)
+  // ⚠️ Pas de QR ici : il sera envoyé par mail après validation du paiement
+  // ⚠️ Bouton de téléchargement désactivé (plus de QR à télécharger à ce stade)
+  if (false) {
   document.getElementById('downloadBtn').addEventListener('click', async () => {
     const btn = document.getElementById('downloadBtn');
     const originalHtml = btn.innerHTML;
@@ -441,6 +437,7 @@
       btn.disabled = false;
     }
   });
+  } // fin du if (false) — code de téléchargement désactivé tant que paiement non validé
 </script>
 </body>
 </html>
