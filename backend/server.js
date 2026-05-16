@@ -27,6 +27,7 @@ const ORGANIZER_EMAIL  = process.env.ORGANIZER_EMAIL || 'abayoassi@gmail.com';
 const FROM_EMAIL_NAME  = process.env.FROM_EMAIL_NAME || 'Brunch Ébène & Saveurs';
 const FROM_EMAIL_ADDR  = process.env.FROM_EMAIL_ADDR || 'abayoassi@gmail.com';
 const SITE_URL         = (process.env.SITE_URL || 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs').replace(/\/$/, '');
+const SHEET_WEBHOOK    = process.env.SHEET_WEBHOOK || ''; // URL Google Apps Script (sync auto sheet)
 const WHATSAPP_NUMBER  = '33668295077';
 const WHATSAPP_DISPLAY = '+33 6 68 29 50 77';
 
@@ -163,6 +164,25 @@ async function sendEmail({ to, subject, html, text }) {
 
 // Wrapper rétro-compatible
 const resendSend = sendEmail;
+
+// ----- 📊 Google Sheets sync (via Apps Script webhook) -----
+async function syncToSheet(action, booking) {
+  if (!SHEET_WEBHOOK) return;  // pas configuré → on skip silencieusement
+  try {
+    const payload = { action, ...booking };
+    // Fire-and-forget : ne bloque pas la requête principale
+    fetch(SHEET_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r => {
+      if (r.ok) console.log(`📊 Sheet sync OK [${action}] ${booking.bookingId}`);
+      else console.warn(`📊 Sheet sync ${r.status} pour ${booking.bookingId}`);
+    }).catch(e => console.warn(`📊 Sheet sync erreur: ${e.message}`));
+  } catch(e) {
+    console.warn(`📊 Sheet sync exception: ${e.message}`);
+  }
+}
 
 async function sendConfirmationEmails(booking) {
   if (!booking.email) return;
@@ -414,6 +434,7 @@ app.post('/api/reservations', async (req, res) => {
 
     // email async (n'attend pas)
     sendConfirmationEmails(b).catch(err => console.error('email error', err));
+    syncToSheet('création', b);
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
@@ -460,6 +481,14 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
         .catch(err => console.error(`❌ Mail validation ÉCHEC pour ${updated.email}:`, err.message));
     }
 
+    // 📊 Sync Google Sheet à chaque mise à jour (statut, archive, check-in, etc.)
+    const final = { ...before, ...patch };
+    let action = 'update';
+    if (isNowConfirmed && wasNotConfirmed) action = 'validation';
+    else if (req.body.archived === true) action = 'archivage';
+    else if (req.body.archived === false) action = 'restauration';
+    syncToSheet(action, final);
+
     res.json({ ok: true });
   } catch (e) {
     console.error('patch error:', e.message);
@@ -494,6 +523,7 @@ app.post('/api/checkin/:id', requireAdmin, async (req, res) => {
       enteredAt: r.enteredAt || new Date().toISOString()  // 1ère arrivée
     };
     await patchReservation(id, patch);
+    syncToSheet('check-in', { ...r, ...patch });
 
     res.json({
       ok: true,
@@ -554,7 +584,9 @@ app.post('/api/resend/:id', requireAdmin, async (req, res) => {
 // Supprimer une réservation (admin)
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
+    const before = await findReservation(req.params.id);
     await removeReservation(req.params.id);
+    if (before) syncToSheet('suppression', before);
     res.json({ ok: true });
   } catch (e) {
     console.error('delete error:', e.message);
