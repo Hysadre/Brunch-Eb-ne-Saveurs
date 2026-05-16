@@ -1002,28 +1002,25 @@
   });
 
   // --- Data ---
-  // Retourne les résa OU null si l'API a échoué (pour ne pas écraser le cache)
-  async function getReservations(retries = 3) {
+  // Un seul fetch rapide (15s max). Si l'API ne répond pas → return null → on garde le cache silencieusement.
+  // L'auto-refresh toutes les 10s retentera automatiquement.
+  async function getReservations() {
     if (API_URL) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const ctrl = new AbortController();
-          const timeoutId = setTimeout(() => ctrl.abort(), 60000); // 60s max (cold start Render)
-          const r = await fetch(API_URL + '/reservations', {
-            headers: { 'X-Admin-Token': ADMIN_PWD },
-            signal: ctrl.signal
-          });
-          clearTimeout(timeoutId);
-          if (r.ok) return await r.json();
-          if (r.status === 401) { console.error('Auth incorrecte'); return null; }
-        } catch(e) {
-          console.warn(`API tentative ${i+1}/${retries} échouée`, e.message);
-          if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
-        }
+      try {
+        const ctrl = new AbortController();
+        const timeoutId = setTimeout(() => ctrl.abort(), 15000);
+        const r = await fetch(API_URL + '/reservations', {
+          headers: { 'X-Admin-Token': ADMIN_PWD },
+          signal: ctrl.signal
+        });
+        clearTimeout(timeoutId);
+        if (r.ok) return await r.json();
+        return null;
+      } catch(e) {
+        console.warn('API échec, garde le cache:', e.message);
+        return null;
       }
-      return null; // ← API morte → on garde le cache en mémoire (NE PAS écraser)
     }
-    // Mode démo : fallback localStorage
     return JSON.parse(localStorage.getItem('cachedReservations') || localStorage.getItem('reservations') || '[]');
   }
 
@@ -1181,11 +1178,9 @@
     isFirstLoad = false;
     document.getElementById('syncIndicator')?.remove();
 
-    // 🛡️ Si l'API a échoué (Render endormi) → on garde le cache et on prévient
+    // Si l'API n'a pas répondu → on garde le cache silencieusement
     if (fresh === null) {
-      console.warn('API indispo, garde le cache actuel');
       if (CACHE.length === 0) {
-        // Premier chargement et API down → essaie le cache localStorage
         const localCache = JSON.parse(localStorage.getItem('cachedReservations') || '[]');
         if (localCache.length > 0) {
           CACHE = localCache;
@@ -1194,20 +1189,10 @@
           renderCheckinHistory(CACHE);
         }
       }
-      // Affiche un badge "serveur en train de se réveiller" en haut
-      let warn = document.getElementById('apiDownBanner');
-      if (!warn) {
-        warn = document.createElement('div');
-        warn.id = 'apiDownBanner';
-        warn.style.cssText = 'position:fixed; top:80px; right:20px; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); color:#f87171; padding:8px 14px; border-radius:99px; font-size:12px; z-index:50; display:flex; align-items:center; gap:8px;';
-        warn.innerHTML = '⚠️ Serveur endormi, données en cache';
-        document.body.appendChild(warn);
-      }
       return;
     }
 
-    // ✓ API OK → on met à jour le cache
-    document.getElementById('apiDownBanner')?.remove();
+    // ✓ API OK → met à jour le cache
     const previousCount = CACHE.length;
     CACHE = fresh;
     try { localStorage.setItem('cachedReservations', JSON.stringify(fresh)); } catch(e) {}
