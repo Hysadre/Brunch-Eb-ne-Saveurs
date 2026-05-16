@@ -1137,6 +1137,16 @@
     updateBulkBar();
   }
 
+  // 🧹 Vide complètement la sélection et cache la barre (à appeler après une action en groupe)
+  function clearSelection() {
+    SELECTED.clear();
+    document.getElementById('bulkBar').classList.remove('show');
+    document.querySelectorAll('.row-check-item').forEach(cb => cb.checked = false);
+    document.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+  }
+
   async function render() {
     // Si on a un cache, on affiche TOUT DE SUITE (pas de page vide)
     if (CACHE.length > 0 && isFirstLoad) {
@@ -1492,6 +1502,7 @@
   document.getElementById('archiveCancel').addEventListener('click', () => {
     document.getElementById('archiveModal').classList.remove('show');
     pendingArchiveId = null;
+    // Si on était en mode bulk → on garde la sélection pour permettre une autre action
     bulkMode = null;
   });
   // Active le champ texte "autre" si on coche "Autre"
@@ -1514,23 +1525,18 @@
   // === Bulk actions ===
   let bulkMode = null;  // 'archive' ou null
 
-  document.getElementById('bulkCancel').addEventListener('click', () => {
-    SELECTED.clear();
-    document.querySelectorAll('.row-check-item').forEach(cb => cb.checked = false);
-    document.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
-    updateBulkBar();
-  });
+  document.getElementById('bulkCancel').addEventListener('click', clearSelection);
 
   // ✓ Valider toutes les sélectionnées
   document.getElementById('bulkValidate').addEventListener('click', async () => {
     const ids = Array.from(SELECTED);
     if (!confirm(`✓ Valider ${ids.length} réservation${ids.length>1?'s':''} ? Un email de confirmation avec QR sera envoyé à chaque client.`)) return;
+    clearSelection();  // 👈 cache la barre immédiatement
     let ok = 0, fail = 0;
     for (const id of ids) {
       if (await updateStatus(id, 'confirmé')) ok++; else fail++;
     }
     toast(`✓ ${ok} validée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
-    SELECTED.clear();
     render();
   });
 
@@ -1538,12 +1544,12 @@
   document.getElementById('bulkDelete').addEventListener('click', async () => {
     const ids = Array.from(SELECTED);
     if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT ${ids.length} réservation${ids.length>1?'s':''} ?\n\nCette action est irréversible.`)) return;
+    clearSelection();  // 👈 cache la barre immédiatement
     let ok = 0, fail = 0;
     for (const id of ids) {
       if (await deleteReservation(id)) ok++; else fail++;
     }
     toast(`🗑️ ${ok} supprimée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
-    SELECTED.clear();
     render();
   });
 
@@ -1571,14 +1577,14 @@
     // Bulk archive
     if (bulkMode === 'bulk') {
       const ids = Array.from(SELECTED);
+      bulkMode = null;
+      clearSelection();  // 👈 cache la barre immédiatement
+      document.getElementById('archiveModal').classList.remove('show');
       let ok = 0, fail = 0;
       for (const id of ids) {
         if (await archiveReservation(id, true, reason)) ok++; else fail++;
       }
       toast(`🗃️ ${ok} archivée${ok>1?'s':''} (${reason})${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
-      bulkMode = null;
-      SELECTED.clear();
-      document.getElementById('archiveModal').classList.remove('show');
       render();
       return;
     }
