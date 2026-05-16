@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f0a06">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="shortcut icon" href="favicon.ico">
 <title>Admin · Brunch Ébène &amp; Saveurs</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -407,6 +412,8 @@
   }
   .action-btn.delete { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
   .action-btn.delete:hover { background: rgba(248, 113, 113, 0.15); }
+  .action-btn.resend { color: #a78bfa; border-color: rgba(167, 139, 250, 0.3); }
+  .action-btn.resend:hover { background: rgba(167, 139, 250, 0.15); }
 
   .method-pill {
     display: inline-block;
@@ -849,6 +856,22 @@
     return true;
   }
 
+  async function resendEmail(id, email) {
+    if (!API_URL) { toast('Mode démo : pas d\'envoi de mail', true); return false; }
+    try {
+      const r = await fetch(`${API_URL}/resend/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': ADMIN_PWD }
+      });
+      if (!r.ok) {
+        const err = await r.text();
+        throw new Error(err || 'HTTP ' + r.status);
+      }
+      const data = await r.json();
+      return data;
+    } catch(e) { console.error(e); toast('Erreur envoi mail : ' + e.message, true); return false; }
+  }
+
   async function archiveReservation(id, archive, reason = null) {
     if (API_URL) {
       try {
@@ -1033,6 +1056,7 @@
           })()}</td>
           <td>
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
+            ${isArchived ? '' : `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation au client">📧 Renvoyer</button>`}
             ${isArchived
               ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>`
               : `${isPaid ? '' : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`}
@@ -1059,7 +1083,7 @@
         const action = b.dataset.action;
         const id = b.dataset.id;
         if (action === 'validate') {
-          if (await updateStatus(id, 'confirmé')) { toast('✓ Réservation validée'); render(); }
+          if (await updateStatus(id, 'confirmé')) { toast('✓ Réservation validée + mail envoyé au client'); render(); }
         } else if (action === 'unvalidate') {
           if (await updateStatus(id, 'en attente vérification')) { toast('↶ Statut remis en attente'); render(); }
         } else if (action === 'archive') {
@@ -1068,6 +1092,20 @@
           if (await archiveReservation(id, false)) { toast('↩ Réservation restaurée'); render(); }
         } else if (action === 'delete') {
           openDeleteModal(id, b.dataset.name);
+        } else if (action === 'resend') {
+          const email = b.dataset.email;
+          const old = b.innerHTML;
+          b.innerHTML = '⏳ ...';
+          b.disabled = true;
+          const result = await resendEmail(id, email);
+          if (result && result.ok) {
+            toast(`📧 Mail (${result.type}) renvoyé à ${email}`);
+            b.innerHTML = '✓ Envoyé';
+            setTimeout(() => { b.innerHTML = old; b.disabled = false; }, 2500);
+          } else {
+            b.innerHTML = old;
+            b.disabled = false;
+          }
         }
       });
     });
