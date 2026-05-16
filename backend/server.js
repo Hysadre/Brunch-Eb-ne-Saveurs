@@ -346,6 +346,20 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// 🔍 Vérifie si un email a déjà une résa active (anti-doublon, public)
+app.get('/api/check-email/:email', async (req, res) => {
+  try {
+    const email = (req.params.email || '').toLowerCase();
+    if (!email.includes('@')) return res.json({ exists: false, count: 0 });
+    const list = await supa(`reservations?select=bookingId,prenom,nom,status,archived&email=ilike.${encodeURIComponent(email)}`);
+    const active = (list || []).filter(r => !r.archived);
+    res.json({ exists: active.length > 0, count: active.length });
+  } catch (e) {
+    console.error('check-email error:', e.message);
+    res.json({ exists: false, count: 0 });  // fail-safe : on n'empêche pas la résa
+  }
+});
+
 // Vérification publique d'un billet (pour ticket.html) — infos limitées, pas d'email/tel
 app.get('/api/verify/:id', async (req, res) => {
   try {
