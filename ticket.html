@@ -71,6 +71,29 @@
   .ticket-meta { display: flex; gap: 18px; flex-wrap: wrap; }
   .ticket-meta .lab { font-size: 11px; color: #d4a574; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
   .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #fff; }
+  .ticket-stub {
+    position: relative;
+    padding: 22px;
+    border-top: 2px dashed #3a2818;
+  }
+  .ticket-stub::before, .ticket-stub::after {
+    content: ""; position: absolute; top: -14px;
+    width: 28px; height: 28px;
+    background: #0f0a06; border-radius: 50%;
+  }
+  .ticket-stub::before { left: -14px; }
+  .ticket-stub::after { right: -14px; }
+  .qr-wrap {
+    background: white; padding: 16px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-wrap img { width: 100%; max-width: 220px; height: auto; }
+  .qr-caption {
+    text-align: center; color: #d4a574;
+    font-size: 13px; margin-top: 12px;
+    font-weight: 600;
+  }
 
   .info-card {
     background: #1a1108;
@@ -235,6 +258,12 @@
               <div class="val">${b.qty}</div>
             </div>
           </div>
+        </div>
+        <div class="ticket-stub">
+          <div class="qr-wrap">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(window.location.href)}&size=400x400&margin=10" alt="QR code de réservation">
+          </div>
+          <div class="qr-caption">📸 À présenter à l'entrée pour scan</div>
         </div>
       </div>
 

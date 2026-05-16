@@ -448,13 +448,20 @@
       if (r.status === 404) return showResult('notfound', { bookingId });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
-      // Récupère l'info "entered" via l'endpoint admin
+      // Récupère l'info complète (enteredCount, archived) via l'endpoint admin
       try {
         const r2 = await fetch(`${API_URL}/reservations`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
         if (r2.ok) {
           const all = await r2.json();
           const full = all.find(x => x.bookingId === bookingId);
-          if (full) { data.entered = full.entered; data.enteredAt = full.enteredAt; data.total = full.total; }
+          if (full) {
+            data.entered = full.entered;
+            data.enteredCount = full.enteredCount || 0;
+            data.enteredAt = full.enteredAt;
+            data.total = full.total;
+            data.archived = full.archived;
+            data.cancelReason = full.cancelReason;
+          }
         }
       } catch(e) {}
       showResult(determineState(data), data);
@@ -465,9 +472,12 @@
   }
 
   function determineState(data) {
-    if (data.entered) return 'already';
-    if (data.status === 'confirmé') return 'ok';
-    return 'unpaid';
+    if (data.archived) return 'cancelled';  // résa annulée
+    if (data.status !== 'confirmé') return 'unpaid';
+    const count = data.enteredCount || 0;
+    const qty = data.qty || 1;
+    if (count >= qty) return 'already';  // toutes les places entrées
+    return 'ok';  // peut entrer (premier scan OU place restante)
   }
 
   function showResult(state, data) {
@@ -480,20 +490,30 @@
     const actions = document.getElementById('resultActions');
 
     banner.className = 'result-banner';
+    const count = data.enteredCount || 0;
+    const qty = data.qty || 1;
 
     if (state === 'ok') {
       banner.classList.add('ok');
-      icon.textContent = '✓';
+      icon.textContent = count > 0 ? `${count + 1}/${qty}` : '✓';
       title.textContent = 'BILLET VALIDE';
-      sub.textContent = 'Paiement confirmé · prêt à entrer';
+      sub.textContent = count > 0
+        ? `Place ${count + 1}/${qty} · ${qty - count} restante${qty - count > 1 ? 's' : ''}`
+        : `Paiement confirmé · prêt à entrer (${qty} place${qty>1?'s':''})`;
       playSound('success');
     } else if (state === 'already') {
       banner.classList.add('already');
-      icon.textContent = 'ℹ️';
-      title.textContent = 'DÉJÀ ENTRÉ';
+      icon.textContent = `${count}/${qty}`;
+      title.textContent = 'TOUS DÉJÀ ENTRÉS';
       const t = data.enteredAt ? new Date(data.enteredAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
-      sub.textContent = `Cette personne est déjà venue${t ? ' à ' + t : ''}`;
+      sub.textContent = `Cette résa a été utilisée intégralement${t ? ' depuis ' + t : ''}`;
       playSound('already');
+    } else if (state === 'cancelled') {
+      banner.classList.add('danger');
+      icon.textContent = '🚫';
+      title.textContent = 'RÉSA ANNULÉE';
+      sub.textContent = data.cancelReason ? `Motif : ${data.cancelReason}` : 'Cette réservation a été annulée';
+      playSound('error');
     } else if (state === 'unpaid') {
       banner.classList.add('warning');
       icon.textContent = '⏳';
@@ -551,20 +571,39 @@
     const btn = document.getElementById('enterBtn') || document.getElementById('forceBtn');
     if (btn) { btn.innerHTML = '⏳ ...'; btn.disabled = true; }
     try {
-      const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(data.bookingId)}`, {
-        method: 'PATCH',
+      // Utilise le nouvel endpoint qui INCRÉMENTE le compteur (multi-scan)
+      const r = await fetch(`${API_URL}/checkin/${encodeURIComponent(data.bookingId)}`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_PWD },
-        body: JSON.stringify({ entered: true, enteredAt: new Date().toISOString() })
+        body: JSON.stringify({})
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      addToLog(data, 'ok');
+      const result = await r.json();
+      const newCount = result.enteredCount;
+      const qty = result.qty;
+
+      addToLog(data, 'ok', newCount, qty);
+
       // Confirmation visuelle rapide
       document.getElementById('resultBanner').className = 'result-banner ok';
-      document.getElementById('resultTitle').textContent = '✓ ENTRÉ !';
-      document.getElementById('resultSub').textContent = `${data.prenom} ${data.nom} · ${data.qty} place(s)`;
-      document.getElementById('resultActions').innerHTML = `<button class="btn-big btn-success" id="nextBtn">▶ Scanner le suivant</button>`;
+      document.getElementById('resultIcon').textContent = `${newCount}/${qty}`;
+      if (newCount >= qty) {
+        document.getElementById('resultTitle').textContent = '✓ COMPLET !';
+        document.getElementById('resultSub').textContent = `${data.prenom} ${data.nom} · toutes les places sont entrées`;
+      } else {
+        document.getElementById('resultTitle').textContent = `✓ ${newCount}/${qty} ENTRÉ`;
+        document.getElementById('resultSub').textContent = `${data.prenom} ${data.nom} · ${qty - newCount} place${qty - newCount > 1 ? 's' : ''} restante${qty - newCount > 1 ? 's' : ''}`;
+      }
+
+      document.getElementById('resultActions').innerHTML = `
+        ${newCount < qty ? '<button class="btn-big btn-success" id="enterMoreBtn">✓ FAIRE ENTRER UNE PLACE DE PLUS</button>' : ''}
+        <button class="btn-big btn-secondary" id="nextBtn">▶ Scanner le suivant</button>
+      `;
+      if (newCount < qty) {
+        document.getElementById('enterMoreBtn').onclick = () => markEntered(data);
+      }
       document.getElementById('nextBtn').onclick = closeOverlay;
-      setTimeout(closeOverlay, 2500);
+      if (newCount >= qty) setTimeout(closeOverlay, 2500);
     } catch(e) {
       alert('Erreur : ' + e.message);
       if (btn) { btn.innerHTML = '✓ FAIRE ENTRER'; btn.disabled = false; }
