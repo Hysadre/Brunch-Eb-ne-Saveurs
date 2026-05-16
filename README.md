@@ -1,177 +1,224 @@
 # 🌴 Brunch Ébène & Saveurs — Site de réservation
 
-Site de billeterie dynamique pour le Brunch du **samedi 22 août 2026 à Ronchin (Lille)**.
+Site complet de billetterie pour le **Brunch du samedi 22 août 2026 à Ronchin (Lille)**.
 Capacité : **200 personnes**. Tarifs : Standard 35€, Duo 70€, Trio 105€.
 
-## 📁 Structure du projet
+## 🏗️ Architecture
 
 ```
-.
-├── index.html         # Page d'accueil + formulaire (mobile-first, fond noir)
-├── paiement.html      # 4 moyens de paiement : Revolut, Wero, virement, CB
-├── confirmation.html  # Billet électronique avec QR code
-├── admin.html         # Dashboard privé (auto-refresh toutes les 30s)
-├── apps-script.gs     # Option B : webhook Google Sheets (sans Node)
-└── backend/           # Option A : API Node.js Express
-    ├── server.js
-    ├── package.json
-    └── .env.example
+👤 Client visite ton site
+        ↓
+🌐 GitHub Pages (gratuit)
+   → sert les pages HTML/CSS/JS
+        ↓
+🔧 Render (gratuit)
+   → API Node.js / Express (server.js)
+   → reçoit les résa, lit/écrit, envoie les emails
+        ↓
+🗄️ Supabase (gratuit)
+   → base Postgres persistante (toutes les résa)
+        ↑
+📧 Resend (gratuit jusqu'à 3000 mails/mois)
+   → envoie les emails de confirmation et validation
 ```
 
----
-
-## 🎯 Comment ça marche (le flux complet)
+## 📁 Structure des fichiers
 
 ```
-1. Le client va sur ton site (index.html)
-2. Il remplit le formulaire → clique "Continuer vers le paiement"
-3. Sur paiement.html, il choisit son moyen de paiement :
-   - Revolut → cliquer ouvre https://revolut.me/abayoa
-   - Wero    → afficher numéro +33 6 68 29 50 77 + référence
-   - Virement → afficher IBAN + référence
-   - CB      → lien Stripe (à configurer)
-4. Il clique "J'ai payé" → la résa est envoyée :
-   - À ton API Node.js (mode LIVE) → fichier reservations.json
-   - Email auto au client + à toi
-5. Tu vas sur admin.html (en favori)
-   → tu vois toutes les résa, stats, et tu peux exporter en Excel
+brunch-ebene-saveurs/
+├── index.html          # Accueil + formulaire de réservation
+├── paiement.html       # Page de paiement (Revolut, Wero, Virement)
+├── confirmation.html   # Confirmation + billet PNG téléchargeable
+├── ticket.html         # Page publique du billet (statut en temps réel)
+├── admin.html          # Dashboard organisateur (tableau + analyse)
+├── scan.html           # Scanner QR pour les entrées le jour J
+├── README.md           # Ce fichier
+└── backend/
+    ├── server.js       # API Express (Supabase + Resend + check-in)
+    ├── package.json    # Dépendances Node
+    └── .env.example    # Modèle de variables d'env
 ```
 
-**Mode DÉMO vs LIVE :**
-- Sans backend configuré → les résa sont stockées dans le navigateur (localStorage). Pratique pour tester, mais tu ne vois pas les vraies résa des clients.
-- Avec backend configuré → toutes les résa sont centralisées sur ton serveur, visibles dans admin.html en temps réel.
+## 🎯 Comment ça marche (le parcours client)
 
----
-
-## 🚀 Étape 1 — Mettre le site (frontend) sur GitHub Pages
-
-1. Crée un repo GitHub : `brunch-ebene-saveurs`
-2. Push `index.html`, `paiement.html`, `confirmation.html`, `admin.html` à la racine
-3. **Settings → Pages** → Source : `Deploy from a branch` → branche `main` → `/ (root)` → **Save**
-4. Au bout de ~30s, ton site est en ligne sur `https://<ton-pseudo>.github.io/brunch-ebene-saveurs/`
-
-Pour ton admin : mets `https://<ton-pseudo>.github.io/brunch-ebene-saveurs/admin.html` en favori dans ton navigateur. Code admin actuel : **`ebene2026`** (à changer ligne `ADMIN_PWD` dans `admin.html`).
-
----
-
-## 🛠️ Étape 2 — Déployer le backend Node.js (rend le site dynamique)
-
-### Choisis ton hébergeur (gratuits) :
-
-**Option A — Render.com (le plus simple)**
-1. Crée un compte sur [render.com](https://render.com)
-2. New → Web Service → Connecte ton repo GitHub
-3. Settings :
-   - Root directory : `backend`
-   - Build command : `npm install`
-   - Start command : `npm start`
-4. Environment Variables (onglet Environment) :
-   - `ADMIN_TOKEN` = ton mot de passe admin
-   - `ORGANIZER_EMAIL` = abayoassi@gmail.com
-   - `SMTP_USER` + `SMTP_PASS` (voir étape 3)
-5. Deploy → tu obtiens une URL type `https://brunch-ebene.onrender.com`
-
-**Option B — Vercel**
-1. [vercel.com](https://vercel.com) → New Project → Import ton repo
-2. Root directory : `backend`
-3. Ajoute les mêmes variables d'env
-4. Deploy
-
-**Option C — Tester en local d'abord**
-```bash
-cd backend
-cp .env.example .env   # remplis le fichier
-npm install
-npm start
-# → écoute sur http://localhost:3000
+```
+1. Le client va sur https://hysadre.github.io/Brunch-Eb-ne-Saveurs/
+2. Choisit sa formule (Standard 1 place / Duo 2 places / Trio 3 places)
+3. Remplit le formulaire (nom, email, téléphone, allergies)
+4. Continue vers le paiement
+5. Choisit Revolut / Wero / Virement
+6. Copie la grosse référence orange "EBENE-NOM-XXXX"
+7. Fait son paiement avec la référence en note
+8. Revient sur la page, clique "✓ J'ai payé"
+9. → Voit sa page de confirmation + reçoit un mail
+10. La résa apparaît dans ton admin avec statut "⏳ En attente"
+11. Tu vois le paiement reçu, tu cliques "✓ Valider"
+12. Le client reçoit un 2ème mail "Paiement confirmé !"
+13. Le jour J, tu scannes son QR à l'entrée → "✓ ENTRER"
 ```
 
-### Brancher le frontend au backend
+## 🚀 Mise en place (déjà faite, pour mémoire)
 
-Dans `index.html`, `paiement.html` ET `admin.html`, cherche cette ligne (en haut du `<script>`) :
-```js
-const API_URL = ''; // ex: 'https://brunch-ebene.onrender.com/api'
-```
-Remplace par :
-```js
-const API_URL = 'https://brunch-ebene.onrender.com/api';
-```
+### 1. GitHub Pages (frontend)
+- Repo : `Hysadre/Brunch-Eb-ne-Saveurs`
+- Branche `main`, dossier `/`
+- URL publique : `https://hysadre.github.io/Brunch-Eb-ne-Saveurs/`
 
-Push sur GitHub → en quelques secondes, GitHub Pages se met à jour et le site est en mode LIVE.
+### 2. Render (backend)
+- Service : `brunch-eb-ne-saveurs`
+- URL API : `https://brunch-eb-ne-saveurs.onrender.com`
+- Root directory : `backend/`
+- Build : `npm install` · Start : `npm start`
+- ⚠️ Le plan **Free spin down après 15 min d'inactivité** : la première résa après une pause peut prendre 30-50s à arriver. Pour éviter, passer au plan Starter ($7/mois) ou utiliser un cron qui ping le service toutes les 10 min.
 
----
+### 3. Supabase (base de données)
+- Projet : `brunch-ebene`
+- URL : `https://xwujdlkxzhxpkjzqqvhw.supabase.co`
+- Table `reservations` avec colonnes :
+  - `bookingId` (text, PK), `prenom`, `nom`, `email`, `telephone`, `message`
+  - `ticketId`, `ticketName`, `ticketPrice`, `qty`, `total`, `paymentMethod`
+  - `status` (default 'en attente vérification')
+  - `timestamp`, `paidAt`, `serverReceivedAt`
+  - `entered` (boolean), `enteredAt` (timestamptz)
+- RLS activée → backend accède via la `service_role` key (env var)
 
-## ✉️ Étape 3 — Activer les emails automatiques
+### 4. Resend (emails)
+- Compte : abayoassi@gmail.com
+- Sender : `onboarding@resend.dev` (par défaut, suffisant)
+- Pour utiliser un domaine perso : acheter un domaine + vérifier dans Resend (optionnel)
 
-1. Va sur [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-2. (Active la 2FA si pas déjà fait)
-3. Crée un mot de passe d'application → nomme-le "Brunch API"
-4. Copie le mot de passe (16 caractères)
-5. Dans les variables d'env de ton backend :
-   - `SMTP_USER` = ton.email@gmail.com
-   - `SMTP_PASS` = le mot de passe à 16 caractères
+## 🔐 Variables d'environnement Render
 
-Désormais, chaque résa déclenche :
-- ✉️ Un email au client (avec QR code)
-- ✉️ Une notification à abayoassi@gmail.com
+| Clé | Valeur |
+|---|---|
+| `SUPABASE_URL` | `https://xwujdlkxzhxpkjzqqvhw.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | clé service_role (Supabase → Settings → API) |
+| `RESEND_API_KEY` | clé `re_...` (Resend → API Keys) |
+| `ADMIN_TOKEN` | `BrunchEbene2026!` (= `ADMIN_PWD` dans admin.html et scan.html) |
+| `ORGANIZER_EMAIL` | `abayoassi@gmail.com` |
+| `SITE_URL` | `https://hysadre.github.io/Brunch-Eb-ne-Saveurs` (optionnel, défaut OK) |
+| `FROM_EMAIL` | (optionnel) `Brunch Ébène & Saveurs <onboarding@resend.dev>` |
 
----
+## 👨‍💼 Dashboard organisateur
 
-## 💳 Étape 4 — Brancher les vrais paiements
+Accès : `https://hysadre.github.io/Brunch-Eb-ne-Saveurs/admin.html`
+Code : **`BrunchEbene2026!`** (à mettre en favori)
 
-Pour l'instant, les paiements sont **semi-manuels** : le client fait son virement/Revolut/Wero et clique "J'ai payé". Tu vérifies dans admin.html et passes le statut à "Payé".
+### Onglet "📋 Réservations"
+- **Stats temps réel** : nb résa, places confirmées, recettes, en attente
+- **Filtres** : recherche par nom/email/n°, moyen de paiement, statut, formule
+- **Actions par ligne** :
+  - 👁️ **Voir** → ouvre la page publique du billet (ticket.html)
+  - ✓ **Valider** → marque comme payé + envoie le mail de confirmation auto au client
+  - ↶ **Annuler** → remet en attente
+  - 🗑️ **Supprimer** → suppression définitive (Supabase)
+- **N° Résa cliquable** → ouvre aussi la page ticket
+- **Export Excel** → télécharge un CSV de toutes les résa
 
-C'est largement suffisant pour démarrer. Pour automatiser :
+### Onglet "📊 Analyse"
+- 📈 Évolution cumulée (places + recettes)
+- 🎫 Répartition par formule
+- 💳 Répartition par moyen de paiement
+- ✅ Taux de paiement (payé vs en attente)
+- 📅 Réservations par jour
+- Panier moyen, taux de conversion, taux de remplissage
 
-**Revolut Pay** — Tu as déjà ton lien `revolut.me/abayoa` ✅. Pour avoir une auto-validation, il te faut un compte **Revolut Business** + Merchant API. Sinon, vérification manuelle.
+## 📸 Scanner d'entrée (le jour J)
 
-**Stripe (CB)** — Crée un compte sur [stripe.com](https://stripe.com), va dans **Payment Links**, crée un lien pour 35€/70€/105€. Remplace le bouton CB dans `paiement.html` par `window.location.href = 'https://buy.stripe.com/...'`.
+Accès : `https://hysadre.github.io/Brunch-Eb-ne-Saveurs/scan.html`
+Aussi accessible depuis l'admin via le bouton vert **"📸 Scanner entrées"**.
 
-**Wero** — Pas d'API publique pour l'instant (mai 2026). Vérification manuelle.
+### Mise en place
+1. Mets-le en favori sur ton tel
+2. Encore mieux : ajoute à l'écran d'accueil ("Sur l'écran d'accueil" sur iOS) → tu auras une "vraie app"
+3. Le jour J, ouvre, connecte-toi, autorise la caméra
 
-**Virement** — Remplace l'IBAN factice dans `paiement.html` par ton vrai IBAN.
+### Utilisation
+1. Pointe la caméra vers le QR du client
+2. Bip + vibration de confirmation
+3. Écran affiche :
+   - 🟢 **BILLET VALIDE** → 1 clic "✓ FAIRE ENTRER" → marque comme entré dans Supabase
+   - 🔵 **DÉJÀ ENTRÉ** → personne déjà venue (anti-fraude)
+   - 🟠 **PAIEMENT EN ATTENTE** → option de forcer si paiement OK entre-temps
+   - 🔴 **INTROUVABLE** → faux billet, refuser
+4. Log des derniers scans en bas de page (utile pour les contestations)
+5. Compteur d'entrées en haut
 
----
+### Mode manuel
+Si la caméra plante ou que le QR est abîmé → "📝 Entrée manuelle" → taper le N° à la main.
 
-## 🔒 Avant la mise en ligne — Check-list sécurité
+## ✉️ Emails automatiques
 
-- [ ] Changer `ADMIN_PWD` dans `admin.html` (mettre un mot de passe fort)
-- [ ] Définir `ADMIN_TOKEN` côté backend (même valeur que `ADMIN_PWD` pour l'instant)
-- [ ] Remplacer l'IBAN factice dans `paiement.html`
-- [ ] Tester un parcours complet sur mobile + desktop
-- [ ] Mettre `admin.html` en favori dans ton navigateur
+Le client reçoit 2 mails (envoyés via Resend) :
+1. **À la réservation** : "🌴 Ta réservation pour Brunch Ébène & Saveurs"
+   - Récap, QR code, lien vers ticket.html
+   - Message "⏳ Tu recevras un autre mail dès vérification du paiement"
+2. **À la validation par toi** : "✅ Paiement confirmé"
+   - QR code, lien vers ticket.html
+   - Style vert avec ✓ XL
 
----
+Toi (organisateur) reçois aussi un mail à chaque résa :
+- Sujet : "🎫 Prénom Nom · Xx Formule (XX €)"
+- Bouton **"✓ Voir & valider dans le dashboard"** qui ouvre admin.html avec la résa pré-filtrée
+- Boutons WhatsApp + Appeler le client
 
-## 📊 Le dashboard admin
+## 🎨 Personnalisation
 
-Accès : `tonsite.com/admin.html` (mets-le en favori)
-
-Tu peux :
-- Voir toutes les résa en temps réel (refresh auto toutes les 30s en mode LIVE)
-- Filtrer par statut (✓ Payé / ⏳ En attente), moyen de paiement, formule
-- Rechercher par nom/email/téléphone
-- Cliquer sur le statut d'une résa pour la basculer Payé/En attente (mode démo)
-- Exporter en CSV/Excel (ouvre directement dans Excel/Numbers)
-- Voir les stats : nb résa, places vendues, recettes, taux de remplissage
-
----
-
-## 🎨 Personnaliser
-
-Les couleurs sont définies en haut de chaque fichier CSS :
+### Couleurs (en haut de chaque CSS)
 - `#f97316` orange principal
-- `#fbbf24` jaune/or
-- `#16a34a` vert (badges payé, etc.)
+- `#fbbf24` jaune / or
+- `#16a34a` vert (badge payé)
 - `#0f0a06` fond noir-marron
 - `#d4a574` beige texte secondaire
 
-Pour changer la capacité (actuellement 200), cherche `CAPACITY = 200` dans `index.html` et `admin.html`.
+### Modifier l'événement
+Dans `index.html`, `paiement.html`, `confirmation.html`, `ticket.html`, `server.js` :
+- Date, heure, lieu, capacité (`CAPACITY = 200`)
+- Tarif unitaire (`UNIT_PRICE = 35`)
+- Objectif recettes (`REVENUE_TARGET = 7000` dans admin.html)
+- Numéro WhatsApp (cherche `+33 6 68 29 50 77`)
+- Numéro Wero (cherche `+33668295077`)
+
+### Changer le mot de passe admin
+Dans `admin.html` et `scan.html` → cherche `const ADMIN_PWD = 'BrunchEbene2026!'`.
+Et change aussi la variable d'env `ADMIN_TOKEN` sur Render avec la même valeur.
+
+## 🆘 Troubleshooting
+
+### Une résa s'affiche pas dans le dashboard
+- Vérifie le mode en haut du dashboard : **LIVE** = OK, **DÉMO** = problème de connexion à Render
+- Va sur Render → onglet Logs → cherche les erreurs
+- Vérifie que `SUPABASE_URL` et `SUPABASE_SERVICE_KEY` sont bien remplis
+
+### Le client ne reçoit pas son mail
+- Vérifie Resend → Logs (sur resend.com)
+- Le mail peut être en spam (rare au début, gmail apprend vite)
+- Vérifie que `RESEND_API_KEY` est bien sur Render
+
+### "Cannot GET /admin" ou erreur 404 sur un lien
+- C'est que le lien pointe vers Render (qui n'héberge que l'API) au lieu de GitHub Pages
+- Vérifier la variable `SITE_URL` sur Render
+
+### Render lent au démarrage
+- Le plan Free spin down après 15 min d'inactivité
+- La première résa après une pause attend 30-50s
+- Solutions :
+  - Upgrade Starter ($7/mois)
+  - Ou utiliser un cron externe (cron-job.org) qui ping `/` toutes les 10 min
+
+## 📊 Stats finales attendues
+
+- Objectif : 200 personnes × 35€ = **7000€**
+- Marge sur frais Resend : 0€ (gratuit jusqu'à 3000 mails/mois)
+- Marge sur frais Supabase : 0€ (500 MB free, on en utilise <1 MB)
+- Marge sur frais Render : 0€ (plan Free)
+- Marge sur frais GitHub Pages : 0€
+- **TOTAL technique : 0€** 🎉
+
+## 📞 Contact organisateur
+
+**+33 6 68 29 50 77** (WhatsApp + appel) · abayoassi@gmail.com
 
 ---
 
-## 🆘 Besoin d'aide ?
-
-Le site fonctionne déjà tel quel en mode démo — tu peux le mettre sur GitHub Pages maintenant et brancher le backend plus tard. Les vraies résa s'accumuleront dès que tu mettras `API_URL` à jour.
-
-Bon brunch ! 🍽️🌴
+Bon brunch ! 🍽️🌴🎉
