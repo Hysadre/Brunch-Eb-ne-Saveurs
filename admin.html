@@ -581,6 +581,18 @@
       </select>
     </div>
 
+    <!-- 🚪 Historique des entrées (check-ins du jour J) -->
+    <details style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#22c55e;">🚪</span>
+          <span>Historique des entrées</span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ Cliquer pour ouvrir</span>
+        </span>
+      </summary>
+      <div style="padding: 0 18px 18px;" id="checkinHistory"></div>
+    </details>
+
     <div class="table-wrap">
       <div class="table-scroll">
         <table>
@@ -897,17 +909,29 @@
     return true;
   }
 
-  let CACHE = [];
+  // 🚀 Cache localStorage : on charge IMMÉDIATEMENT les données de la dernière visite
+  let CACHE = JSON.parse(localStorage.getItem('cachedReservations') || '[]');
   let isFirstLoad = true;
 
   async function render() {
-    // Loader sur le premier chargement
-    if (isFirstLoad) {
+    // Si on a un cache, on affiche TOUT DE SUITE (pas de page vide)
+    if (CACHE.length > 0 && isFirstLoad) {
+      renderStats(CACHE);
+      renderTable(CACHE);
+      renderCheckinHistory(CACHE);
+      // Indicateur subtil "actualisation en cours"
+      const indicator = document.createElement('div');
+      indicator.id = 'syncIndicator';
+      indicator.style.cssText = 'position:fixed; top:80px; right:20px; background:#1a1108; border:1px solid #3a2818; padding:8px 14px; border-radius:99px; font-size:12px; color:#d4a574; z-index:50; display:flex; align-items:center; gap:8px;';
+      indicator.innerHTML = '<div class="loader-spinner" style="width:14px; height:14px; border-width:2px;"></div> Synchronisation...';
+      document.body.appendChild(indicator);
+    } else if (isFirstLoad) {
+      // Pas de cache → loader plein écran
       document.getElementById('stats').innerHTML = `
         <div class="stat" style="grid-column: 1 / -1; text-align: center; padding: 24px;">
           <div class="loader-spinner"></div>
-          <div style="margin-top: 12px; color: #d4a574;">⏳ Chargement des réservations...</div>
-          <div style="margin-top: 4px; font-size: 12px; color: #8a6648;">Le serveur peut mettre jusqu'à 50s à se réveiller (plan gratuit Render)</div>
+          <div style="margin-top: 12px; color: #d4a574;">⏳ Chargement initial...</div>
+          <div style="margin-top: 4px; font-size: 12px; color: #8a6648;">Le serveur peut mettre jusqu'à 50s à se réveiller la 1ère fois</div>
         </div>
       `;
       document.getElementById('resBody').innerHTML = `
@@ -920,14 +944,75 @@
     const fresh = await getReservations();
     const previousCount = CACHE.length;
     CACHE = fresh;
+    // Mémorise pour la prochaine visite (chargement instantané)
+    try { localStorage.setItem('cachedReservations', JSON.stringify(fresh)); } catch(e) {}
     isFirstLoad = false;
     renderStats(CACHE);
     renderTable(CACHE);
-    // Notif si nouvelle résa apparue (pas au premier chargement)
+    renderCheckinHistory(CACHE);
+    // Retire l'indicateur de sync
+    document.getElementById('syncIndicator')?.remove();
+    // Notif si nouvelle résa apparue
     if (previousCount > 0 && CACHE.length > previousCount) {
       const diff = CACHE.length - previousCount;
       toast(`🎫 ${diff} nouvelle${diff > 1 ? 's' : ''} réservation${diff > 1 ? 's' : ''} !`);
     }
+  }
+
+  // 🚪 Historique des entrées (check-ins) — derniers scans
+  function renderCheckinHistory(data) {
+    const container = document.getElementById('checkinHistory');
+    if (!container) return;
+    // Filtre les résa avec au moins 1 entrée, trie par enteredAt desc
+    const withEntries = data
+      .filter(r => (r.enteredCount || 0) > 0 && r.enteredAt)
+      .sort((a, b) => new Date(b.enteredAt) - new Date(a.enteredAt))
+      .slice(0, 30);
+
+    if (withEntries.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding: 30px 20px; color: #8a6648;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🚪</div>
+          <p style="margin: 0;">Aucune entrée pour le moment</p>
+          <p style="margin: 4px 0 0; font-size: 12px;">L'historique apparaîtra ici quand tu commenceras à scanner les billets le jour J.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const totalEntered = data.reduce((s, r) => s + (r.enteredCount || 0), 0);
+    const totalExpected = data.filter(r => !r.archived && r.status === 'confirmé').reduce((s, r) => s + (r.qty || 0), 0);
+
+    container.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 0 12px; border-bottom: 1px solid #3a2818; margin-bottom: 12px;">
+        <div style="font-size: 13px; color: #d4a574;">
+          <strong style="color: #22c55e; font-size: 16px;">${totalEntered}</strong> / ${totalExpected} entrées
+        </div>
+        <div style="font-size: 11px; color: #8a6648;">${withEntries.length} dernier${withEntries.length>1?'s':''}</div>
+      </div>
+      <div style="max-height: 360px; overflow-y: auto;">
+        ${withEntries.map(r => {
+          const d = new Date(r.enteredAt);
+          const dateStr = d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+          const count = r.enteredCount || 0;
+          const qty = r.qty || 1;
+          const full = count >= qty;
+          return `
+            <div style="display:flex; align-items:center; gap:12px; padding: 10px 0; border-bottom: 1px solid #2a1810; font-size: 13px;">
+              <div style="flex:0 0 32px; height:32px; background: ${full ? 'rgba(34,197,94,.15)' : 'rgba(251,191,36,.15)'}; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 14px;">${full ? '✓' : '🚪'}</div>
+              <div style="flex:1; min-width: 0;">
+                <div style="color: #fff; font-weight: 700;">${r.prenom} ${r.nom}</div>
+                <div style="color: #8a6648; font-size: 11px;">${dateStr} · ${r.ticketName}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="color: ${full ? '#22c55e' : '#fbbf24'}; font-weight: 800; font-size: 14px;">${count}/${qty}</div>
+                <div style="color: #8a6648; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">${full ? 'Complet' : 'Partiel'}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
   function renderStats(data) {
@@ -1056,7 +1141,7 @@
           })()}</td>
           <td>
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
-            ${isArchived ? '' : `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation au client">📧 Renvoyer</button>`}
+            ${(!isArchived && isPaid) ? `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation (avec QR) au client">📧 Renvoyer QR</button>` : ''}
             ${isArchived
               ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>`
               : `${isPaid ? '' : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`}

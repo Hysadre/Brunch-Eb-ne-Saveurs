@@ -264,12 +264,24 @@
             </div>
           </div>
         </div>
+        ${isPaid ? `
         <div class="ticket-stub">
           <div class="qr-wrap">
             <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(window.location.href)}&size=400x400&margin=10" alt="QR code de réservation">
           </div>
           <div class="qr-caption">📸 À présenter à l'entrée pour scan</div>
         </div>
+        ` : `
+        <div class="ticket-stub" style="text-align: center;">
+          <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px;">
+            <div style="font-size: 36px; margin-bottom: 8px;">⏳</div>
+            <p style="margin: 0 0 6px; font-weight: 700; color: #fbbf24;">QR code en attente</p>
+            <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.5;">
+              Ton QR code unique s'affichera ici dès que ton <strong>paiement aura été vérifié</strong>. Tu recevras aussi un email de confirmation.
+            </p>
+          </div>
+        </div>
+        `}
       </div>
 
       <div class="info-card">
