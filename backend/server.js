@@ -163,13 +163,25 @@ async function sendConfirmationEmails(booking) {
   const clientWa = `https://wa.me/${(booking.telephone || '').replace(/[^0-9]/g,'').replace(/^0/, '33')}`;
 
   // ===== EMAIL CLIENT =====
+  // Le QR est PROMINENT, en gros, sur fond blanc — clientpeut le présenter direct
+  const bigQrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=600x600&margin=20`;
   const clientHtml = `
   <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
-    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 32px 24px; text-align: center; color: white;">
-      <div style="font-size: 48px; margin-bottom: 8px;">🌴</div>
-      <h1 style="margin: 0; font-size: 24px;">Réservation enregistrée !</h1>
-      <p style="margin: 8px 0 0; opacity: .95;">Merci ${booking.prenom}, on a hâte de te voir 🎉</p>
+    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 28px 24px; text-align: center; color: white;">
+      <div style="font-size: 40px; margin-bottom: 6px;">🌴</div>
+      <h1 style="margin: 0; font-size: 22px;">Réservation enregistrée !</h1>
+      <p style="margin: 6px 0 0; opacity: .95;">Merci ${booking.prenom}, on a hâte de te voir 🎉</p>
     </div>
+
+    <!-- 🎫 QR Code BIEN VISIBLE -->
+    <div style="background: white; padding: 28px 24px; text-align: center;">
+      <p style="margin: 0 0 4px; font-size: 11px; color: #8a6648; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;">🎫 TON BILLET</p>
+      <p style="margin: 0 0 18px; font-size: 13px; color: #6b6b80;">À présenter à l'entrée du brunch</p>
+      <img src="${bigQrUrl}" alt="QR code de réservation" style="width: 100%; max-width: 280px; height: auto;">
+      <p style="margin: 16px 0 0; font-family: 'Courier New', monospace; font-size: 18px; font-weight: 800; color: #1a1108; letter-spacing: 1px;">${booking.bookingId}</p>
+      <p style="margin: 4px 0 0; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;">N° de réservation</p>
+    </div>
+
     <div style="padding: 24px; background: #1a1108;">
       <h2 style="margin: 0 0 12px; font-size: 18px; color: #fbbf24;">${EVENT.name}</h2>
       <p style="margin: 0 0 4px; color: #d4a574;">📅 ${EVENT.date} · ${EVENT.time}</p>
@@ -180,12 +192,11 @@ async function sendConfirmationEmails(booking) {
         <tr><td style="padding: 6px 0; color: #d4a574; border-top: 1px solid #3a2818;">Paiement</td><td style="padding: 6px 0; text-align: right; font-weight: 600; border-top: 1px solid #3a2818;">${booking.paymentMethod}</td></tr>
         <tr><td style="padding: 6px 0; color: #d4a574;">Total</td><td style="padding: 6px 0; text-align: right; font-weight: 700; font-size: 18px; color: #fbbf24;">${totalFmt} €</td></tr>
       </table>
-      <div style="text-align: center; padding: 20px; background: white; border-radius: 12px;">
-        <img src="${qrUrl}" alt="QR" style="max-width: 200px;">
-        <p style="margin: 12px 0 0; font-family: monospace; font-size: 16px; font-weight: 700; color: #1a1108;">${booking.bookingId}</p>
-      </div>
-      <a href="${ticketUrl}" style="display:block; margin-top:16px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center;">Voir mon billet en ligne →</a>
-      <p style="margin: 16px 0 0; font-size: 13px; color: #d4a574; text-align: center;">⏳ Tu recevras un autre mail dès vérification du paiement.</p>
+      <a href="${ticketUrl}" style="display:block; background: linear-gradient(135deg, #f97316, #ea580c); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center; font-size: 15px;">🎫 Voir mon billet en ligne</a>
+      <p style="margin: 14px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.5;">
+        💡 <strong style="color:#fbbf24;">Garde ce mail précieusement</strong> — il contient ton QR et ton numéro pour entrer.<br>
+        ⏳ Tu recevras un 2e mail dès vérification du paiement.
+      </p>
     </div>
     <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
       <p style="margin: 0 0 10px; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Une question ?</p>
@@ -249,17 +260,28 @@ async function sendValidationEmail(booking) {
   const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
   const telLink = `tel:+${WHATSAPP_NUMBER}`;
 
+  const bigQrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=600x600&margin=20`;
   const html = `
   <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
-    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 36px 24px; text-align: center; color: white;">
-      <div style="display:inline-block; width:80px; height:80px; background:white; border-radius:50%; line-height:80px; font-size:48px; color:#16a34a; margin-bottom:12px;">✓</div>
-      <h1 style="margin: 0; font-size: 26px;">Paiement confirmé !</h1>
-      <p style="margin: 8px 0 0; opacity: .95; font-size:16px;">Ta place est officiellement réservée 🎉</p>
+    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 32px 24px; text-align: center; color: white;">
+      <div style="display:inline-block; width:70px; height:70px; background:white; border-radius:50%; line-height:70px; font-size:42px; color:#16a34a; margin-bottom:10px;">✓</div>
+      <h1 style="margin: 0; font-size: 24px;">Paiement confirmé !</h1>
+      <p style="margin: 6px 0 0; opacity: .95; font-size:15px;">Ta place est officiellement réservée 🎉</p>
     </div>
+
+    <!-- 🎫 QR Code EN GRAND, fond blanc, en haut -->
+    <div style="background: white; padding: 28px 24px; text-align: center;">
+      <p style="margin: 0 0 4px; font-size: 11px; color: #8a6648; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;">🎫 TON BILLET — VALIDÉ ✓</p>
+      <p style="margin: 0 0 18px; font-size: 13px; color: #6b6b80;">À présenter à l'entrée du brunch</p>
+      <img src="${bigQrUrl}" alt="QR code de réservation" style="width: 100%; max-width: 280px; height: auto;">
+      <p style="margin: 16px 0 0; font-family: 'Courier New', monospace; font-size: 18px; font-weight: 800; color: #1a1108; letter-spacing: 1px;">${booking.bookingId}</p>
+      <p style="margin: 4px 0 0; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;">N° de réservation</p>
+    </div>
+
     <div style="padding: 24px; background: #1a1108;">
-      <p style="margin: 0 0 16px; font-size: 15px; color: #f5ede1;">
-        Hello ${booking.prenom},<br><br>
-        On vient de valider ton paiement de <strong style="color: #fbbf24;">${totalFmt} €</strong> pour le <strong>${EVENT.name}</strong>. Tu peux désormais venir tranquille le ${EVENT.date} 🌴
+      <p style="margin: 0 0 16px; font-size: 15px; color: #f5ede1; line-height: 1.6;">
+        Hello <strong>${booking.prenom}</strong>,<br><br>
+        On vient de valider ton paiement de <strong style="color: #fbbf24;">${totalFmt} €</strong>. Tu peux désormais venir tranquille le <strong>${EVENT.date}</strong> 🌴
       </p>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #f5ede1; background: #14100a; border-radius: 10px;">
@@ -269,19 +291,12 @@ async function sendValidationEmail(booking) {
         <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">👥 Places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.qty}</td></tr>
       </table>
 
-      <div style="text-align: center; padding: 20px; background: white; border-radius: 12px; margin-bottom: 16px;">
-        <img src="${qrUrl}" alt="QR" style="max-width: 200px;">
-        <p style="margin: 12px 0 4px; font-family: monospace; font-size: 16px; font-weight: 700; color: #1a1108;">${booking.bookingId}</p>
-        <p style="margin: 0; font-size: 12px; color: #999;">Présente ce QR à l'entrée</p>
-      </div>
-
       <a href="${ticketUrl}" style="display:block; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; text-decoration: none; padding: 16px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(22,163,74,0.3);">
         🎫 Voir mon billet en ligne
       </a>
 
       <p style="margin: 20px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.6;">
-        💡 Garde ce mail précieusement.<br>
-        Tu peux re-télécharger ton billet à tout moment via le lien ci-dessus.
+        💡 <strong style="color:#fbbf24;">Garde ce mail</strong> ou bookmark le lien ci-dessus — tout est là pour entrer.
       </p>
     </div>
     <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
@@ -381,7 +396,7 @@ app.post('/api/reservations', async (req, res) => {
   }
 });
 
-// Modifier le statut OU le check-in (admin)
+// Modifier le statut OU le check-in OU archivage (admin)
 app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -391,11 +406,20 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
     const patch = {};
     if (req.body.status) patch.status = req.body.status;
     if (req.body.status === 'confirmé') patch.paidAt = new Date().toISOString();
-    // Check-in à l'entrée
+
+    // Check-in à l'entrée (rétro-compat)
     if (typeof req.body.entered === 'boolean') {
       patch.entered = req.body.entered;
       patch.enteredAt = req.body.entered ? (req.body.enteredAt || new Date().toISOString()) : null;
     }
+
+    // 🆕 Archivage avec motif
+    if (typeof req.body.archived === 'boolean') {
+      patch.archived = req.body.archived;
+      patch.archivedAt = req.body.archived ? new Date().toISOString() : null;
+      if (req.body.cancelReason !== undefined) patch.cancelReason = req.body.cancelReason || null;
+    }
+
     await patchReservation(id, patch);
 
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
@@ -409,6 +433,67 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     console.error('patch error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🆕 Check-in (incrémente enteredCount) — utilisé par scan.html
+app.post('/api/checkin/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await findReservation(id);
+    if (!r) return res.status(404).json({ error: 'not found' });
+
+    const currentCount = r.enteredCount || 0;
+    const qty = r.qty || 1;
+
+    if (currentCount >= qty) {
+      return res.json({
+        ok: false,
+        full: true,
+        enteredCount: currentCount,
+        qty,
+        message: `Déjà ${currentCount}/${qty} entré(s)`
+      });
+    }
+
+    const newCount = currentCount + 1;
+    const patch = {
+      enteredCount: newCount,
+      entered: newCount >= qty,  // rétro-compat : entered = true quand tout le monde est entré
+      enteredAt: r.enteredAt || new Date().toISOString()  // 1ère arrivée
+    };
+    await patchReservation(id, patch);
+
+    res.json({
+      ok: true,
+      enteredCount: newCount,
+      qty,
+      full: newCount >= qty
+    });
+  } catch (e) {
+    console.error('checkin error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🆕 Annuler le dernier check-in (decrement)
+app.post('/api/checkin/:id/undo', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await findReservation(id);
+    if (!r) return res.status(404).json({ error: 'not found' });
+    const currentCount = r.enteredCount || 0;
+    if (currentCount === 0) return res.json({ ok: false, enteredCount: 0 });
+    const newCount = currentCount - 1;
+    await patchReservation(id, {
+      enteredCount: newCount,
+      entered: false,
+      enteredAt: newCount === 0 ? null : r.enteredAt
+    });
+    res.json({ ok: true, enteredCount: newCount, qty: r.qty });
+  } catch (e) {
+    console.error('undo checkin error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
