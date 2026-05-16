@@ -103,6 +103,7 @@ function requireAdmin(req, res, next) {
 // ----- Email — Resend (primaire, domaine vérifié) ou Brevo (fallback) -----
 async function sendEmail({ to, subject, html, text }) {
   const recipients = (Array.isArray(to) ? to : [to]);
+  console.log(`📧 sendEmail → to=${recipients.join(',')} | subject="${subject}" | from="${FROM_EMAIL_NAME} <${FROM_EMAIL_ADDR}>"`);
 
   // 1️⃣ Resend (primaire) — domaine cosmakit.com vérifié
   if (RESEND_API_KEY) {
@@ -118,12 +119,18 @@ async function sendEmail({ to, subject, html, text }) {
           text
         })
       });
-      if (r.ok) return await r.json();
+      if (r.ok) {
+        const data = await r.json();
+        console.log(`✅ Resend OK → id=${data.id || '?'} pour ${recipients.join(',')}`);
+        return data;
+      }
       const errText = await r.text();
-      console.warn('Resend failed, trying Brevo:', errText);
+      console.warn(`⚠️  Resend ${r.status} ÉCHEC pour ${recipients.join(',')}: ${errText}`);
     } catch(e) {
-      console.warn('Resend error, trying Brevo:', e.message);
+      console.warn(`⚠️  Resend exception pour ${recipients.join(',')}: ${e.message}`);
     }
+  } else {
+    console.warn('⚠️  RESEND_API_KEY manquante');
   }
 
   // 2️⃣ Fallback Brevo (si Resend foire)
@@ -234,7 +241,7 @@ async function sendConfirmationEmails(booking) {
       </table>
 
       <div style="margin-top: 20px; padding: 14px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; text-align: center;">
-        <p style="margin: 0 0 8px; color: #c79270; font-weight: 700; font-size: 14px;">⏳ À vérifier dans ton app ${booking.paymentMethod || ''}</p>
+        <p style="margin: 0 0 8px; color: #c79270; font-weight: 700; font-size: 14px;">⏳ À vérifier dans l'app ${booking.paymentMethod || ''}</p>
         <p style="margin: 0; color: #d4a574; font-size: 12px;">Cherche la référence <strong style="color: #c79270;">${booking.bookingId}</strong></p>
       </div>
 
@@ -271,7 +278,7 @@ async function sendValidationEmail(booking) {
     <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 32px 24px; text-align: center; color: white;">
       <div style="display:inline-block; width:70px; height:70px; background:white; border-radius:50%; line-height:70px; font-size:42px; color:#16a34a; margin-bottom:10px;">✓</div>
       <h1 style="margin: 0; font-size: 24px;">Paiement confirmé !</h1>
-      <p style="margin: 6px 0 0; opacity: .95; font-size:15px;">Ta place est officiellement réservée 🎉</p>
+      <p style="margin: 6px 0 0; opacity: .95; font-size:15px;">Votre place est officiellement réservée 🎉</p>
     </div>
 
     <!-- 🎫 QR Code EN GRAND, fond blanc, en haut -->
@@ -313,7 +320,7 @@ async function sendValidationEmail(booking) {
 
   await resendSend({
     to: booking.email,
-    subject: `✅ Paiement confirmé — Ta place est réservée !`,
+    subject: `✅ Paiement confirmé — Votre place est réservée !`,
     html
   });
 }
@@ -444,9 +451,13 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
     const wasNotConfirmed = before.status !== 'confirmé';
     const isNowConfirmed  = req.body.status === 'confirmé';
+    console.log(`🔎 PATCH ${id} → before="${before.status}" / new="${req.body.status}" → trigger mail validation? ${wasNotConfirmed && isNowConfirmed}`);
     if (wasNotConfirmed && isNowConfirmed) {
       const updated = { ...before, ...patch };
-      sendValidationEmail(updated).catch(err => console.error('validation email error', err));
+      console.log(`📤 Envoi mail validation à ${updated.email} pour ${id}`);
+      sendValidationEmail(updated)
+        .then(() => console.log(`✅ Mail validation envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail validation ÉCHEC pour ${updated.email}:`, err.message));
     }
 
     res.json({ ok: true });
@@ -521,17 +532,21 @@ app.post('/api/checkin/:id/undo', requireAdmin, async (req, res) => {
 // Refuse si la résa n'est pas encore confirmée
 app.post('/api/resend/:id', requireAdmin, async (req, res) => {
   try {
+    console.log(`🔄 RESEND demandé pour ${req.params.id}`);
     const r = await findReservation(req.params.id);
-    if (!r) return res.status(404).json({ error: 'not found' });
-    if (!r.email) return res.status(400).json({ error: 'no email' });
+    if (!r) { console.warn(`❌ Résa introuvable: ${req.params.id}`); return res.status(404).json({ error: 'not found' }); }
+    if (!r.email) { console.warn(`❌ Pas d'email pour ${req.params.id}`); return res.status(400).json({ error: 'no email' }); }
     if (r.status !== 'confirmé') {
+      console.warn(`❌ Résa non confirmée (status="${r.status}") pour ${req.params.id}`);
       return res.status(400).json({ error: 'Réservation non confirmée — valide d\'abord le paiement.' });
     }
 
+    console.log(`📤 Envoi mail validation (resend manuel) à ${r.email}`);
     await sendValidationEmail(r);
+    console.log(`✅ Mail validation (resend) envoyé à ${r.email}`);
     res.json({ ok: true, sent: r.email, type: 'validation' });
   } catch (e) {
-    console.error('resend error:', e.message);
+    console.error(`❌ Resend ÉCHEC pour ${req.params.id}: ${e.message}`);
     res.status(500).json({ error: e.message });
   }
 });
