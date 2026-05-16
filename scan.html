@@ -314,46 +314,82 @@
     // (Safari iOS exige un user gesture explicite pour la caméra)
   }
 
-  document.getElementById('startBtn').addEventListener('click', startScanner);
+  // Délégation d'événement (au cas où le bouton est recréé dans le DOM)
+  document.body.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'startBtn') {
+      e.preventDefault();
+      startScanner();
+    }
+    if (e.target && e.target.id === 'retryBtn') {
+      e.preventDefault();
+      location.reload();
+    }
+  });
 
   async function startScanner() {
-    const placeholder = document.getElementById('placeholder');
+    console.log('🎥 startScanner appelé');
     const reader = document.getElementById('reader');
     const startBtn = document.getElementById('startBtn');
 
-    startBtn.disabled = true;
-    startBtn.innerHTML = '⏳ Activation de la caméra...';
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.innerHTML = '⏳ Activation...';
+    }
 
     try {
+      // Vérifie que la librairie est chargée
       if (typeof Html5Qrcode !== 'function') {
-        throw new Error('Librairie de scan non chargée. Recharge la page.');
+        throw new Error('La librairie de scan ne s\'est pas chargée. Vérifie ta connexion internet et recharge la page.');
       }
-      // On vide le reader (enlève le placeholder)
-      placeholder.style.display = 'none';
 
+      // Vérifie que getUserMedia est dispo (caméra)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Ton navigateur ne supporte pas l\'accès caméra. Essaie Chrome ou Safari récent.');
+      }
+
+      // VIDE complètement le reader (sinon Html5Qrcode plante)
+      reader.innerHTML = '';
+
+      console.log('🎥 Initialisation Html5Qrcode...');
       scanner = new Html5Qrcode('reader');
+
+      console.log('🎥 Demande d\'accès caméra...');
       await scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess,
         () => {} // ignore les erreurs de frame
       );
-      // Affiche les contrôles
+      console.log('🎥 Caméra démarrée ✅');
+
       document.getElementById('scanControls').style.display = 'block';
     } catch (e) {
-      console.error('Camera error:', e);
-      placeholder.style.display = 'block';
-      placeholder.innerHTML = `
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <h3 style="color:#f87171;">⚠️ Caméra inaccessible</h3>
-        <p style="color:#d4a574;">${e.message || e}</p>
-        <p style="font-size:12px; margin-top:10px;">Vérifie que tu as autorisé l'accès à la caméra dans ton navigateur.</p>
-        <button class="start-btn" id="retryBtn" style="background:#3a2818;">↻ Réessayer</button>
-        <p style="font-size:13px; margin-top:14px; color:#d4a574;">Ou utilise l'<strong style="color:#fbbf24;">entrée manuelle</strong> ci-dessous 👇</p>
+      console.error('❌ Erreur caméra:', e);
+      const errMsg = e.message || e.toString();
+      const isPermission = /permission|denied|notallowed/i.test(errMsg);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      let helpText = '';
+      if (isPermission) {
+        helpText = isIOS
+          ? '👉 Sur iPhone : Réglages → Safari → Caméra → Autoriser. Puis recharge cette page.'
+          : '👉 Clique sur l\'icône 🔒 ou 📷 dans la barre d\'adresse pour autoriser la caméra. Puis recharge.';
+      } else if (errMsg.includes('NotFoundError') || errMsg.includes('not found')) {
+        helpText = '👉 Aucune caméra détectée. Vérifie ton appareil.';
+      } else {
+        helpText = '👉 Essaie de recharger la page. Si ça persiste, utilise l\'entrée manuelle ci-dessous.';
+      }
+
+      reader.innerHTML = `
+        <div class="reader-placeholder">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <h3 style="color:#f87171;">⚠️ Impossible d'accéder à la caméra</h3>
+          <p style="color:#d4a574; font-size: 13px; margin-top: 6px;">${errMsg}</p>
+          <p style="color:#fbbf24; font-size: 13px; margin-top: 14px; line-height: 1.6;">${helpText}</p>
+          <button class="start-btn" id="retryBtn" style="background: linear-gradient(135deg,#f97316,#ea580c); margin-top: 14px;">↻ Réessayer</button>
+          <p style="font-size:12px; margin-top:12px; color:#8a6648;">📝 Ou utilise l'entrée manuelle plus bas 👇</p>
+        </div>
       `;
-      document.getElementById('retryBtn').addEventListener('click', () => {
-        location.reload();
-      });
     }
   }
 
