@@ -170,43 +170,43 @@ async function sendConfirmationEmails(booking) {
   // ===== EMAIL CLIENT (résa enregistrée, EN ATTENTE de paiement) =====
   // ⚠️ PAS DE QR à ce stade — le QR n'est envoyé qu'après validation du paiement
   const clientHtml = `
-  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
-    <div style="background: linear-gradient(135deg, #f97316, #fbbf24); padding: 28px 24px; text-align: center; color: white;">
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #b86a45, #c79270); padding: 28px 24px; text-align: center; color: white;">
       <div style="font-size: 40px; margin-bottom: 6px;">⏳</div>
       <h1 style="margin: 0; font-size: 22px;">Réservation enregistrée !</h1>
-      <p style="margin: 6px 0 0; opacity: .95;">Merci ${booking.prenom}, on a bien reçu ta demande</p>
+      <p style="margin: 6px 0 0; opacity: .95;">Merci ${booking.prenom}, nous avons bien reçu votre demande</p>
     </div>
 
     <div style="padding: 24px; background: #1a1108;">
-      <h2 style="margin: 0 0 12px; font-size: 18px; color: #fbbf24;">${EVENT.name}</h2>
+      <h2 style="margin: 0 0 12px; font-size: 18px; color: #c79270;">${EVENT.name}</h2>
       <p style="margin: 0 0 4px; color: #d4a574;">📅 ${EVENT.date} · ${EVENT.time}</p>
       <p style="margin: 0 0 16px; color: #d4a574;">📍 ${EVENT.place}</p>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #f5ede1;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #ede5d1;">
         <tr><td style="padding: 6px 0; color: #d4a574;">Formule</td><td style="padding: 6px 0; text-align: right; font-weight: 600;">${booking.ticketName}</td></tr>
         <tr><td style="padding: 6px 0; color: #d4a574;">Places</td><td style="padding: 6px 0; text-align: right; font-weight: 600;">${booking.qty}</td></tr>
         <tr><td style="padding: 6px 0; color: #d4a574; border-top: 1px solid #3a2818;">Paiement</td><td style="padding: 6px 0; text-align: right; font-weight: 600; border-top: 1px solid #3a2818; text-transform: capitalize;">${booking.paymentMethod}</td></tr>
-        <tr><td style="padding: 6px 0; color: #d4a574;">Total</td><td style="padding: 6px 0; text-align: right; font-weight: 700; font-size: 18px; color: #fbbf24;">${totalFmt} €</td></tr>
-        <tr><td style="padding: 6px 0; color: #d4a574; border-top: 1px solid #3a2818;">N° de référence</td><td style="padding: 6px 0; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; font-family: 'Courier New', monospace; color: #fbbf24;">${booking.bookingId}</td></tr>
+        <tr><td style="padding: 6px 0; color: #d4a574;">Total</td><td style="padding: 6px 0; text-align: right; font-weight: 700; font-size: 18px; color: #c79270;">${totalFmt} €</td></tr>
+        <tr><td style="padding: 6px 0; color: #d4a574; border-top: 1px solid #3a2818;">N° de référence</td><td style="padding: 6px 0; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; font-family: 'Courier New', monospace; color: #c79270;">${booking.bookingId}</td></tr>
       </table>
 
       <!-- ⏳ Bandeau d'attente paiement -->
       <div style="background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 18px; margin-top: 12px;">
-        <p style="margin: 0 0 10px; font-size: 14px; color: #fbbf24; font-weight: 700;">⏳ En attente de validation du paiement</p>
-        <p style="margin: 0; font-size: 13px; color: #f5ede1; line-height: 1.6;">
-          On va vérifier ton paiement (${booking.paymentMethod}) sous 24h. Dès que c'est fait, tu recevras un <strong style="color:#22c55e;">deuxième mail de confirmation avec ton QR code unique</strong> à présenter à l'entrée du brunch.
+        <p style="margin: 0 0 10px; font-size: 14px; color: #c79270; font-weight: 700;">⏳ En attente de validation du paiement</p>
+        <p style="margin: 0; font-size: 13px; color: #ede5d1; line-height: 1.6;">
+          Nous vérifions votre paiement (${booking.paymentMethod}) sous 24h. Dès que c'est fait, vous recevrez un <strong style="color:#22c55e;">deuxième mail de confirmation avec votre QR code unique</strong> à présenter à l'entrée du brunch.
         </p>
       </div>
 
-      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center; font-size: 15px;">🔎 Voir le statut de ma réservation</a>
+      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #b86a45, #8a4a2e); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center; font-size: 15px;">🔎 Voir le statut de ma réservation</a>
 
       <p style="margin: 16px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.5;">
-        💡 Tu peux suivre l'état de ta résa à tout moment via le lien ci-dessus.
+        💡 Vous pouvez suivre l'état de votre réservation à tout moment via le lien ci-dessus.
       </p>
     </div>
     <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
       <p style="margin: 0 0 10px; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Une question ?</p>
       <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
-      <a href="${telLink}" style="display: inline-block; background: #fbbf24; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
     </div>
   </div>`;
 
@@ -214,37 +214,37 @@ async function sendConfirmationEmails(booking) {
 
   // ===== EMAIL ADMIN =====
   const adminHtml = `
-  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
-    <div style="background: linear-gradient(135deg, #f97316, #fbbf24); padding: 24px; text-align: center; color: #1a1108;">
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #b86a45, #c79270); padding: 24px; text-align: center; color: #1a1108;">
       <div style="font-size: 36px; margin-bottom: 6px;">🎫</div>
       <h1 style="margin: 0; font-size: 22px;">Nouvelle réservation</h1>
       <p style="margin: 6px 0 0; font-weight: 700;">${booking.prenom} ${booking.nom} · ${booking.qty} place${booking.qty>1?'s':''} · ${totalFmt} €</p>
     </div>
     <div style="padding: 24px; background: #1a1108;">
-      <table style="width: 100%; border-collapse: collapse; color: #f5ede1; font-size: 14px;">
+      <table style="width: 100%; border-collapse: collapse; color: #ede5d1; font-size: 14px;">
         <tr><td style="padding: 8px 0; color: #d4a574; width: 38%;">Nom complet</td><td style="padding: 8px 0; font-weight: 700;">${booking.prenom} ${booking.nom}</td></tr>
-        <tr><td style="padding: 8px 0; color: #d4a574;">Email</td><td style="padding: 8px 0;"><a href="mailto:${booking.email}" style="color: #fbbf24; text-decoration: none;">${booking.email}</a></td></tr>
-        <tr><td style="padding: 8px 0; color: #d4a574;">Téléphone</td><td style="padding: 8px 0;"><a href="tel:${booking.telephone}" style="color: #fbbf24; text-decoration: none;">${booking.telephone}</a> · <a href="${clientWa}" style="color: #22c55e; text-decoration: none;">WhatsApp</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #d4a574;">Email</td><td style="padding: 8px 0;"><a href="mailto:${booking.email}" style="color: #c79270; text-decoration: none;">${booking.email}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #d4a574;">Téléphone</td><td style="padding: 8px 0;"><a href="tel:${booking.telephone}" style="color: #c79270; text-decoration: none;">${booking.telephone}</a> · <a href="${clientWa}" style="color: #22c55e; text-decoration: none;">WhatsApp</a></td></tr>
         <tr><td style="padding: 8px 0; color: #d4a574; border-top: 1px solid #3a2818;">Formule</td><td style="padding: 8px 0; border-top: 1px solid #3a2818; font-weight: 700;">${booking.ticketName}</td></tr>
         <tr><td style="padding: 8px 0; color: #d4a574;">Places</td><td style="padding: 8px 0; font-weight: 700;">${booking.qty}</td></tr>
         <tr><td style="padding: 8px 0; color: #d4a574;">Paiement</td><td style="padding: 8px 0; font-weight: 700; text-transform: capitalize;">${booking.paymentMethod}</td></tr>
-        <tr><td style="padding: 8px 0; color: #d4a574;">Total</td><td style="padding: 8px 0; font-weight: 800; font-size: 17px; color: #fbbf24;">${totalFmt} €</td></tr>
-        <tr><td style="padding: 8px 0; color: #d4a574; border-top: 1px solid #3a2818;">N° Référence</td><td style="padding: 8px 0; border-top: 1px solid #3a2818; font-family: monospace; font-weight: 700; color: #fbbf24;">${booking.bookingId}</td></tr>
+        <tr><td style="padding: 8px 0; color: #d4a574;">Total</td><td style="padding: 8px 0; font-weight: 800; font-size: 17px; color: #c79270;">${totalFmt} €</td></tr>
+        <tr><td style="padding: 8px 0; color: #d4a574; border-top: 1px solid #3a2818;">N° Référence</td><td style="padding: 8px 0; border-top: 1px solid #3a2818; font-family: monospace; font-weight: 700; color: #c79270;">${booking.bookingId}</td></tr>
         ${booking.message ? `<tr><td style="padding: 8px 0; color: #d4a574; vertical-align: top;">Allergies / Note</td><td style="padding: 8px 0; font-style: italic;">${booking.message}</td></tr>` : ''}
       </table>
 
       <div style="margin-top: 20px; padding: 14px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; text-align: center;">
-        <p style="margin: 0 0 8px; color: #fbbf24; font-weight: 700; font-size: 14px;">⏳ À vérifier dans ton app ${booking.paymentMethod || ''}</p>
-        <p style="margin: 0; color: #d4a574; font-size: 12px;">Cherche la référence <strong style="color: #fbbf24;">${booking.bookingId}</strong></p>
+        <p style="margin: 0 0 8px; color: #c79270; font-weight: 700; font-size: 14px;">⏳ À vérifier dans ton app ${booking.paymentMethod || ''}</p>
+        <p style="margin: 0; color: #d4a574; font-size: 12px;">Cherche la référence <strong style="color: #c79270;">${booking.bookingId}</strong></p>
       </div>
 
-      <a href="${adminLink}" style="display: block; margin-top: 16px; background: linear-gradient(135deg, #f97316, #ea580c); color: white; text-decoration: none; padding: 16px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(249,115,22,0.3);">
+      <a href="${adminLink}" style="display: block; margin-top: 16px; background: linear-gradient(135deg, #b86a45, #8a4a2e); color: white; text-decoration: none; padding: 16px; border-radius: 14px; font-weight: 800; font-size: 16px; text-align: center; box-shadow: 0 4px 12px rgba(249,115,22,0.3);">
         ✓ Voir & valider dans le dashboard →
       </a>
 
       <div style="margin-top: 14px; text-align: center;">
         <a href="${clientWa}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; margin: 4px;">💬 WhatsApp le client</a>
-        <a href="tel:${booking.telephone}" style="display: inline-block; background: #1a1108; color: #fbbf24; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; margin: 4px; border: 1px solid #3a2818;">📞 Appeler</a>
+        <a href="tel:${booking.telephone}" style="display: inline-block; background: #1a1108; color: #c79270; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; margin: 4px; border: 1px solid #3a2818;">📞 Appeler</a>
       </div>
     </div>
   </div>`;
@@ -267,7 +267,7 @@ async function sendValidationEmail(booking) {
 
   const bigQrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=600x600&margin=20`;
   const html = `
-  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #f5ede1; border-radius: 16px; overflow: hidden;">
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
     <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 32px 24px; text-align: center; color: white;">
       <div style="display:inline-block; width:70px; height:70px; background:white; border-radius:50%; line-height:70px; font-size:42px; color:#16a34a; margin-bottom:10px;">✓</div>
       <h1 style="margin: 0; font-size: 24px;">Paiement confirmé !</h1>
@@ -284,12 +284,12 @@ async function sendValidationEmail(booking) {
     </div>
 
     <div style="padding: 24px; background: #1a1108;">
-      <p style="margin: 0 0 16px; font-size: 15px; color: #f5ede1; line-height: 1.6;">
-        Hello <strong>${booking.prenom}</strong>,<br><br>
-        On vient de valider ton paiement de <strong style="color: #fbbf24;">${totalFmt} €</strong>. Tu peux désormais venir tranquille le <strong>${EVENT.date}</strong> 🌴
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Nous venons de valider votre paiement de <strong style="color: #c79270;">${totalFmt} €</strong>. Vous pouvez désormais venir tranquillement le <strong>${EVENT.date}</strong> 🌴
       </p>
 
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #f5ede1; background: #14100a; border-radius: 10px;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
         <tr><td style="padding: 10px 14px; color: #d4a574;">📅 Date</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;">${EVENT.date} · ${EVENT.time}</td></tr>
         <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">📍 Lieu</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${EVENT.place}</td></tr>
         <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">🎫 Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
@@ -301,13 +301,13 @@ async function sendValidationEmail(booking) {
       </a>
 
       <p style="margin: 20px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.6;">
-        💡 <strong style="color:#fbbf24;">Garde ce mail</strong> ou bookmark le lien ci-dessus — tout est là pour entrer.
+        💡 <strong style="color:#c79270;">Conservez ce mail</strong> ou ajoutez le lien à vos favoris — tout est là pour entrer.
       </p>
     </div>
     <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
       <p style="margin: 0 0 10px; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Une question ?</p>
       <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
-      <a href="${telLink}" style="display: inline-block; background: #fbbf24; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
     </div>
   </div>`;
 
