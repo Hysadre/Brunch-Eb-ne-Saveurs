@@ -503,6 +503,26 @@ app.post('/api/checkin/:id/undo', requireAdmin, async (req, res) => {
   }
 });
 
+// 📧 Renvoyer le mail au client (admin)
+app.post('/api/resend/:id', requireAdmin, async (req, res) => {
+  try {
+    const r = await findReservation(req.params.id);
+    if (!r) return res.status(404).json({ error: 'not found' });
+    if (!r.email) return res.status(400).json({ error: 'no email' });
+
+    // Envoie le bon mail selon le statut
+    if (r.status === 'confirmé') {
+      await sendValidationEmail(r);
+    } else {
+      await sendConfirmationEmails(r);
+    }
+    res.json({ ok: true, sent: r.email, type: r.status === 'confirmé' ? 'validation' : 'confirmation' });
+  } catch (e) {
+    console.error('resend error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Supprimer une réservation (admin)
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
