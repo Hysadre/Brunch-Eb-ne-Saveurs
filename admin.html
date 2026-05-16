@@ -117,6 +117,103 @@
     box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
   }
 
+  /* Compte à rebours */
+  .countdown {
+    background: linear-gradient(135deg, #1a1108 0%, #2a1810 50%, #1a1108 100%);
+    border: 1px solid #3a2818;
+    border-radius: 18px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .countdown::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 90% 10%, rgba(251, 191, 36, 0.12), transparent 60%);
+    pointer-events: none;
+  }
+  .countdown-label {
+    font-size: 11px;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .countdown-event {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.2px;
+  }
+  .countdown-event .accent {
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    font-style: italic;
+  }
+  .countdown-event-date {
+    font-size: 12px;
+    color: #d4a574;
+    margin-top: 2px;
+  }
+  .countdown-timer {
+    display: flex;
+    gap: 10px;
+    z-index: 1;
+  }
+  .countdown-unit {
+    text-align: center;
+    min-width: 56px;
+    background: #0f0a06;
+    border-radius: 12px;
+    padding: 8px 4px;
+    border: 1px solid #3a2818;
+  }
+  .countdown-num {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fbbf24;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+  }
+  .countdown-text {
+    font-size: 10px;
+    color: #8a6648;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    font-weight: 700;
+  }
+  .countdown.today {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-color: #22c55e;
+  }
+  .countdown.today .countdown-label,
+  .countdown.today .countdown-event-date { color: rgba(255,255,255,0.85); }
+  .countdown.today .countdown-event,
+  .countdown.today .countdown-event .accent {
+    color: white;
+    background: none;
+    -webkit-text-fill-color: white;
+  }
+  .countdown.today .countdown-unit { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+  .countdown.today .countdown-num,
+  .countdown.today .countdown-text { color: white; }
+
+  @media (max-width: 640px) {
+    .countdown { flex-direction: column; align-items: stretch; }
+    .countdown-timer { justify-content: center; }
+    .countdown-unit { min-width: 60px; }
+  }
+
   .mode-pill {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(251, 191, 36, 0.1); color: #fbbf24;
@@ -376,6 +473,16 @@
     </div>
   </div>
 
+  <!-- Compte à rebours -->
+  <div class="countdown" id="countdown">
+    <div>
+      <div class="countdown-label">⏳ Compte à rebours</div>
+      <div class="countdown-event">Brunch <span class="accent">Ébène &amp; Saveurs</span></div>
+      <div class="countdown-event-date">📅 Samedi 22 août 2026 · 12h00 · Ronchin</div>
+    </div>
+    <div class="countdown-timer" id="countdownTimer"></div>
+  </div>
+
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" data-tab="resa">📋 Réservations</div>
@@ -519,6 +626,56 @@
 
     render();
     if (API_URL) setInterval(render, 30000);
+
+    // Démarre le compte à rebours
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  }
+
+  // ⏳ Compte à rebours jusqu'au 22 août 2026 à 12h00
+  const EVENT_DATE = new Date('2026-08-22T12:00:00+02:00');
+  function updateCountdown() {
+    const now = new Date();
+    const diff = EVENT_DATE - now;
+    const wrap = document.getElementById('countdown');
+    const timer = document.getElementById('countdownTimer');
+
+    if (diff <= 0) {
+      // Le jour J
+      const elapsedH = Math.floor(-diff / 3600000);
+      wrap.classList.add('today');
+      if (elapsedH < 12) {
+        timer.innerHTML = `<div class="countdown-unit" style="min-width:180px;"><div class="countdown-num">🎉 C'EST LE JOUR J !</div><div class="countdown-text">Bon brunch !</div></div>`;
+      } else {
+        timer.innerHTML = `<div class="countdown-unit" style="min-width:180px;"><div class="countdown-num">✨ Événement passé</div><div class="countdown-text">Merci !</div></div>`;
+      }
+      return;
+    }
+
+    wrap.classList.remove('today');
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+
+    timer.innerHTML = `
+      <div class="countdown-unit">
+        <div class="countdown-num">${days}</div>
+        <div class="countdown-text">Jour${days>1?'s':''}</div>
+      </div>
+      <div class="countdown-unit">
+        <div class="countdown-num">${String(hours).padStart(2,'0')}</div>
+        <div class="countdown-text">Heures</div>
+      </div>
+      <div class="countdown-unit">
+        <div class="countdown-num">${String(minutes).padStart(2,'0')}</div>
+        <div class="countdown-text">Min</div>
+      </div>
+      <div class="countdown-unit">
+        <div class="countdown-num">${String(seconds).padStart(2,'0')}</div>
+        <div class="countdown-text">Sec</div>
+      </div>
+    `;
   }
 
   document.getElementById('logoutBtn').addEventListener('click', () => {

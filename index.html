@@ -269,13 +269,14 @@
   .btn-primary:active { transform: scale(.98); }
   .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 
+  /* Checkbox custom — visuel clair, square + ✓ */
   .checkbox-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    font-size: 13px; color: #d4a574;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 14px; color: #d4a574;
     margin-top: 14px;
     cursor: pointer;
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 14px;
+    border-radius: 14px;
     border: 1.5px solid #3a2818;
     background: #0f0a06;
     transition: all .2s ease;
@@ -286,26 +287,135 @@
     background: #1a1108;
     color: #f5ede1;
   }
+  .checkbox-row input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .checkbox-row .custom-check {
+    width: 26px; height: 26px;
+    flex: 0 0 26px;
+    border: 2.5px solid #5a4028;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s ease;
+    background: #14100a;
+  }
+  .checkbox-row:hover .custom-check { border-color: #f97316; }
+  .checkbox-row .custom-check svg {
+    width: 18px; height: 18px;
+    color: white;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
+  }
   .checkbox-row.checked {
     border-color: #16a34a;
-    background: rgba(22, 163, 74, 0.08);
+    background: rgba(22, 163, 74, 0.10);
     color: #f5ede1;
   }
-  .checkbox-row.checked::after {
-    content: "✓";
-    color: #22c55e;
-    font-weight: 800;
-    margin-left: auto;
-    font-size: 18px;
+  .checkbox-row.checked .custom-check {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-color: #22c55e;
   }
-  .checkbox-row input[type="checkbox"] {
-    width: 22px; height: 22px;
-    flex: 0 0 22px;
-    margin: 0;
-    accent-color: #16a34a;
+  .checkbox-row.checked .custom-check svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .checkbox-row .check-text { flex: 1; line-height: 1.5; }
+  .checkbox-row a { color: #fbbf24; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+  .checkbox-row a:hover { color: #f97316; }
+
+  /* CGU Modal */
+  .cgu-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none; align-items: flex-end; justify-content: center;
+    z-index: 200;
+  }
+  .cgu-overlay.show { display: flex; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .cgu-modal {
+    background: #1a1108;
+    width: 100%; max-width: 560px;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    display: flex; flex-direction: column;
+    animation: slideUp .3s cubic-bezier(.34, 1.2, .64, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (min-width: 600px) {
+    .cgu-overlay { align-items: center; padding: 20px; }
+    .cgu-modal { border-radius: 20px; max-height: 80vh; }
+  }
+  .cgu-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #3a2818;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: #1a1108; border-radius: 20px 20px 0 0;
+  }
+  .cgu-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: #fff; }
+  .cgu-close {
+    width: 36px; height: 36px;
+    background: #3a2818; border: none; color: #f5ede1;
+    border-radius: 10px; cursor: pointer;
+    font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cgu-close:active { background: #5a4028; }
+  .cgu-body {
+    padding: 22px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #d4a574;
+  }
+  .cgu-body h3 {
+    color: #fbbf24;
+    font-size: 15px;
+    margin: 20px 0 8px;
+    font-weight: 700;
+  }
+  .cgu-body h3:first-child { margin-top: 0; }
+  .cgu-body p { margin: 0 0 12px; }
+  .cgu-body strong { color: #f5ede1; }
+  .cgu-body .highlight-box {
+    background: rgba(22, 163, 74, 0.10);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 10px 0;
+    color: #f5ede1;
+  }
+  .cgu-body .highlight-box strong { color: #22c55e; }
+  .cgu-body .warning-box {
+    background: rgba(249, 115, 22, 0.10);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 10px 0;
+    color: #f5ede1;
+  }
+  .cgu-body .warning-box strong { color: #fbbf24; }
+  .cgu-footer {
+    padding: 16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #3a2818;
+    background: #1a1108;
+  }
+  .cgu-footer button {
+    width: 100%;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
     cursor: pointer;
+    font-family: inherit;
   }
-  .checkbox-row a { color: #fbbf24; text-decoration: underline; text-underline-offset: 2px; }
 
   .error { color: #f87171; font-size: 13px; margin-top: 6px; display: none; }
   .error.show { display: block; }
@@ -470,9 +580,12 @@
       <label class="label" for="message">Allergies / régime alimentaire (optionnel)</label>
       <textarea id="message" name="message" placeholder="Sans porc, sans alcool, allergies..."></textarea>
 
-      <label class="checkbox-row">
+      <label class="checkbox-row" id="cguRow">
         <input type="checkbox" id="cgu" required>
-        <span>J'accepte les <a href="#">conditions générales</a> et que mes infos soient utilisées uniquement pour la gestion du brunch</span>
+        <span class="custom-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="check-text">J'accepte les <a href="#" id="cguLink">conditions générales</a> et que mes infos soient utilisées uniquement pour la gestion du brunch</span>
       </label>
       <div class="error" data-for="cgu">Tu dois accepter les CGU</div>
     </div>
@@ -493,6 +606,79 @@
     <div class="contact-footer-row">
       <a href="https://wa.me/33668295077" class="contact-pill whatsapp">💬 WhatsApp +33 6 68 29 50 77</a>
       <a href="tel:+33668295077" class="contact-pill">📞 Appeler</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE CGU -->
+<div class="cgu-overlay" id="cguOverlay">
+  <div class="cgu-modal">
+    <div class="cgu-header">
+      <h2>📄 Conditions générales</h2>
+      <button class="cgu-close" id="cguClose" aria-label="Fermer">✕</button>
+    </div>
+    <div class="cgu-body">
+      <h3>🌴 L'événement</h3>
+      <p>
+        <strong>Brunch Ébène &amp; Saveurs</strong> — Samedi 22 août 2026 à 12h00<br>
+        Salle de Ronchin, 59790 Ronchin (Lille) · Capacité limitée à 200 personnes.
+      </p>
+      <p>
+        Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, défilé wax, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
+      </p>
+
+      <h3>💰 Tarifs</h3>
+      <p>
+        Standard : 35 € (1 place) · Duo : 70 € (2 places) · Trio : 105 € (3 places).<br>
+        Les tarifs sont indiqués TTC et n'incluent pas les frais bancaires éventuels selon ton moyen de paiement.
+      </p>
+
+      <h3>↩️ Annulation &amp; remboursement</h3>
+      <div class="highlight-box">
+        <strong>✓ Remboursement intégral</strong> possible <strong>jusqu'à 10 jours avant l'événement</strong>, soit avant le <strong>12 août 2026</strong>.<br>
+        Envoie une demande par WhatsApp au +33 6 68 29 50 77 ou par email avec ton numéro de réservation.
+      </div>
+      <div class="warning-box">
+        <strong>⚠️ Passé le 12 août 2026</strong>, aucun remboursement ne sera possible (commandes engagées auprès des fournisseurs).<br>
+        En revanche, ton billet est <strong>transférable</strong> : tu peux donner ta place à quelqu'un d'autre (préviens-nous du changement de nom).
+      </div>
+
+      <h3>🪪 Accès le jour J</h3>
+      <p>
+        Présente ton billet électronique (QR code reçu par email ou page de réservation) à l'entrée. Un bracelet te sera remis pour la durée de l'événement.<br>
+        Tenue chic / wax fortement encouragée 👗.
+      </p>
+
+      <h3>🚫 Cas particuliers</h3>
+      <p>
+        L'organisateur se réserve le droit de refuser l'entrée en cas de comportement inapproprié, sans remboursement.<br>
+        L'événement peut être reporté ou annulé pour des raisons de force majeure (grève, météo extrême, restrictions sanitaires) : dans ce cas, tu seras intégralement remboursé(e) ou tu pourras conserver ta place pour la date de report.
+      </p>
+
+      <h3>🔐 Protection des données</h3>
+      <p>
+        Tes informations (nom, email, téléphone) sont collectées <strong>uniquement</strong> pour la gestion de ta réservation et la communication autour de l'événement.
+      </p>
+      <p>
+        Elles sont stockées de manière sécurisée (Supabase) et ne sont <strong>jamais cédées à des tiers</strong>. Elles seront supprimées dans les 3 mois après l'événement.
+      </p>
+      <p>
+        Tu peux à tout moment demander la suppression de tes données via WhatsApp ou par email.
+      </p>
+
+      <h3>📞 Contact</h3>
+      <p>
+        Une question sur ta réservation ?<br>
+        WhatsApp : <a href="https://wa.me/33668295077">+33 6 68 29 50 77</a><br>
+        Email : <a href="mailto:abayoassi@gmail.com">abayoassi@gmail.com</a>
+      </p>
+
+      <p style="font-size:12px; color:#8a6648; margin-top:24px; text-align:center;">
+        Dernière mise à jour : mai 2026
+      </p>
+    </div>
+    <div class="cgu-footer">
+      <button id="cguAccept">✓ J'ai lu et j'accepte</button>
     </div>
   </div>
 </div>
@@ -613,6 +799,33 @@
   cguInput.addEventListener('change', () => {
     cguRow.classList.toggle('checked', cguInput.checked);
     if (cguInput.checked) showError('cgu', false);
+  });
+
+  // --- Modale CGU ---
+  const cguOverlay = document.getElementById('cguOverlay');
+  const openCgu = (e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    cguOverlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  const closeCgu = () => {
+    cguOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+  };
+  document.getElementById('cguLink').addEventListener('click', openCgu);
+  document.getElementById('cguClose').addEventListener('click', closeCgu);
+  document.getElementById('cguAccept').addEventListener('click', () => {
+    cguInput.checked = true;
+    cguRow.classList.add('checked');
+    showError('cgu', false);
+    closeCgu();
+  });
+  cguOverlay.addEventListener('click', (e) => {
+    if (e.target === cguOverlay) closeCgu();
+  });
+  // Échap pour fermer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cguOverlay.classList.contains('show')) closeCgu();
   });
 
   document.getElementById('bookingForm').addEventListener('submit', async (e) => {
