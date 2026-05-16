@@ -112,6 +112,10 @@
   .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
   .btn-secondary { background: #1a1108; color: #f5ede1; border: 1px solid #3a2818; }
   .btn-danger { background: transparent; color: #f87171; border: 1px solid #3a2818; }
+  .btn-scan {
+    background: linear-gradient(135deg, #16a34a, #22c55e); color: white;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+  }
 
   .mode-pill {
     display: inline-flex; align-items: center; gap: 6px;
@@ -360,6 +364,9 @@
   <div class="header">
     <h1>🌴 Brunch <span class="accent">Ébène &amp; Saveurs</span> <span class="mode-pill" id="modePill"><span class="dot"></span><span id="modeText">DÉMO</span></span></h1>
     <div class="header-actions">
+      <a class="btn btn-scan" href="scan.html" title="Scanner les billets à l'entrée">
+        📸 Scanner entrées
+      </a>
       <button class="btn btn-secondary" id="refreshBtn">↻ Actualiser</button>
       <button class="btn btn-primary" id="exportBtn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -416,6 +423,7 @@
               <th>Total</th>
               <th>Paiement</th>
               <th>Statut</th>
+              <th>Présent</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -675,6 +683,10 @@
           <td><strong style="color:#fbbf24;">${(r.total||0).toFixed(2).replace('.', ',')} €</strong></td>
           <td><span class="method-pill">${r.paymentMethod || '—'}</span></td>
           <td><span class="badge ${isPaid ? 'badge-paid' : 'badge-pending'}">${isPaid ? '✓ Payé' : '⏳ En attente'}</span></td>
+          <td>${r.entered
+            ? `<span class="badge badge-paid" title="${r.enteredAt ? new Date(r.enteredAt).toLocaleString('fr-FR') : ''}">🚪 Entré</span>`
+            : `<span style="color:#8a6648; font-size:12px;">—</span>`
+          }</td>
           <td>
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
             ${isPaid

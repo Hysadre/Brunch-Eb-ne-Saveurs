@@ -406,16 +406,15 @@
           <span class="ticket-radio"></span>
           <div class="ticket-info">
             <div class="ticket-name">Standard</div>
-            <div class="ticket-desc">1 place · accès complet au brunch</div>
+            <div class="ticket-desc">1 place</div>
           </div>
           <div class="ticket-price">35 €</div>
         </label>
         <label class="ticket" data-id="duo" data-places="2" data-price="70">
-          <span class="ticket-flag">Couple / Amis</span>
           <span class="ticket-radio"></span>
           <div class="ticket-info">
             <div class="ticket-name">Duo</div>
-            <div class="ticket-desc">2 places · venez à deux</div>
+            <div class="ticket-desc">2 places</div>
           </div>
           <div class="ticket-price">70 €</div>
         </label>
@@ -423,7 +422,7 @@
           <span class="ticket-radio"></span>
           <div class="ticket-info">
             <div class="ticket-name">Trio</div>
-            <div class="ticket-desc">3 places · pour la famille / la tribu</div>
+            <div class="ticket-desc">3 places</div>
           </div>
           <div class="ticket-price">105 €</div>
         </label>
@@ -559,14 +558,16 @@
     return 'groupe';
   }
 
-  // --- Capacité dynamique (depuis API si dispo, sinon localStorage) ---
+  // --- Capacité dynamique + badge "Le + populaire" ---
   async function loadCapacity() {
     let bookedPlaces = 0;
+    let formulas = null;
     if (API_URL) {
       try {
         const r = await fetch(API_URL + '/stats');
         const data = await r.json();
         bookedPlaces = data.places || 0;
+        formulas = data.formulas || null;
       } catch(e) { /* fallback ci-dessous */ }
     }
     if (!bookedPlaces) {
@@ -577,6 +578,24 @@
     document.querySelector('.capacity-fill').style.width = pct + '%';
     document.querySelector('.capacity-text').textContent =
       `${bookedPlaces} / ${CAPACITY} places réservées · ${CAPACITY - bookedPlaces} restantes`;
+
+    // Badge "Le + populaire" — sur la formule la plus choisie (min 3 résa pour afficher)
+    document.querySelectorAll('.ticket-flag').forEach(f => f.remove());
+    if (formulas) {
+      let best = null, bestCount = 0;
+      ['standard', 'duo', 'trio'].forEach(id => {
+        if ((formulas[id] || 0) > bestCount) { best = id; bestCount = formulas[id]; }
+      });
+      if (best && bestCount >= 3) {
+        const ticket = document.querySelector(`.ticket[data-id="${best}"]`);
+        if (ticket) {
+          const flag = document.createElement('span');
+          flag.className = 'ticket-flag';
+          flag.textContent = '🔥 Le + populaire';
+          ticket.insertBefore(flag, ticket.firstChild);
+        }
+      }
+    }
   }
   loadCapacity();
 

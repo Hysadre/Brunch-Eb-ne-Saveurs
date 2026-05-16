@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f0a06">
+<title>Scanner · Brunch Ébène &amp; Saveurs</title>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: #0f0a06;
+    color: #f5ede1;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 20px; }
+
+  /* Login */
+  .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card {
+    background: #1a1108; border: 1px solid #3a2818; border-radius: 20px;
+    padding: 32px 24px; width: 100%; max-width: 380px; text-align: center;
+  }
+  .lock-icon {
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px; color: white;
+  }
+  .login-card h1 { margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #fff; }
+  .login-card p { color: #d4a574; font-size: 14px; margin: 0 0 24px; }
+  .login-card input {
+    width: 100%; background: #0f0a06; border: 1.5px solid #3a2818;
+    color: #f5ede1; border-radius: 12px; padding: 14px;
+    font-size: 16px; font-family: inherit;
+    text-align: center; letter-spacing: 4px; margin-bottom: 12px;
+  }
+  .login-card input:focus { outline: none; border-color: #f97316; }
+  .login-card button {
+    width: 100%; background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white; border: none; border-radius: 12px;
+    padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  .login-error { color: #f87171; font-size: 13px; margin-top: 8px; min-height: 16px; }
+
+  /* App */
+  .scanner-app { display: none; }
+  .scanner-app.show { display: block; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .topbar h1 {
+    margin: 0; font-size: 22px; font-weight: 800;
+    color: #fff; letter-spacing: -0.4px;
+  }
+  .topbar h1 .accent { background: linear-gradient(135deg, #f97316, #fbbf24); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
+  .topbar a {
+    color: #d4a574; text-decoration: none; font-size: 13px;
+    padding: 8px 12px; border-radius: 10px; background: #1a1108; border: 1px solid #3a2818;
+  }
+
+  #reader {
+    width: 100%; max-width: 500px;
+    border-radius: 16px; overflow: hidden;
+    background: #14100a;
+    border: 1px solid #3a2818;
+  }
+  #reader video { width: 100% !important; height: auto !important; }
+
+  .scan-controls { margin-top: 14px; }
+  .btn {
+    width: 100%; padding: 14px; border-radius: 14px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: inherit; border: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity .15s;
+  }
+  .btn-primary { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+  .btn-secondary { background: #1a1108; color: #f5ede1; border: 1px solid #3a2818; }
+  .btn-success { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; }
+  .btn-danger { background: #1a1108; color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+
+  .manual-entry {
+    margin-top: 12px;
+    background: #1a1108; border: 1px solid #3a2818;
+    border-radius: 12px; padding: 12px;
+  }
+  .manual-entry summary { font-size: 13px; color: #d4a574; cursor: pointer; }
+  .manual-entry input {
+    width: 100%; margin-top: 10px;
+    background: #0f0a06; border: 1.5px solid #3a2818;
+    color: #f5ede1; border-radius: 10px;
+    padding: 12px; font-size: 14px; font-family: inherit;
+  }
+  .manual-entry button {
+    width: 100%; margin-top: 8px;
+    background: #f97316; color: white; border: none;
+    padding: 10px; border-radius: 10px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* Result modal */
+  .result-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 20px; padding-top: 40px;
+    z-index: 100; overflow-y: auto;
+  }
+  .result-overlay.show { display: flex; }
+  .result-card {
+    background: #1a1108; border-radius: 24px;
+    width: 100%; max-width: 500px;
+    overflow: hidden;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .result-banner {
+    padding: 30px 20px; text-align: center; color: white;
+    position: relative;
+  }
+  .result-banner.ok { background: linear-gradient(135deg, #16a34a, #22c55e); }
+  .result-banner.warning { background: linear-gradient(135deg, #f97316, #fbbf24); color: #1a1108; }
+  .result-banner.danger { background: linear-gradient(135deg, #b91c1c, #ef4444); }
+  .result-banner.already { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+  .result-icon {
+    width: 80px; height: 80px; background: white;
+    border-radius: 50%; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    animation: pop .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  .result-banner.ok .result-icon { color: #16a34a; }
+  .result-banner.warning .result-icon { color: #f97316; }
+  .result-banner.danger .result-icon { color: #b91c1c; }
+  .result-banner.already .result-icon { color: #06b6d4; }
+  .result-title { font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+  .result-sub { font-size: 14px; opacity: .95; margin: 6px 0 0; }
+
+  .result-body { padding: 22px; }
+  .result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid #3a2818;
+    font-size: 15px;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .k { color: #d4a574; }
+  .result-row .v { color: #fff; font-weight: 700; }
+  .result-row .v.big { color: #fbbf24; font-size: 18px; }
+
+  .result-actions {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 0 22px 22px;
+  }
+  .btn-big {
+    padding: 18px; font-size: 17px; border-radius: 16px;
+    font-weight: 800; cursor: pointer; font-family: inherit;
+    border: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .scan-log {
+    margin-top: 20px;
+    background: #1a1108; border: 1px solid #3a2818;
+    border-radius: 16px; overflow: hidden;
+  }
+  .scan-log h3 {
+    margin: 0; padding: 14px 18px;
+    font-size: 13px; color: #d4a574;
+    letter-spacing: 1px; text-transform: uppercase; font-weight: 700;
+    background: #14100a; border-bottom: 1px solid #3a2818;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-item {
+    padding: 12px 18px; border-bottom: 1px solid #3a2818;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-time { color: #8a6648; font-size: 11px; }
+  .log-name { color: #f5ede1; font-weight: 700; }
+  .log-status { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 800; }
+  .log-status.ok { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .log-status.warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .log-status.bad { background: rgba(248,113,113,0.15); color: #f87171; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login">
+  <div class="login-card">
+    <div class="lock-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h1>📸 Scanner d'entrée</h1>
+    <p>Brunch Ébène &amp; Saveurs · 22 août 2026</p>
+    <input type="password" id="pwd" placeholder="••••••" autocomplete="off">
+    <button id="loginBtn">Se connecter</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="scanner-app app" id="scannerApp">
+  <div class="topbar">
+    <h1>📸 <span class="accent">Scanner</span></h1>
+    <a href="admin.html">← Dashboard</a>
+  </div>
+
+  <div id="reader"></div>
+
+  <div class="scan-controls">
+    <button class="btn btn-secondary" id="toggleScanBtn">⏸️ Mettre en pause</button>
+  </div>
+
+  <details class="manual-entry">
+    <summary>📝 Entrée manuelle (sans scanner)</summary>
+    <input type="text" id="manualId" placeholder="EBENE-NOM-XXXX">
+    <button id="manualBtn">Vérifier ce billet</button>
+  </details>
+
+  <div class="scan-log">
+    <h3>
+      <span>📋 Derniers scans</span>
+      <span id="scanCount" style="color:#fbbf24; font-size:14px;">0</span>
+    </h3>
+    <div id="logBody">
+      <div class="log-item" style="justify-content:center; color:#8a6648; font-style:italic;">Aucun scan pour le moment</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="result-overlay" id="result">
+  <div class="result-card">
+    <div class="result-banner" id="resultBanner">
+      <div class="result-icon" id="resultIcon">✓</div>
+      <h2 class="result-title" id="resultTitle">—</h2>
+      <p class="result-sub" id="resultSub">—</p>
+    </div>
+    <div class="result-body" id="resultBody"></div>
+    <div class="result-actions" id="resultActions"></div>
+  </div>
+</div>
+
+<script>
+  // 🔧 CONFIG
+  const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
+  const ADMIN_PWD = 'BrunchEbene2026!';
+
+  // --- Auth ---
+  document.getElementById('loginBtn').addEventListener('click', tryLogin);
+  document.getElementById('pwd').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  function tryLogin() {
+    if (document.getElementById('pwd').value === ADMIN_PWD) {
+      sessionStorage.setItem('admin_ok', '1');
+      showApp();
+    } else {
+      document.getElementById('loginError').textContent = '❌ Code incorrect';
+    }
+  }
+  if (sessionStorage.getItem('admin_ok')) showApp();
+
+  let scanLog = JSON.parse(sessionStorage.getItem('scanLog') || '[]');
+  let scanner = null;
+  let isPaused = false;
+  let lastScanned = null;
+  let lastScannedAt = 0;
+
+  function showApp() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('scannerApp').classList.add('show');
+    renderLog();
+    startScanner();
+  }
+
+  async function startScanner() {
+    try {
+      scanner = new Html5Qrcode('reader');
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        () => {} // ignore les erreurs de frame
+      );
+    } catch (e) {
+      document.getElementById('reader').innerHTML = `
+        <div style="padding:30px; text-align:center; color:#f87171;">
+          <p>⚠️ Impossible d'accéder à la caméra</p>
+          <p style="font-size:12px; color:#d4a574;">${e.message || e}</p>
+          <p style="font-size:13px; margin-top:14px;">👉 Utilise l'<strong>entrée manuelle</strong> ci-dessous</p>
+        </div>`;
+    }
+  }
+
+  function onScanSuccess(decodedText) {
+    // Ignore rescans rapides du même code (< 3 secondes)
+    const now = Date.now();
+    if (decodedText === lastScanned && now - lastScannedAt < 3000) return;
+    lastScanned = decodedText;
+    lastScannedAt = now;
+
+    // Extrait l'ID du booking depuis l'URL ou le texte
+    let bookingId = decodedText;
+    try {
+      const url = new URL(decodedText);
+      bookingId = url.searchParams.get('id') || decodedText;
+    } catch(e) { /* ce n'est pas une URL, on prend le texte brut */ }
+
+    // Beep
+    beep();
+    // Vibration
+    if (navigator.vibrate) navigator.vibrate(150);
+
+    fetchAndShow(bookingId);
+  }
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 800; g.gain.value = 0.1;
+      o.start(); setTimeout(() => { o.stop(); ctx.close(); }, 150);
+    } catch(e) {}
+  }
+
+  async function fetchAndShow(bookingId) {
+    try {
+      const r = await fetch(`${API_URL}/verify/${encodeURIComponent(bookingId)}`);
+      if (r.status === 404) return showResult('notfound', { bookingId });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      // Récupère l'info "entered" via l'endpoint admin
+      try {
+        const r2 = await fetch(`${API_URL}/reservations`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+        if (r2.ok) {
+          const all = await r2.json();
+          const full = all.find(x => x.bookingId === bookingId);
+          if (full) { data.entered = full.entered; data.enteredAt = full.enteredAt; data.total = full.total; }
+        }
+      } catch(e) {}
+      showResult(determineState(data), data);
+    } catch(e) {
+      console.error(e);
+      showResult('error', { bookingId, error: e.message });
+    }
+  }
+
+  function determineState(data) {
+    if (data.entered) return 'already';
+    if (data.status === 'confirmé') return 'ok';
+    return 'unpaid';
+  }
+
+  function showResult(state, data) {
+    const overlay = document.getElementById('result');
+    const banner = document.getElementById('resultBanner');
+    const icon = document.getElementById('resultIcon');
+    const title = document.getElementById('resultTitle');
+    const sub = document.getElementById('resultSub');
+    const body = document.getElementById('resultBody');
+    const actions = document.getElementById('resultActions');
+
+    banner.className = 'result-banner';
+
+    if (state === 'ok') {
+      banner.classList.add('ok');
+      icon.textContent = '✓';
+      title.textContent = 'BILLET VALIDE';
+      sub.textContent = 'Paiement confirmé · prêt à entrer';
+    } else if (state === 'already') {
+      banner.classList.add('already');
+      icon.textContent = 'ℹ️';
+      title.textContent = 'DÉJÀ ENTRÉ';
+      const t = data.enteredAt ? new Date(data.enteredAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
+      sub.textContent = `Cette personne est déjà venue${t ? ' à ' + t : ''}`;
+    } else if (state === 'unpaid') {
+      banner.classList.add('warning');
+      icon.textContent = '⏳';
+      title.textContent = 'PAIEMENT EN ATTENTE';
+      sub.textContent = 'À vérifier dans le dashboard avant d\'entrer';
+    } else if (state === 'notfound') {
+      banner.classList.add('danger');
+      icon.textContent = '✕';
+      title.textContent = 'INTROUVABLE';
+      sub.textContent = `Aucune résa pour ${data.bookingId}`;
+    } else {
+      banner.classList.add('danger');
+      icon.textContent = '!';
+      title.textContent = 'ERREUR';
+      sub.textContent = data.error || 'Problème de connexion';
+    }
+
+    body.innerHTML = data.prenom ? `
+      <div class="result-row"><span class="k">Nom</span><span class="v">${data.prenom} ${data.nom}</span></div>
+      <div class="result-row"><span class="k">Formule</span><span class="v">${data.ticketName}</span></div>
+      <div class="result-row"><span class="k">Places</span><span class="v big">${data.qty}</span></div>
+      <div class="result-row"><span class="k">N° Résa</span><span class="v" style="font-family:monospace; font-size:13px; color:#fbbf24;">${data.bookingId}</span></div>
+    ` : `<div class="result-row"><span class="v" style="color:#f87171;">${data.bookingId || '—'}</span></div>`;
+
+    actions.innerHTML = '';
+    if (state === 'ok') {
+      actions.innerHTML = `
+        <button class="btn-big btn-success" id="enterBtn">✓ FAIRE ENTRER</button>
+        <button class="btn-big btn-danger" id="refuseBtn">❌ Refuser / Fermer</button>
+      `;
+      document.getElementById('enterBtn').onclick = () => markEntered(data);
+      document.getElementById('refuseBtn').onclick = () => closeResult(data, 'refusé');
+    } else if (state === 'already') {
+      actions.innerHTML = `<button class="btn-big btn-secondary" id="closeBtn">Fermer</button>`;
+      document.getElementById('closeBtn').onclick = () => closeResult(data, 'déjà entré');
+    } else if (state === 'unpaid') {
+      actions.innerHTML = `
+        <button class="btn-big btn-success" id="forceBtn">⚠️ Forcer l'entrée (paiement OK)</button>
+        <button class="btn-big btn-danger" id="closeBtn">Fermer</button>
+      `;
+      document.getElementById('forceBtn').onclick = () => markEntered(data);
+      document.getElementById('closeBtn').onclick = () => closeResult(data, 'refusé');
+    } else {
+      actions.innerHTML = `<button class="btn-big btn-secondary" id="closeBtn">Fermer</button>`;
+      document.getElementById('closeBtn').onclick = () => closeResult({ bookingId: data.bookingId }, 'introuvable');
+    }
+
+    overlay.classList.add('show');
+  }
+
+  async function markEntered(data) {
+    const btn = document.getElementById('enterBtn') || document.getElementById('forceBtn');
+    if (btn) { btn.innerHTML = '⏳ ...'; btn.disabled = true; }
+    try {
+      const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(data.bookingId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_PWD },
+        body: JSON.stringify({ entered: true, enteredAt: new Date().toISOString() })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      addToLog(data, 'ok');
+      // Confirmation visuelle rapide
+      document.getElementById('resultBanner').className = 'result-banner ok';
+      document.getElementById('resultTitle').textContent = '✓ ENTRÉ !';
+      document.getElementById('resultSub').textContent = `${data.prenom} ${data.nom} · ${data.qty} place(s)`;
+      document.getElementById('resultActions').innerHTML = `<button class="btn-big btn-success" id="nextBtn">▶ Scanner le suivant</button>`;
+      document.getElementById('nextBtn').onclick = closeOverlay;
+      setTimeout(closeOverlay, 2500);
+    } catch(e) {
+      alert('Erreur : ' + e.message);
+      if (btn) { btn.innerHTML = '✓ FAIRE ENTRER'; btn.disabled = false; }
+    }
+  }
+
+  function closeResult(data, status) {
+    addToLog(data, status === 'refusé' || status === 'introuvable' ? 'bad' : 'warn');
+    closeOverlay();
+  }
+  function closeOverlay() {
+    document.getElementById('result').classList.remove('show');
+  }
+
+  function addToLog(data, kind) {
+    scanLog.unshift({
+      bookingId: data.bookingId,
+      name: data.prenom ? `${data.prenom} ${data.nom}` : '—',
+      qty: data.qty || 0,
+      time: new Date().toISOString(),
+      kind
+    });
+    if (scanLog.length > 30) scanLog = scanLog.slice(0, 30);
+    sessionStorage.setItem('scanLog', JSON.stringify(scanLog));
+    renderLog();
+  }
+
+  function renderLog() {
+    const body = document.getElementById('logBody');
+    document.getElementById('scanCount').textContent = scanLog.filter(x => x.kind === 'ok').length;
+    if (!scanLog.length) {
+      body.innerHTML = `<div class="log-item" style="justify-content:center; color:#8a6648; font-style:italic;">Aucun scan pour le moment</div>`;
+      return;
+    }
+    body.innerHTML = scanLog.map(s => `
+      <div class="log-item">
+        <div>
+          <div class="log-name">${s.name} ${s.qty ? `· ${s.qty}p` : ''}</div>
+          <div class="log-time">${new Date(s.time).toLocaleTimeString('fr-FR')} · ${s.bookingId}</div>
+        </div>
+        <span class="log-status ${s.kind}">${
+          s.kind === 'ok' ? '✓ Entré' :
+          s.kind === 'warn' ? '⏳ Refusé' :
+          s.kind === 'bad' ? '✕ Pb' : '?'
+        }</span>
+      </div>
+    `).join('');
+  }
+
+  // Pause / play
+  document.getElementById('toggleScanBtn').addEventListener('click', async () => {
+    if (!scanner) return;
+    const btn = document.getElementById('toggleScanBtn');
+    if (isPaused) {
+      await scanner.resume();
+      btn.textContent = '⏸️ Mettre en pause';
+      isPaused = false;
+    } else {
+      await scanner.pause();
+      btn.textContent = '▶️ Reprendre';
+      isPaused = true;
+    }
+  });
+
+  // Entrée manuelle
+  document.getElementById('manualBtn').addEventListener('click', () => {
+    const id = document.getElementById('manualId').value.trim();
+    if (id) fetchAndShow(id);
+  });
+  document.getElementById('manualId').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('manualBtn').click();
+  });
+</script>
+</body>
+</html>

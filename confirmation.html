@@ -173,6 +173,11 @@
     color: white; border: none;
     box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
   }
+  .btn-view {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: white; border: none;
+    box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+  }
   .btn-secondary {
     background: #1a1108;
     color: #f5ede1;
@@ -304,9 +309,13 @@
   </div>
 
   <div class="actions">
+    <a href="#" class="btn btn-view" id="viewBtn" target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      🎫 Voir ma réservation en ligne
+    </a>
     <button class="btn btn-primary" id="downloadBtn">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      Sauver mon billet en PDF
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      📥 Télécharger mon billet (image)
     </button>
     <a href="index.html" class="btn btn-secondary">Faire une autre réservation</a>
   </div>
@@ -339,11 +348,14 @@
   document.getElementById('subtext').textContent =
     `Merci ${booking.prenom} ! Ta réservation de ${booking.total.toFixed(2).replace('.', ',')} € est enregistrée.`;
 
-  // 🔧 URL du site (pour le QR code)
+  // 🔧 URL du site (pour le QR code + bouton "Voir ma réservation")
   const SITE_URL = 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs';
 
   // Vrai QR code scannable → ouvre la page publique du billet
   const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+
+  // Remplit le href du bouton "Voir ma réservation"
+  document.getElementById('viewBtn').href = ticketUrl;
   const qrImg = document.createElement('img');
   qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(ticketUrl)}&size=400x400&margin=10`;
   qrImg.alt = 'QR de réservation';
@@ -353,7 +365,7 @@
   qrImg.style.height = 'auto';
   document.getElementById('qr').appendChild(qrImg);
 
-  // 📥 Téléchargement en IMAGE PNG (via html2canvas)
+  // 📥 Téléchargement en IMAGE PNG (compatible iOS / Android / Desktop)
   document.getElementById('downloadBtn').addEventListener('click', async () => {
     const btn = document.getElementById('downloadBtn');
     const originalHtml = btn.innerHTML;
@@ -361,35 +373,65 @@
     btn.disabled = true;
 
     try {
+      // Vérifie que html2canvas est bien chargé
+      if (typeof html2canvas !== 'function') {
+        throw new Error('html2canvas non chargé (vérifie ta connexion)');
+      }
+
       const ticket = document.querySelector('.ticket-card');
       const canvas = await html2canvas(ticket, {
         backgroundColor: '#0f0a06',
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false
       });
 
-      // Détection : iOS Safari supporte mal le download direct → on ouvre dans un nouvel onglet
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const dataUrl = canvas.toDataURL('image/png');
+      const filename = `billet-brunch-${booking.bookingId}.png`;
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+      if (!blob) throw new Error('Conversion en image impossible');
 
-      if (isIOS) {
-        // Sur iOS : ouvre l'image, l'utilisateur fait "appui long → enregistrer dans Photos"
-        const w = window.open('');
-        if (w) {
-          w.document.write(`<title>Billet ${booking.bookingId}</title><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" style="max-width:100%;height:auto;"><p style="position:fixed;top:10px;left:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:10px;border-radius:8px;font-family:system-ui;font-size:13px;text-align:center;">📲 Appui long sur l'image → "Ajouter aux Photos"</p></body>`);
+      // ⭐ Méthode 1 : navigator.share (menu de partage natif iOS/Android)
+      // → l'utilisateur choisit "Enregistrer dans Photos", AirDrop, WhatsApp, etc.
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Mon billet Brunch Ébène & Saveurs',
+              text: `Billet n° ${booking.bookingId}`
+            });
+            btn.innerHTML = '✓ Partagé !';
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+            return;
+          } catch(e) {
+            if (e.name === 'AbortError') {
+              // L'utilisateur a annulé → on ne fait rien
+              btn.innerHTML = originalHtml; btn.disabled = false;
+              return;
+            }
+            // Autre erreur → fallback ci-dessous
+          }
         }
-      } else {
-        // Desktop / Android : téléchargement direct
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `billet-brunch-${booking.bookingId}.png`;
-        a.click();
       }
+
+      // ⭐ Méthode 2 : Téléchargement direct (Desktop, Android)
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+      btn.innerHTML = '✓ Téléchargé !';
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+
     } catch(err) {
-      console.error(err);
-      alert('Oups, problème lors de la génération. Tu peux faire une capture d\'écran du billet à la place.');
-    } finally {
+      console.error('Erreur téléchargement billet :', err);
+      alert('Oups, un souci : ' + err.message + '\n\nEn attendant, fais une capture d\'écran du billet 📸');
       btn.innerHTML = originalHtml;
       btn.disabled = false;
     }
