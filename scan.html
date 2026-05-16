@@ -258,7 +258,10 @@
   <div class="scan-log">
     <h3>
       <span>📋 Derniers scans</span>
-      <span id="scanCount" style="color:#fbbf24; font-size:14px;">0</span>
+      <span style="display:flex; align-items:center; gap:10px;">
+        <button id="clearLogBtn" style="background:transparent; border:1px solid #3a2818; color:#8a6648; padding:4px 10px; border-radius:8px; font-size:11px; cursor:pointer; font-family:inherit;" title="Vider l'historique local">🗑️ Vider</button>
+        <span id="scanCount" style="color:#fbbf24; font-size:14px;">0</span>
+      </span>
     </h3>
     <div id="logBody">
       <div class="log-item" style="justify-content:center; color:#8a6648; font-style:italic;">Aucun scan pour le moment</div>
@@ -297,7 +300,7 @@
   }
   if (sessionStorage.getItem('admin_ok')) showApp();
 
-  let scanLog = JSON.parse(sessionStorage.getItem('scanLog') || '[]');
+  let scanLog = JSON.parse(localStorage.getItem('scanLog') || '[]');
   let scanner = null;
   let isPaused = false;
   let lastScanned = null;
@@ -627,7 +630,7 @@
       kind
     });
     if (scanLog.length > 30) scanLog = scanLog.slice(0, 30);
-    sessionStorage.setItem('scanLog', JSON.stringify(scanLog));
+    localStorage.setItem('scanLog', JSON.stringify(scanLog));
     renderLog();
   }
 
@@ -666,6 +669,14 @@
       btn.textContent = '▶️ Reprendre';
       isPaused = true;
     }
+  });
+
+  // Vider l'historique local des scans
+  document.getElementById('clearLogBtn').addEventListener('click', () => {
+    if (!confirm('Vider l\'historique local des scans ? (les check-ins restent dans le dashboard)')) return;
+    scanLog = [];
+    localStorage.removeItem('scanLog');
+    renderLog();
   });
 
   // Entrée manuelle
