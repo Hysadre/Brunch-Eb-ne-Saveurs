@@ -1002,6 +1002,7 @@
   });
 
   // --- Data ---
+  // Retourne les résa OU null si l'API a échoué (pour ne pas écraser le cache)
   async function getReservations(retries = 3) {
     if (API_URL) {
       for (let i = 0; i < retries; i++) {
@@ -1014,15 +1015,16 @@
           });
           clearTimeout(timeoutId);
           if (r.ok) return await r.json();
-          if (r.status === 401) { console.error('Auth incorrecte'); break; }
-          // Sinon, on retry (Render qui se réveille)
+          if (r.status === 401) { console.error('Auth incorrecte'); return null; }
         } catch(e) {
           console.warn(`API tentative ${i+1}/${retries} échouée`, e.message);
-          if (i < retries - 1) await new Promise(r => setTimeout(r, 2000)); // attend 2s
+          if (i < retries - 1) await new Promise(r => setTimeout(r, 2000));
         }
       }
+      return null; // ← API morte → on garde le cache en mémoire (NE PAS écraser)
     }
-    return JSON.parse(localStorage.getItem('reservations') || '[]');
+    // Mode démo : fallback localStorage
+    return JSON.parse(localStorage.getItem('cachedReservations') || localStorage.getItem('reservations') || '[]');
   }
 
   async function updateStatus(id, newStatus) {
@@ -1176,17 +1178,43 @@
       `;
     }
     const fresh = await getReservations();
+    isFirstLoad = false;
+    document.getElementById('syncIndicator')?.remove();
+
+    // 🛡️ Si l'API a échoué (Render endormi) → on garde le cache et on prévient
+    if (fresh === null) {
+      console.warn('API indispo, garde le cache actuel');
+      if (CACHE.length === 0) {
+        // Premier chargement et API down → essaie le cache localStorage
+        const localCache = JSON.parse(localStorage.getItem('cachedReservations') || '[]');
+        if (localCache.length > 0) {
+          CACHE = localCache;
+          renderStats(CACHE);
+          renderTable(CACHE);
+          renderCheckinHistory(CACHE);
+        }
+      }
+      // Affiche un badge "serveur en train de se réveiller" en haut
+      let warn = document.getElementById('apiDownBanner');
+      if (!warn) {
+        warn = document.createElement('div');
+        warn.id = 'apiDownBanner';
+        warn.style.cssText = 'position:fixed; top:80px; right:20px; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); color:#f87171; padding:8px 14px; border-radius:99px; font-size:12px; z-index:50; display:flex; align-items:center; gap:8px;';
+        warn.innerHTML = '⚠️ Serveur endormi, données en cache';
+        document.body.appendChild(warn);
+      }
+      return;
+    }
+
+    // ✓ API OK → on met à jour le cache
+    document.getElementById('apiDownBanner')?.remove();
     const previousCount = CACHE.length;
     CACHE = fresh;
-    // Mémorise pour la prochaine visite (chargement instantané)
     try { localStorage.setItem('cachedReservations', JSON.stringify(fresh)); } catch(e) {}
-    isFirstLoad = false;
     renderStats(CACHE);
     renderTable(CACHE);
     renderCheckinHistory(CACHE);
-    // Retire l'indicateur de sync
-    document.getElementById('syncIndicator')?.remove();
-    // Notif si nouvelle résa apparue
+
     if (previousCount > 0 && CACHE.length > previousCount) {
       const diff = CACHE.length - previousCount;
       toast(`🎫 ${diff} nouvelle${diff > 1 ? 's' : ''} réservation${diff > 1 ? 's' : ''} !`);
