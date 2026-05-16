@@ -17,7 +17,7 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
     background: #0f0a06;
-    color: #f5ede1;
+    color: #ede5d1;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -31,7 +31,7 @@
       radial-gradient(circle at 80% 10%, rgba(251, 191, 36, 0.18), transparent 50%),
       radial-gradient(circle at 10% 90%, rgba(22, 163, 74, 0.20), transparent 55%),
       linear-gradient(160deg, #1a1108 0%, #2a1810 50%, #1a1108 100%);
-    color: #f5ede1;
+    color: #ede5d1;
     border-radius: 0 0 28px 28px;
     position: relative;
     overflow: hidden;
@@ -41,7 +41,7 @@
     font-size: 11px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: #fbbf24;
+    color: #c79270;
     font-weight: 700;
     margin-bottom: 6px;
   }
@@ -54,7 +54,7 @@
     color: #fff;
   }
   .hero-title .accent {
-    background: linear-gradient(135deg, #f97316, #fbbf24);
+    background: linear-gradient(135deg, #b86a45, #c79270);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -73,7 +73,7 @@
     font-size: 15px;
   }
   .hero-meta .row { display: flex; align-items: center; gap: 10px; }
-  .hero-meta .ico { width: 18px; height: 18px; flex: 0 0 18px; color: #fbbf24; }
+  .hero-meta .ico { width: 18px; height: 18px; flex: 0 0 18px; color: #c79270; }
 
   .badge-warning {
     display: inline-flex;
@@ -116,7 +116,7 @@
     width: 100%;
     background: #0f0a06;
     border: 1.5px solid #3a2818;
-    color: #f5ede1;
+    color: #ede5d1;
     border-radius: 14px;
     padding: 14px 14px;
     font-size: 16px;
@@ -127,7 +127,7 @@
   }
   input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: #f97316;
+    border-color: #b86a45;
     background: #14100a;
   }
   textarea { resize: vertical; min-height: 80px; }
@@ -142,7 +142,7 @@
     transition: border-color .15s, background .15s;
     position: relative;
   }
-  .ticket.selected { border-color: #f97316; background: #241408; }
+  .ticket.selected { border-color: #b86a45; background: #241408; }
   .ticket.disabled {
     opacity: .45;
     cursor: not-allowed;
@@ -155,17 +155,17 @@
     position: relative;
     transition: border-color .15s;
   }
-  .ticket.selected .ticket-radio { border-color: #f97316; }
+  .ticket.selected .ticket-radio { border-color: #b86a45; }
   .ticket.selected .ticket-radio::after {
     content: "";
     position: absolute; inset: 3px;
-    background: #f97316;
+    background: #b86a45;
     border-radius: 50%;
   }
   .ticket-info { flex: 1; }
   .ticket-name { font-weight: 700; font-size: 15px; color: #fff; }
   .ticket-desc { font-size: 12px; color: #d4a574; margin-top: 2px; }
-  .ticket-price { font-weight: 800; font-size: 19px; color: #fbbf24; }
+  .ticket-price { font-weight: 800; font-size: 19px; color: #c79270; }
   .ticket-flag {
     position: absolute;
     top: -8px; right: 12px;
@@ -191,7 +191,7 @@
     border-radius: 10px;
     border: none;
     background: #3a2818;
-    color: #fbbf24;
+    color: #c79270;
     font-size: 22px;
     font-weight: 700;
     cursor: pointer;
@@ -209,7 +209,7 @@
   .menu-col h4 {
     margin: 0 0 6px;
     font-size: 13px;
-    color: #fbbf24;
+    color: #c79270;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 700;
@@ -257,10 +257,10 @@
   }
   .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
   .total-label { font-size: 13px; color: #d4a574; }
-  .total-amount { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #fbbf24; }
+  .total-amount { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #c79270; }
   .btn-primary {
     width: 100%;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
     color: white;
     border: none;
     border-radius: 16px;
@@ -289,9 +289,9 @@
     user-select: none;
   }
   .checkbox-row:hover {
-    border-color: #f97316;
+    border-color: #b86a45;
     background: #1a1108;
-    color: #f5ede1;
+    color: #ede5d1;
   }
   .checkbox-row input[type="checkbox"] {
     position: absolute;
@@ -307,7 +307,7 @@
     transition: all .15s ease;
     background: #14100a;
   }
-  .checkbox-row:hover .custom-check { border-color: #f97316; }
+  .checkbox-row:hover .custom-check { border-color: #b86a45; }
   .checkbox-row .custom-check svg {
     width: 18px; height: 18px;
     color: white;
@@ -318,7 +318,7 @@
   .checkbox-row.checked {
     border-color: #16a34a;
     background: rgba(22, 163, 74, 0.10);
-    color: #f5ede1;
+    color: #ede5d1;
   }
   .checkbox-row.checked .custom-check {
     background: linear-gradient(135deg, #16a34a, #22c55e);
@@ -329,8 +329,8 @@
     transform: scale(1);
   }
   .checkbox-row .check-text { flex: 1; line-height: 1.5; }
-  .checkbox-row a { color: #fbbf24; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
-  .checkbox-row a:hover { color: #f97316; }
+  .checkbox-row a { color: #c79270; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+  .checkbox-row a:hover { color: #b86a45; }
 
   /* CGU Modal */
   .cgu-overlay {
@@ -365,7 +365,7 @@
   .cgu-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: #fff; }
   .cgu-close {
     width: 36px; height: 36px;
-    background: #3a2818; border: none; color: #f5ede1;
+    background: #3a2818; border: none; color: #ede5d1;
     border-radius: 10px; cursor: pointer;
     font-size: 18px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
@@ -379,21 +379,21 @@
     color: #d4a574;
   }
   .cgu-body h3 {
-    color: #fbbf24;
+    color: #c79270;
     font-size: 15px;
     margin: 20px 0 8px;
     font-weight: 700;
   }
   .cgu-body h3:first-child { margin-top: 0; }
   .cgu-body p { margin: 0 0 12px; }
-  .cgu-body strong { color: #f5ede1; }
+  .cgu-body strong { color: #ede5d1; }
   .cgu-body .highlight-box {
     background: rgba(22, 163, 74, 0.10);
     border: 1px solid rgba(22, 163, 74, 0.3);
     border-radius: 12px;
     padding: 14px;
     margin: 10px 0;
-    color: #f5ede1;
+    color: #ede5d1;
   }
   .cgu-body .highlight-box strong { color: #22c55e; }
   .cgu-body .warning-box {
@@ -402,9 +402,9 @@
     border-radius: 12px;
     padding: 14px;
     margin: 10px 0;
-    color: #f5ede1;
+    color: #ede5d1;
   }
-  .cgu-body .warning-box strong { color: #fbbf24; }
+  .cgu-body .warning-box strong { color: #c79270; }
   .cgu-footer {
     padding: 16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #3a2818;
@@ -412,7 +412,7 @@
   }
   .cgu-footer button {
     width: 100%;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
     color: white;
     border: none;
     padding: 14px;
@@ -436,7 +436,7 @@
   }
   .capacity-fill {
     height: 100%;
-    background: linear-gradient(90deg, #16a34a, #fbbf24, #f97316);
+    background: linear-gradient(90deg, #16a34a, #c79270, #b86a45);
     width: 32%;
     border-radius: 99px;
   }
@@ -471,7 +471,7 @@
     display: inline-flex; align-items: center; gap: 6px;
     background: #1a1108;
     border: 1px solid #3a2818;
-    color: #fbbf24;
+    color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
     text-decoration: none;
@@ -495,7 +495,7 @@
   <!-- 🎉 Mode événement passé (visible si date > 22 août 2026 23:59) -->
   <div id="pastEventBanner" style="display:none; margin: 60px auto 40px; max-width: 480px; text-align: center; padding: 40px 24px;">
     <div style="font-size: 72px; margin-bottom: 16px;">🌴</div>
-    <h1 style="font-size: 28px; color: #fbbf24; margin: 0 0 16px;">Merci à tous !</h1>
+    <h1 style="font-size: 28px; color: #c79270; margin: 0 0 16px;">Merci à tous !</h1>
     <p style="color: #d4a574; font-size: 16px; line-height: 1.6;">
       Le Brunch Ébène &amp; Saveurs du 22 août 2026 est passé.<br>
       Merci d'avoir été là 🎉<br><br>
@@ -530,7 +530,7 @@
   <form id="bookingForm" novalidate>
 
     <div class="card">
-      <h2>🎫 Choisis ta formule</h2>
+      <h2>🎫 Choisissez votre formule</h2>
       <div class="ticket-options" id="tickets">
         <label class="ticket selected" data-id="standard" data-places="1" data-price="35">
           <span class="ticket-radio"></span>
@@ -573,7 +573,7 @@
 
       <!-- 👥 Accompagnants (visible si qty >= 2) -->
       <div id="accompagnantsSection" style="display:none; margin-top: 18px; padding: 16px; background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 14px;">
-        <div style="font-size: 13px; font-weight: 700; color: #fbbf24; margin-bottom: 4px;">👥 Tes accompagnants</div>
+        <div style="font-size: 13px; font-weight: 700; color: #c79270; margin-bottom: 4px;">👥 Tes accompagnants</div>
         <div style="font-size: 12px; color: #d4a574; margin-bottom: 12px;">Pour la liste d'entrée, donne-nous les noms des personnes qui viennent avec toi.</div>
         <div id="accompagnantsList"></div>
       </div>
@@ -581,20 +581,20 @@
 
     <div class="card">
       <p style="margin:0; font-size:14px; line-height:1.6; color:#d4a574;">
-        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#fbbf24;">DJ afro, percussions, danses, photobooth &amp; tombola</strong> 🌴
+        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#c79270;">DJ afro, percussions, danses, photobooth &amp; tombola</strong> 🌴
       </p>
     </div>
 
     <div class="card">
-      <h2>📝 Tes informations</h2>
+      <h2>📝 Vos informations</h2>
 
       <label class="label" for="prenom">Prénom</label>
       <input type="text" id="prenom" name="prenom" autocomplete="given-name" required>
-      <div class="error" data-for="prenom">Ton prénom est requis</div>
+      <div class="error" data-for="prenom">Votre prénom est requis</div>
 
       <label class="label" for="nom">Nom</label>
       <input type="text" id="nom" name="nom" autocomplete="family-name" required>
-      <div class="error" data-for="nom">Ton nom est requis</div>
+      <div class="error" data-for="nom">Votre nom est requis</div>
 
       <label class="label" for="email">Email</label>
       <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
@@ -612,9 +612,9 @@
         <span class="custom-check">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </span>
-        <span class="check-text">J'accepte les <a href="#" id="cguLink">conditions générales</a> et que mes infos soient utilisées uniquement pour la gestion du brunch</span>
+        <span class="check-text">J'accepte les <a href="#" id="cguLink">conditions générales</a> et que mes informations soient utilisées uniquement pour la gestion du brunch</span>
       </label>
-      <div class="error" data-for="cgu">Tu dois accepter les CGU</div>
+      <div class="error" data-for="cgu">Vous devez accepter les CGU</div>
     </div>
 
     <div class="total-bar">
@@ -790,10 +790,10 @@
       const nVal = existing[nName] || '';
       html += `
         <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; padding: 10px; background: #0f0a06; border-radius: 10px;">
-          <div style="font-size: 11px; color: #fbbf24; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">👤 Accompagnant ${i}</div>
+          <div style="font-size: 11px; color: #c79270; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">👤 Accompagnant ${i}</div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <input type="text" name="${pName}" placeholder="Prénom" value="${pVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #f5ede1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
-            <input type="text" name="${nName}" placeholder="Nom" value="${nVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #f5ede1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+            <input type="text" name="${pName}" placeholder="Prénom" value="${pVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+            <input type="text" name="${nName}" placeholder="Nom" value="${nVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
           </div>
         </div>
       `;

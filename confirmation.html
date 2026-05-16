@@ -17,7 +17,7 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
     background: #0f0a06;
-    color: #f5ede1;
+    color: #ede5d1;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -60,7 +60,7 @@
   .pending-banner {
     background: rgba(251, 191, 36, 0.12);
     border: 1px solid rgba(251, 191, 36, 0.3);
-    color: #fbbf24;
+    color: #c79270;
     padding: 14px;
     border-radius: 14px;
     font-size: 13px;
@@ -81,10 +81,10 @@
     padding: 22px 22px 16px;
     background: linear-gradient(135deg, #1a1108, #2a1810);
   }
-  .ticket-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #fbbf24; font-weight: 700; }
+  .ticket-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #c79270; font-weight: 700; }
   .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #fff; }
   .ticket-name .accent {
-    background: linear-gradient(135deg, #f97316, #fbbf24);
+    background: linear-gradient(135deg, #b86a45, #c79270);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -125,7 +125,7 @@
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 1px;
-    color: #fbbf24;
+    color: #c79270;
   }
   .booking-id-label {
     text-align: center;
@@ -154,10 +154,10 @@
     display: flex; align-items: center; gap: 12px;
     padding: 10px 0;
     font-size: 14px;
-    color: #f5ede1;
+    color: #ede5d1;
   }
-  .info-row svg { color: #f97316; flex: 0 0 18px; }
-  .info-row .v { font-weight: 600; color: #fbbf24; }
+  .info-row svg { color: #b86a45; flex: 0 0 18px; }
+  .info-row .v { font-weight: 600; color: #c79270; }
 
   .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
   .btn {
@@ -174,7 +174,7 @@
   }
   .btn:active { transform: scale(.98); }
   .btn-primary {
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
     color: white; border: none;
     box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
   }
@@ -185,7 +185,7 @@
   }
   .btn-secondary {
     background: #1a1108;
-    color: #f5ede1;
+    color: #ede5d1;
     border: 1.5px solid #3a2818;
   }
 
@@ -196,7 +196,7 @@
     margin-top: 24px;
     line-height: 1.6;
   }
-  .footer-note a { color: #fbbf24; text-decoration: none; }
+  .footer-note a { color: #c79270; text-decoration: none; }
 
   /* Contact footer commun */
   .contact-footer {
@@ -221,7 +221,7 @@
     display: inline-flex; align-items: center; gap: 6px;
     background: #1a1108;
     border: 1px solid #3a2818;
-    color: #fbbf24;
+    color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
     text-decoration: none;
@@ -238,7 +238,7 @@
     .app { padding: 0; max-width: none; }
     .actions, .footer-note, .contact-footer, .pending-banner { display: none !important; }
     .success-hero { background: linear-gradient(135deg, #16a34a, #22c55e) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .ticket-card, .info-card { background: #1a1108 !important; color: #f5ede1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
+    .ticket-card, .info-card { background: #1a1108 !important; color: #ede5d1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
     .ticket-top { background: linear-gradient(135deg, #1a1108, #2a1810) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
@@ -251,12 +251,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
     <h1 class="success-title">Réservation enregistrée !</h1>
-    <p class="success-sub" id="subtext">Ton billet est prêt 🎉</p>
+    <p class="success-sub" id="subtext">Votre réservation est enregistrée 🎉</p>
   </div>
 
   <div class="pending-banner" id="pendingBanner">
     <strong>⏳ Confirmation du paiement en attente</strong>
-    Une fois ton paiement vérifié, tu recevras un email de confirmation définitive. En général, ça prend quelques minutes (jusqu'à 24h pour un virement).
+    Une fois votre paiement vérifié, vous recevrez un email de confirmation définitive avec votre QR code. Cela prend généralement quelques minutes (jusqu'à 24h pour un virement).
+  </div>
+
+  <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-size: 13px; color: #d4a574; line-height: 1.6;">
+    📩 <strong style="color: #06b6d4;">Vous n'avez pas reçu de mail de confirmation&nbsp;?</strong><br>
+    Pensez à vérifier votre dossier <strong>spam / indésirables</strong>. Si vous ne recevez toujours rien sous 24h, n'hésitez pas à nous contacter via WhatsApp au <a href="https://wa.me/33668295077" style="color: #22c55e; text-decoration: none; font-weight: 700;">+33 6 68 29 50 77</a> en précisant votre numéro de réservation.
   </div>
 
   <div class="ticket-card">
@@ -285,9 +290,9 @@
     <div class="ticket-stub">
       <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px; text-align: center;">
         <div style="font-size: 36px; margin-bottom: 8px;">⏳</div>
-        <p style="margin: 0 0 6px; font-weight: 700; color: #fbbf24;">QR code en attente de validation</p>
+        <p style="margin: 0 0 6px; font-weight: 700; color: #c79270;">QR code en attente de validation</p>
         <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.6;">
-          Ton QR unique te sera envoyé par mail dès que ton <strong>paiement aura été vérifié</strong> (sous 24h).
+          Votre QR unique vous sera envoyé par mail dès que votre <strong>paiement aura été vérifié</strong> (sous 24h).
         </p>
       </div>
       <div class="booking-id" id="bookingId">—</div>
@@ -328,7 +333,7 @@
   </div>
 
   <p class="footer-note">
-    Hâte de te voir au brunch 🍽️🎉
+    Au plaisir de vous accueillir au brunch 🍽️🎉
   </p>
 
   <div class="contact-footer">
@@ -353,7 +358,7 @@
   document.getElementById('bookingId').textContent = booking.bookingId;
   document.getElementById('userEmail').textContent = booking.email;
   document.getElementById('subtext').textContent =
-    `Merci ${booking.prenom} ! Ta réservation de ${booking.total.toFixed(2).replace('.', ',')} € est enregistrée.`;
+    `Merci ${booking.prenom} ! Votre réservation de ${booking.total.toFixed(2).replace('.', ',')} € est enregistrée.`;
 
   // 🔧 URL du site (pour le QR code + bouton "Voir ma réservation")
   const SITE_URL = 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs';
@@ -368,7 +373,7 @@
   document.getElementById('shareBtn').addEventListener('click', async () => {
     const shareData = {
       title: 'Brunch Ébène & Saveurs',
-      text: `Hey ! Je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Tu viens aussi ?`,
+      text: `Bonjour, je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Voulez-vous nous rejoindre ?`,
       url: SITE_URL + '/'
     };
     try {

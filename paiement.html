@@ -16,7 +16,7 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
     background: #0f0a06;
-    color: #f5ede1;
+    color: #ede5d1;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -33,7 +33,7 @@
     border: 1px solid #3a2818;
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: #fbbf24;
+    cursor: pointer; color: #c79270;
     text-decoration: none;
   }
   .topbar h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; color: #fff; }
@@ -43,7 +43,7 @@
     margin-bottom: 18px;
   }
   .step { flex: 1; height: 4px; background: #3a2818; border-radius: 99px; }
-  .step.done { background: #f97316; }
+  .step.done { background: #b86a45; }
 
   .card {
     background: #1a1108;
@@ -77,10 +77,10 @@
     font-size: 15px;
   }
   .recap-row .k { color: #d4a574; }
-  .recap-row .v { font-weight: 600; color: #f5ede1; }
+  .recap-row .v { font-weight: 600; color: #ede5d1; }
   .recap-divider { height: 1px; background: #3a2818; margin: 8px 0; }
   .recap-total { font-size: 22px; font-weight: 800; }
-  .recap-total span:last-child { color: #fbbf24; }
+  .recap-total span:last-child { color: #c79270; }
 
   /* PAYMENT OPTIONS — XXL & TRÈS VISIBLES */
   .payment-option {
@@ -96,7 +96,7 @@
   }
   .payment-option:hover { border-color: #5a4028; transform: translateY(-1px); }
   .payment-option.selected {
-    border-color: #f97316;
+    border-color: #b86a45;
     background: linear-gradient(135deg, #241408, #1a1108);
     box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
   }
@@ -108,11 +108,11 @@
     flex: 0 0 24px;
     position: relative;
   }
-  .payment-option.selected .pay-radio { border-color: #f97316; }
+  .payment-option.selected .pay-radio { border-color: #b86a45; }
   .payment-option.selected .pay-radio::after {
     content: "";
     position: absolute; inset: 3px;
-    background: #f97316;
+    background: #b86a45;
     border-radius: 50%;
   }
   .pay-logo {
@@ -175,11 +175,11 @@
   .pay-details.show { display: block; }
   .pay-details .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; gap: 10px; flex-wrap: wrap; }
   .pay-details .row .k { color: #d4a574; font-size: 13px; }
-  .pay-details .row .v { font-weight: 700; color: #f5ede1; text-align: right; word-break: break-all; }
+  .pay-details .row .v { font-weight: 700; color: #ede5d1; text-align: right; word-break: break-all; }
   .copy-btn {
     background: #3a2818;
     border: none;
-    color: #fbbf24;
+    color: #c79270;
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 12px;
@@ -194,7 +194,7 @@
     width: 100%;
     margin-top: 14px;
     padding: 14px;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
     color: white;
     border: none;
     border-radius: 12px;
@@ -225,13 +225,13 @@
   .field input {
     background: #14100a;
     border: 1.5px solid #3a2818;
-    color: #f5ede1;
+    color: #ede5d1;
     border-radius: 12px;
     padding: 12px 14px;
     font-size: 15px;
     font-family: inherit;
   }
-  .field input:focus { outline: none; border-color: #f97316; }
+  .field input:focus { outline: none; border-color: #b86a45; }
   .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   .total-bar {
@@ -246,7 +246,7 @@
   }
   .btn-primary {
     width: 100%;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
     color: white;
     border: none;
     border-radius: 16px;
@@ -303,11 +303,11 @@
     margin-top: 12px;
     line-height: 1.5;
   }
-  .info-note strong { color: #fbbf24; }
+  .info-note strong { color: #c79270; }
 
   /* GROSSE BOÎTE RÉFÉRENCE */
   .ref-bigbox {
-    background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+    background: linear-gradient(135deg, #b86a45 0%, #c79270 100%);
     border-radius: 18px;
     padding: 18px;
     margin-bottom: 18px;
@@ -339,7 +339,7 @@
   .ref-copy-btn {
     width: 100%;
     background: #1a1108;
-    color: #fbbf24;
+    color: #c79270;
     border: none;
     border-radius: 12px;
     padding: 12px;
@@ -386,7 +386,7 @@
     display: inline-flex; align-items: center; gap: 6px;
     background: #1a1108;
     border: 1px solid #3a2818;
-    color: #fbbf24;
+    color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
     text-decoration: none;
@@ -418,16 +418,16 @@
 
   <div class="card">
     <div class="card-section-title">
-      <h2>💳 Choisis ton moyen de paiement</h2>
+      <h2>💳 Choisissez votre moyen de paiement</h2>
     </div>
     <p class="card-section-sub">3 options disponibles · paiement sécurisé</p>
 
     <!-- BLOC RÉFÉRENCE ÉNORME -->
     <div class="ref-bigbox">
-      <div class="ref-bigbox-label">⚠️ À indiquer en note de ton paiement</div>
+      <div class="ref-bigbox-label">⚠️ À indiquer en note de votre paiement</div>
       <div class="ref-bigbox-code" id="bigRef">EBENE-XXX</div>
       <button type="button" class="ref-copy-btn" id="bigRefCopy">📋 Copier la référence</button>
-      <div class="ref-bigbox-hint">Sans cette référence, on ne pourra pas relier ton paiement à ta réservation 🙏</div>
+      <div class="ref-bigbox-hint">Sans cette référence, nous ne pourrons pas relier votre paiement à votre réservation 🙏</div>
     </div>
 
     <!-- REVOLUT -->
@@ -446,10 +446,10 @@
       </a>
       <div class="info-note">
         <strong>💡 Comment faire :</strong><br>
-        1. Copie la <strong>référence</strong> ci-dessus<br>
-        2. Clique "Ouvrir Revolut" → entre le montant<br>
-        3. <strong>Colle la référence en note</strong> du paiement<br>
-        4. Reviens ici et clique "J'ai payé" en bas
+        1. Copiez la <strong>référence</strong> ci-dessus<br>
+        2. Cliquez sur "Ouvrir Revolut" → saisissez le montant<br>
+        3. <strong>Collez la référence en note</strong> du paiement<br>
+        4. Revenez ici et cliquez sur "J'ai payé" en bas
       </div>
     </div>
 
@@ -459,7 +459,7 @@
       <span class="pay-logo wero">wero</span>
       <div class="pay-info">
         <div class="pay-name">Wero <span class="pay-badge">Instantané</span></div>
-        <div class="pay-desc">Avec ton numéro de téléphone</div>
+        <div class="pay-desc">Avec votre numéro de téléphone</div>
       </div>
     </label>
     <div class="pay-details" data-panel="wero">
@@ -470,10 +470,10 @@
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-wero"></span></div>
       <div class="info-note">
         <strong>💡 Comment faire :</strong><br>
-        1. Ouvre ton app bancaire → Wero<br>
-        2. Envoie le montant au numéro ci-dessus<br>
-        3. <strong>Colle la référence en note</strong><br>
-        4. Reviens et clique "J'ai payé"
+        1. Ouvrez votre app bancaire → Wero<br>
+        2. Envoyez le montant au numéro ci-dessus<br>
+        3. <strong>Collez la référence en note</strong><br>
+        4. Revenez et cliquez sur "J'ai payé"
       </div>
     </div>
 
@@ -495,7 +495,7 @@
       <div class="row"><span class="k">Bénéficiaire</span><span class="v">Brunch Ébène &amp; Saveurs</span></div>
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-virement"></span></div>
       <div class="info-note">
-        ⚠️ <strong>IBAN à remplacer</strong> par tes vraies coordonnées dans le code avant la mise en ligne. <strong>Colle la référence en libellé</strong> du virement.
+        ⚠️ <strong>IBAN à remplacer</strong> par vos vraies coordonnées dans le code avant la mise en ligne. <strong>Collez la référence en libellé</strong> du virement.
       </div>
     </div>
   </div>
@@ -557,7 +557,7 @@
       bigRefCopy.textContent = '✓ Copié !';
       bigRefCopy.classList.add('copied');
       const t = document.getElementById('toast');
-      t.textContent = '✓ Référence copiée — colle-la en note de ton paiement';
+      t.textContent = '✓ Référence copiée — collez-la en note de votre paiement';
       t.classList.add('show');
       setTimeout(() => {
         bigRefCopy.textContent = '📋 Copier la référence';
