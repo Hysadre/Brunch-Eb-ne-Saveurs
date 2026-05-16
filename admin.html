@@ -228,6 +228,16 @@
   .mode-pill.live .dot { animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
 
+  .loader-spinner {
+    width: 32px; height: 32px;
+    margin: 0 auto;
+    border: 3px solid #3a2818;
+    border-top-color: #f97316;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* Tabs */
   .tabs {
     display: flex;
@@ -275,6 +285,8 @@
   .stat.accent .stat-value { color: #fbbf24; }
   .stat.warning .stat-value { color: #fb923c; }
   .stat.danger .stat-value { color: #f87171; }
+  .stat.success .stat-value { color: #22c55e; }
+  .stat.success { border-color: rgba(34, 197, 94, 0.3); }
 
   /* Filters */
   .filters {
@@ -318,6 +330,29 @@
   td { color: #f5ede1; }
   .highlight { background: rgba(251, 191, 36, 0.08) !important; }
 
+  /* Ligne TOTAL au bas du tableau */
+  tr.totals-row td {
+    background: linear-gradient(135deg, #2a1810, #1a1108) !important;
+    border-top: 2px solid #f97316;
+    font-size: 14px;
+    padding: 16px 14px;
+  }
+  tr.totals-row:hover td { background: linear-gradient(135deg, #2a1810, #1a1108) !important; }
+  tr.totals-row .totals-label {
+    font-weight: 800;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 12px;
+    text-align: right;
+  }
+  tr.totals-row .totals-value {
+    font-weight: 800;
+    color: #fbbf24;
+    font-size: 16px;
+  }
+  tr.totals-row .totals-value.entered { color: #22c55e; }
+
   .badge {
     display: inline-block;
     padding: 3px 10px;
@@ -351,6 +386,25 @@
   .action-btn.validate:hover { background: rgba(22, 163, 74, 0.15); }
   .action-btn.unvalidate { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
   .action-btn.unvalidate:hover { background: rgba(251, 191, 36, 0.15); }
+  .action-btn.archive { color: #fb923c; border-color: rgba(251, 146, 60, 0.3); }
+  .action-btn.archive:hover { background: rgba(251, 146, 60, 0.15); }
+  .action-btn.unarchive { color: #06b6d4; border-color: rgba(6, 182, 212, 0.3); }
+  .action-btn.unarchive:hover { background: rgba(6, 182, 212, 0.15); }
+  /* Ligne d'une résa archivée — opacité réduite + petit badge */
+  tr.archived-row td { opacity: 0.55; }
+  tr.archived-row:hover td { opacity: 0.85; }
+  .archive-pill {
+    display: inline-block;
+    background: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+  }
   .action-btn.delete { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
   .action-btn.delete:hover { background: rgba(248, 113, 113, 0.15); }
 
@@ -513,6 +567,11 @@
         <option value="trio">Trio</option>
         <option value="groupe">Groupe</option>
       </select>
+      <select id="filterArchived">
+        <option value="active">📂 Actives uniquement</option>
+        <option value="all">📂📦 Tout voir</option>
+        <option value="archived">📦 Archivées uniquement</option>
+      </select>
     </div>
 
     <div class="table-wrap">
@@ -585,6 +644,36 @@
   </div>
 </div>
 
+<!-- Modal d'archivage avec motif -->
+<div class="modal-overlay" id="archiveModal">
+  <div class="modal" style="max-width: 480px;">
+    <h3>🗃️ Annuler cette réservation</h3>
+    <p id="archiveModalText" style="margin-bottom: 18px;">La réservation va être archivée. Indique le motif de l'annulation :</p>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; text-align: left;">
+      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+        <input type="radio" name="cancelReason" value="Désistement client" style="accent-color: #f97316;"> Désistement du client
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+        <input type="radio" name="cancelReason" value="Impayé" style="accent-color: #f97316;"> Impayé / Paiement non reçu
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+        <input type="radio" name="cancelReason" value="Doublon" style="accent-color: #f97316;"> Doublon
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+        <input type="radio" name="cancelReason" value="Erreur de saisie" style="accent-color: #f97316;"> Erreur de saisie
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+        <input type="radio" name="cancelReason" value="other" style="accent-color: #f97316;"> Autre (préciser) :
+      </label>
+      <input type="text" id="archiveReasonOther" placeholder="Tape le motif..." style="background: #0f0a06; border: 1.5px solid #3a2818; color: #f5ede1; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 14px;" disabled>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="archiveCancel">Annuler</button>
+      <button class="modal-confirm" id="archiveConfirm" style="background: #f97316;">🗃️ Archiver</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast">✓</div>
 
 <script>
@@ -625,7 +714,15 @@
     }
 
     render();
-    if (API_URL) setInterval(render, 30000);
+    // Auto-refresh toutes les 10s (plus rapide qu'avant)
+    if (API_URL) setInterval(render, 10000);
+
+    // 🔄 Refresh AUTO quand l'utilisateur revient sur l'onglet (depuis scan.html par ex.)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && API_URL) {
+        render();
+      }
+    });
 
     // Démarre le compte à rebours
     updateCountdown();
@@ -694,12 +791,25 @@
   });
 
   // --- Data ---
-  async function getReservations() {
+  async function getReservations(retries = 3) {
     if (API_URL) {
-      try {
-        const r = await fetch(API_URL + '/reservations', { headers: { 'X-Admin-Token': ADMIN_PWD } });
-        if (r.ok) return await r.json();
-      } catch(e) { console.warn('API offline, fallback localStorage', e); }
+      for (let i = 0; i < retries; i++) {
+        try {
+          const ctrl = new AbortController();
+          const timeoutId = setTimeout(() => ctrl.abort(), 60000); // 60s max (cold start Render)
+          const r = await fetch(API_URL + '/reservations', {
+            headers: { 'X-Admin-Token': ADMIN_PWD },
+            signal: ctrl.signal
+          });
+          clearTimeout(timeoutId);
+          if (r.ok) return await r.json();
+          if (r.status === 401) { console.error('Auth incorrecte'); break; }
+          // Sinon, on retry (Render qui se réveille)
+        } catch(e) {
+          console.warn(`API tentative ${i+1}/${retries} échouée`, e.message);
+          if (i < retries - 1) await new Promise(r => setTimeout(r, 2000)); // attend 2s
+        }
+      }
     }
     return JSON.parse(localStorage.getItem('reservations') || '[]');
   }
@@ -739,24 +849,79 @@
     return true;
   }
 
+  async function archiveReservation(id, archive, reason = null) {
+    if (API_URL) {
+      try {
+        const body = { archived: archive };
+        if (reason !== null) body.cancelReason = reason;
+        const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_PWD },
+          body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return true;
+      } catch(e) { console.error(e); toast('Erreur API', true); return false; }
+    }
+    const local = JSON.parse(localStorage.getItem('reservations') || '[]');
+    const found = local.find(x => x.bookingId === id);
+    if (found) {
+      found.archived = archive;
+      found.cancelReason = reason;
+      found.archivedAt = archive ? new Date().toISOString() : null;
+      localStorage.setItem('reservations', JSON.stringify(local));
+    }
+    return true;
+  }
+
   let CACHE = [];
+  let isFirstLoad = true;
 
   async function render() {
-    CACHE = await getReservations();
+    // Loader sur le premier chargement
+    if (isFirstLoad) {
+      document.getElementById('stats').innerHTML = `
+        <div class="stat" style="grid-column: 1 / -1; text-align: center; padding: 24px;">
+          <div class="loader-spinner"></div>
+          <div style="margin-top: 12px; color: #d4a574;">⏳ Chargement des réservations...</div>
+          <div style="margin-top: 4px; font-size: 12px; color: #8a6648;">Le serveur peut mettre jusqu'à 50s à se réveiller (plan gratuit Render)</div>
+        </div>
+      `;
+      document.getElementById('resBody').innerHTML = `
+        <tr><td colspan="12" style="text-align:center; color:#8a6648; padding: 40px;">
+          <div class="loader-spinner" style="margin: 0 auto 12px;"></div>
+          Chargement...
+        </td></tr>
+      `;
+    }
+    const fresh = await getReservations();
+    const previousCount = CACHE.length;
+    CACHE = fresh;
+    isFirstLoad = false;
     renderStats(CACHE);
     renderTable(CACHE);
+    // Notif si nouvelle résa apparue (pas au premier chargement)
+    if (previousCount > 0 && CACHE.length > previousCount) {
+      const diff = CACHE.length - previousCount;
+      toast(`🎫 ${diff} nouvelle${diff > 1 ? 's' : ''} réservation${diff > 1 ? 's' : ''} !`);
+    }
   }
 
   function renderStats(data) {
     const total = data.length;
-    const paid = data.filter(r => r.status === 'confirmé');
-    const pending = data.filter(r => r.status !== 'confirmé');
+    const paid = data.filter(r => r.status === 'confirmé' && !r.archived);
+    const pending = data.filter(r => r.status !== 'confirmé' && !r.archived);
     const placesPaid = paid.reduce((s, r) => s + (r.qty || 0), 0);
     const placesPending = pending.reduce((s, r) => s + (r.qty || 0), 0);
     const revenuePaid = paid.reduce((s, r) => s + (r.total || 0), 0);
     const today = new Date().toISOString().slice(0,10);
     const todayCount = data.filter(r => (r.timestamp || '').slice(0,10) === today).length;
     const fillPct = Math.round(placesPaid/CAPACITY*100);
+
+    // 🚪 Stats de présence (check-in)
+    const placesEntered = paid.reduce((s, r) => s + (r.enteredCount || 0), 0);
+    const fullyEntered = paid.filter(r => (r.enteredCount || 0) >= (r.qty || 1)).length;
+    const presencePct = placesPaid > 0 ? Math.round(placesEntered / placesPaid * 100) : 0;
 
     document.getElementById('stats').innerHTML = `
       <div class="stat">
@@ -769,8 +934,13 @@
         <div class="stat-value">${placesPaid}<span style="font-size:14px; color:#8a6648;"> / ${CAPACITY}</span></div>
         <div class="stat-sub">${Math.max(0, CAPACITY - placesPaid)} restantes</div>
       </div>
+      <div class="stat success">
+        <div class="stat-label">🚪 Présents</div>
+        <div class="stat-value">${placesEntered}<span style="font-size:14px; color:#8a6648;"> / ${placesPaid}</span></div>
+        <div class="stat-sub">${presencePct}% des arrivées · ${fullyEntered} groupe${fullyEntered > 1 ? 's' : ''} complet${fullyEntered > 1 ? 's' : ''}</div>
+      </div>
       <div class="stat accent">
-        <div class="stat-label">Recettes encaissées</div>
+        <div class="stat-label">Recettes</div>
         <div class="stat-value">${revenuePaid.toFixed(0)} €</div>
         <div class="stat-sub">Objectif : ${REVENUE_TARGET.toLocaleString('fr-FR')} €</div>
       </div>
@@ -789,7 +959,12 @@
     const t = document.getElementById('filterTicket').value;
     const urlId = new URLSearchParams(window.location.search).get('id');
 
+    const archivedFilter = document.getElementById('filterArchived').value || 'active';
+
     const filtered = all.filter(r => {
+      // Filtre archives
+      if (archivedFilter === 'active' && r.archived) return false;
+      if (archivedFilter === 'archived' && !r.archived) return false;
       if (m && r.paymentMethod !== m) return false;
       if (s && r.status !== s) return false;
       if (t && r.ticketId !== t) return false;
@@ -818,18 +993,26 @@
       return new Date(b.timestamp) - new Date(a.timestamp);
     });
 
+    // Calcul des totaux (sur les résa filtrées + non archivées)
+    const activeRows = filtered.filter(r => !r.archived);
+    const totalPlaces = activeRows.reduce((s, r) => s + (r.qty || 0), 0);
+    const totalRevenue = activeRows.reduce((s, r) => s + (r.total || 0), 0);
+    const totalEntered = activeRows.reduce((s, r) => s + (r.enteredCount || 0), 0);
+
     body.innerHTML = filtered.map(r => {
       const d = new Date(r.timestamp);
       const dateStr = d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
       const isPaid = r.status === 'confirmé';
       const isHighlight = urlId && r.bookingId === urlId;
       const ticketLink = `${SITE_URL}/ticket.html?id=${encodeURIComponent(r.bookingId)}`;
+      const isArchived = !!r.archived;
       return `
-        <tr class="${isHighlight ? 'highlight' : ''}">
+        <tr class="${isHighlight ? 'highlight' : ''} ${isArchived ? 'archived-row' : ''}">
           <td>
             <a href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation publique" style="text-decoration:none;">
               <code style="font-size:12px; color:#fbbf24; text-decoration:underline; text-underline-offset:3px;">${r.bookingId}</code>
             </a>
+            ${isArchived ? `<div class="archive-pill" title="${r.cancelReason || ''}">📦 ${r.cancelReason || 'Archivé'}</div>` : ''}
           </td>
           <td>${dateStr}</td>
           <td><strong>${r.prenom} ${r.nom}</strong></td>
@@ -850,15 +1033,25 @@
           })()}</td>
           <td>
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
-            ${isPaid
-              ? `<button class="action-btn unvalidate" data-action="unvalidate" data-id="${r.bookingId}">↶ Annuler</button>`
-              : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`
+            ${isArchived
+              ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>`
+              : `${isPaid ? '' : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`}
+                 <button class="action-btn archive" data-action="archive" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Annuler la réservation avec motif">🗃️ Annuler</button>`
             }
             <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}">🗑️</button>
           </td>
         </tr>
       `;
-    }).join('');
+    }).join('') + (filtered.length > 1 ? `
+      <tr class="totals-row">
+        <td colspan="6" class="totals-label">📊 Total (${activeRows.length} résa)</td>
+        <td class="totals-value">${totalPlaces}</td>
+        <td class="totals-value">${totalRevenue.toFixed(2).replace('.', ',')} €</td>
+        <td colspan="2"></td>
+        <td class="totals-value entered">${totalEntered} / ${totalPlaces}</td>
+        <td></td>
+      </tr>
+    ` : '');
 
     // Wire up action buttons
     body.querySelectorAll('.action-btn').forEach(b => {
@@ -869,6 +1062,10 @@
           if (await updateStatus(id, 'confirmé')) { toast('✓ Réservation validée'); render(); }
         } else if (action === 'unvalidate') {
           if (await updateStatus(id, 'en attente vérification')) { toast('↶ Statut remis en attente'); render(); }
+        } else if (action === 'archive') {
+          openArchiveModal(id, b.dataset.name);
+        } else if (action === 'unarchive') {
+          if (await archiveReservation(id, false)) { toast('↩ Réservation restaurée'); render(); }
         } else if (action === 'delete') {
           openDeleteModal(id, b.dataset.name);
         }
@@ -880,6 +1077,7 @@
   document.getElementById('filterMethod').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
+  document.getElementById('filterArchived').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('refreshBtn').addEventListener('click', async () => {
     const btn = document.getElementById('refreshBtn');
     const oldHtml = btn.innerHTML;
@@ -919,6 +1117,47 @@
       toast('🗑️ Réservation supprimée');
       document.getElementById('modal').classList.remove('show');
       pendingDeleteId = null;
+      render();
+    }
+  });
+
+  // --- Modale archivage ---
+  let pendingArchiveId = null;
+  function openArchiveModal(id, name) {
+    pendingArchiveId = id;
+    document.getElementById('archiveModalText').innerHTML = `Tu vas annuler la réservation de <strong style="color:#fbbf24;">${name}</strong> (${id}).<br>Choisis le motif de l'annulation :`;
+    // Reset radios
+    document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
+    document.getElementById('archiveReasonOther').value = '';
+    document.getElementById('archiveReasonOther').disabled = true;
+    document.getElementById('archiveModal').classList.add('show');
+  }
+  document.getElementById('archiveCancel').addEventListener('click', () => {
+    document.getElementById('archiveModal').classList.remove('show');
+    pendingArchiveId = null;
+  });
+  // Active le champ texte "autre" si on coche "Autre"
+  document.querySelectorAll('input[name="cancelReason"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const otherInput = document.getElementById('archiveReasonOther');
+      otherInput.disabled = r.value !== 'other';
+      if (r.value === 'other') otherInput.focus();
+    });
+  });
+  document.getElementById('archiveConfirm').addEventListener('click', async () => {
+    if (!pendingArchiveId) return;
+    const radio = document.querySelector('input[name="cancelReason"]:checked');
+    if (!radio) { toast('Choisis un motif d\'annulation', true); return; }
+    let reason = radio.value;
+    if (reason === 'other') {
+      const custom = document.getElementById('archiveReasonOther').value.trim();
+      if (!custom) { toast('Précise le motif', true); return; }
+      reason = custom;
+    }
+    if (await archiveReservation(pendingArchiveId, true, reason)) {
+      toast(`🗃️ Réservation archivée (${reason})`);
+      document.getElementById('archiveModal').classList.remove('show');
+      pendingArchiveId = null;
       render();
     }
   });
