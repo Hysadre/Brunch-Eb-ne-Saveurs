@@ -615,6 +615,7 @@
   <div class="tabs">
     <div class="tab active" data-tab="resa">📋 Réservations</div>
     <div class="tab" data-tab="analyse">📊 Analyse</div>
+    <div class="tab" data-tab="invites">👥 Invités</div>
   </div>
 
   <!-- ===== TAB: Réservations ===== -->
@@ -716,6 +717,22 @@
         <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
       </div>
     </div>
+  </div>
+
+  <!-- ===== TAB: Invités (focus sur les personnes) ===== -->
+  <div class="tab-panel" id="panel-invites">
+    <div class="stats" id="statsInvites"></div>
+
+    <div class="filters">
+      <input type="text" id="searchInvites" placeholder="🔍 Chercher un invité (nom, prénom)...">
+      <select id="filterInvitesStatus">
+        <option value="confirmed">✓ Confirmés uniquement</option>
+        <option value="all">Tout voir (en attente compris)</option>
+      </select>
+      <button class="btn btn-secondary" id="printInvitesBtn" style="cursor:pointer;">🖨️ Imprimer la liste</button>
+    </div>
+
+    <div id="invitesList" style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; overflow:hidden;"></div>
   </div>
 </div>
 
@@ -883,7 +900,105 @@
       t.classList.add('active');
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
+      if (t.dataset.tab === 'invites') renderInvites();
     });
+  });
+
+  // 👥 Onglet Invités — focus sur les personnes + accompagnants
+  function renderInvites() {
+    const q = (document.getElementById('searchInvites').value || '').toLowerCase();
+    const statusFilter = document.getElementById('filterInvitesStatus').value;
+    const filtered = CACHE.filter(r => {
+      if (r.archived) return false;
+      if (statusFilter === 'confirmed' && r.status !== 'confirmé') return false;
+      if (q) {
+        const blob = `${r.prenom} ${r.nom} ${r.accompagnants || ''}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    }).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+
+    // Stats invités
+    const totalGroupes = filtered.length;
+    const totalPersonnes = filtered.reduce((s, r) => s + (r.qty || 0), 0);
+    const totalAccompagnants = filtered.reduce((s, r) => {
+      if (!r.accompagnants) return s;
+      return s + r.accompagnants.split(',').filter(x => x.trim()).length;
+    }, 0);
+    const totalEntered = filtered.reduce((s, r) => s + (r.enteredCount || 0), 0);
+
+    document.getElementById('statsInvites').innerHTML = `
+      <div class="stat accent">
+        <div class="stat-label">👥 Total invités</div>
+        <div class="stat-value">${totalPersonnes}</div>
+        <div class="stat-sub">${totalGroupes} groupe${totalGroupes>1?'s':''}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">🎫 Réservateurs</div>
+        <div class="stat-value">${totalGroupes}</div>
+        <div class="stat-sub">${totalAccompagnants} accompagnants</div>
+      </div>
+      <div class="stat success">
+        <div class="stat-label">🚪 Présents</div>
+        <div class="stat-value">${totalEntered}<span style="font-size:14px; color:#8a6648;"> / ${totalPersonnes}</span></div>
+        <div class="stat-sub">${totalPersonnes - totalEntered} à venir</div>
+      </div>
+    `;
+
+    const list = document.getElementById('invitesList');
+    if (!filtered.length) {
+      list.innerHTML = `<div style="padding: 50px 20px; text-align: center; color: #8a6648;">Aucun invité à afficher</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((r, idx) => {
+      const accompList = (r.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+      const isPaid = r.status === 'confirmé';
+      const entered = r.enteredCount || 0;
+      const qty = r.qty || 1;
+      return `
+        <div style="padding: 18px; ${idx < filtered.length - 1 ? 'border-bottom: 1px solid #3a2818;' : ''}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #f97316, #fbbf24); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #1a1108; font-size: 14px; flex-shrink: 0;">
+                  ${(r.prenom || '?').charAt(0).toUpperCase()}${(r.nom || '?').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style="font-weight: 800; color: #fff; font-size: 15px;">${r.prenom} ${r.nom}</div>
+                  <div style="font-size: 11px; color: #8a6648; margin-top: 2px;">
+                    <span style="background: ${isPaid ? 'rgba(34,197,94,0.15)' : 'rgba(251,191,36,0.15)'}; color: ${isPaid ? '#22c55e' : '#fbbf24'}; padding: 2px 8px; border-radius: 99px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">${isPaid ? '✓ Payé' : '⏳ Attente'}</span>
+                    <span style="margin-left: 8px;">${r.ticketName} · ${qty} place${qty>1?'s':''}</span>
+                    ${entered > 0 ? `<span style="margin-left: 8px; color: ${entered >= qty ? '#22c55e' : '#fbbf24'};">🚪 ${entered}/${qty}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              ${accompList.length > 0 ? `
+                <div style="margin-top: 12px; margin-left: 46px; padding-left: 14px; border-left: 2px solid #3a2818;">
+                  <div style="font-size: 11px; color: #8a6648; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 6px;">👤 Accompagnant${accompList.length > 1 ? 's' : ''}</div>
+                  ${accompList.map(a => `<div style="color: #d4a574; font-size: 14px; padding: 3px 0;">• ${a}</div>`).join('')}
+                </div>
+              ` : (qty > 1 ? `
+                <div style="margin-top: 10px; margin-left: 46px; font-size: 12px; color: #f87171; font-style: italic;">
+                  ⚠️ ${qty - 1} accompagnant${qty - 1 > 1 ? 's' : ''} non renseigné${qty - 1 > 1 ? 's' : ''}
+                </div>
+              ` : '')}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Listeners onglet Invités
+  document.getElementById('searchInvites').addEventListener('input', renderInvites);
+  document.getElementById('filterInvitesStatus').addEventListener('change', renderInvites);
+  document.getElementById('printInvitesBtn').addEventListener('click', () => {
+    const oldTitle = document.title;
+    document.title = `Liste invites - Brunch Ebene Saveurs`;
+    window.print();
+    setTimeout(() => { document.title = oldTitle; }, 500);
   });
 
   // --- Data ---
