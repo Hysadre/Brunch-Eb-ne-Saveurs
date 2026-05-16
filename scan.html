@@ -368,23 +368,79 @@
       bookingId = url.searchParams.get('id') || decodedText;
     } catch(e) { /* ce n'est pas une URL, on prend le texte brut */ }
 
-    // Beep
-    beep();
-    // Vibration
-    if (navigator.vibrate) navigator.vibrate(150);
+    // Petit bip "scan détecté" neutre — le vrai feedback sonore arrive après vérification
+    playSound('detect');
 
     fetchAndShow(bookingId);
   }
 
-  function beep() {
+  // 🔊 Sons distincts selon le résultat
+  // Web Audio API : différentes fréquences et patterns pour chaque cas
+  function playSound(type) {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = 800; g.gain.value = 0.1;
-      o.start(); setTimeout(() => { o.stop(); ctx.close(); }, 150);
-    } catch(e) {}
+      const seq = SOUND_SEQUENCES[type] || SOUND_SEQUENCES.detect;
+      seq.forEach(note => {
+        playTone(ctx, note.freq, note.delay, note.duration, note.type || 'sine', note.volume || 0.15);
+      });
+      // Vibration associée
+      if (navigator.vibrate && VIBRATIONS[type]) navigator.vibrate(VIBRATIONS[type]);
+      // Ferme le contexte audio après la fin
+      const total = Math.max(...seq.map(n => (n.delay + n.duration))) * 1000 + 200;
+      setTimeout(() => { try { ctx.close(); } catch(e) {} }, total);
+    } catch(e) { console.warn('Audio error', e); }
   }
+
+  function playTone(ctx, freq, delay, duration, waveType = 'sine', volume = 0.15) {
+    setTimeout(() => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = waveType;
+      o.frequency.value = freq;
+      o.connect(g);
+      g.connect(ctx.destination);
+      g.gain.setValueAtTime(volume, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      o.start();
+      o.stop(ctx.currentTime + duration);
+    }, delay * 1000);
+  }
+
+  const SOUND_SEQUENCES = {
+    // Détection (juste un petit click neutre)
+    detect: [
+      { freq: 900, delay: 0, duration: 0.05, volume: 0.08 }
+    ],
+    // ✅ Succès — bip aigu joyeux montant (style supermarché)
+    success: [
+      { freq: 1200, delay: 0, duration: 0.10 },
+      { freq: 1800, delay: 0.10, duration: 0.15 }
+    ],
+    // 🔵 Déjà scanné — descendant, mélancolique "déjà vu"
+    already: [
+      { freq: 700, delay: 0,    duration: 0.12 },
+      { freq: 500, delay: 0.14, duration: 0.12 },
+      { freq: 400, delay: 0.28, duration: 0.25 }
+    ],
+    // ⚠️ Paiement en attente — deux tons hésitants
+    pending: [
+      { freq: 600, delay: 0,    duration: 0.15 },
+      { freq: 600, delay: 0.20, duration: 0.30 }
+    ],
+    // ❌ Erreur — bzzz grave, désagréable
+    error: [
+      { freq: 200, delay: 0,    duration: 0.20, type: 'sawtooth', volume: 0.20 },
+      { freq: 150, delay: 0.25, duration: 0.30, type: 'sawtooth', volume: 0.20 }
+    ]
+  };
+
+  const VIBRATIONS = {
+    detect:  [50],
+    success: [80, 30, 80],
+    already: [200, 80, 100],
+    pending: [150],
+    error:   [400]
+  };
 
   async function fetchAndShow(bookingId) {
     try {
@@ -430,27 +486,32 @@
       icon.textContent = '✓';
       title.textContent = 'BILLET VALIDE';
       sub.textContent = 'Paiement confirmé · prêt à entrer';
+      playSound('success');
     } else if (state === 'already') {
       banner.classList.add('already');
       icon.textContent = 'ℹ️';
       title.textContent = 'DÉJÀ ENTRÉ';
       const t = data.enteredAt ? new Date(data.enteredAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
       sub.textContent = `Cette personne est déjà venue${t ? ' à ' + t : ''}`;
+      playSound('already');
     } else if (state === 'unpaid') {
       banner.classList.add('warning');
       icon.textContent = '⏳';
       title.textContent = 'PAIEMENT EN ATTENTE';
       sub.textContent = 'À vérifier dans le dashboard avant d\'entrer';
+      playSound('pending');
     } else if (state === 'notfound') {
       banner.classList.add('danger');
       icon.textContent = '✕';
       title.textContent = 'INTROUVABLE';
       sub.textContent = `Aucune résa pour ${data.bookingId}`;
+      playSound('error');
     } else {
       banner.classList.add('danger');
       icon.textContent = '!';
       title.textContent = 'ERREUR';
       sub.textContent = data.error || 'Problème de connexion';
+      playSound('error');
     }
 
     body.innerHTML = data.prenom ? `
