@@ -345,7 +345,7 @@ app.post('/api/reservations', async (req, res) => {
   }
 });
 
-// Modifier le statut (admin)
+// Modifier le statut OU le check-in (admin)
 app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -355,6 +355,11 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
     const patch = {};
     if (req.body.status) patch.status = req.body.status;
     if (req.body.status === 'confirmé') patch.paidAt = new Date().toISOString();
+    // Check-in à l'entrée
+    if (typeof req.body.entered === 'boolean') {
+      patch.entered = req.body.entered;
+      patch.enteredAt = req.body.entered ? (req.body.enteredAt || new Date().toISOString()) : null;
+    }
     await patchReservation(id, patch);
 
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
