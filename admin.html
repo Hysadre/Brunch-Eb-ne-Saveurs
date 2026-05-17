@@ -748,6 +748,18 @@
   </div>
 </div>
 
+<!-- Modal sélection personne à supprimer (résa Duo/Trio) -->
+<div class="modal-overlay" id="personModal">
+  <div class="modal" style="max-width: 500px;">
+    <h3>🗑️ Qui souhaitez-vous retirer ?</h3>
+    <p id="personModalText" style="margin-bottom: 14px;">Cette réservation contient plusieurs personnes. Choisis qui retirer :</p>
+    <div id="personModalList" style="display:flex; flex-direction:column; gap:8px; text-align:left; margin-bottom: 14px;"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="personCancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal d'archivage avec motif -->
 <div class="modal-overlay" id="archiveModal">
   <div class="modal" style="max-width: 480px;">
@@ -1433,7 +1445,13 @@
         } else if (action === 'unarchive') {
           if (await archiveReservation(id, false)) { toast('↩ Réservation restaurée'); render(); }
         } else if (action === 'delete') {
-          openDeleteModal(id, b.dataset.name);
+          // Si Duo/Trio → choisir qui supprimer ; sinon delete direct
+          const resa = CACHE.find(x => x.bookingId === id);
+          if (resa && (resa.qty || 1) > 1) {
+            openPersonModal(resa);
+          } else {
+            openDeleteModal(id, b.dataset.name);
+          }
         } else if (action === 'resend') {
           const email = b.dataset.email;
           const old = b.innerHTML;
@@ -1479,6 +1497,115 @@
       btn.disabled = false;
     }
   });
+
+  // --- Modale "Qui supprimer ?" pour Duo/Trio ---
+  function openPersonModal(resa) {
+    const accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+    document.getElementById('personModalText').innerHTML = `Réservation <strong style="color:#c79270;">${resa.bookingId}</strong> · ${resa.qty} places.<br>Qui souhaitez-vous retirer ?`;
+    const list = document.getElementById('personModalList');
+    let html = '';
+    // Réservateur principal
+    html += `
+      <button class="action-btn delete person-row" data-role="reservateur" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%;">
+        <span style="width:32px; height:32px; flex-shrink:0; background: linear-gradient(135deg, #b86a45, #c79270); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#1a1108; font-size:13px;">${(resa.prenom||'?').charAt(0)}${(resa.nom||'?').charAt(0)}</span>
+        <div style="flex:1;">
+          <div style="color:#fff; font-weight:800;">${resa.prenom} ${resa.nom}</div>
+          <div style="font-size:11px; color:#f87171; margin-top:2px;">⚠️ Réservateur — supprimer annule TOUT</div>
+        </div>
+        <span style="color:#f87171; font-size:20px;">🗑️</span>
+      </button>
+    `;
+    // Accompagnants
+    accomps.forEach((name, idx) => {
+      html += `
+        <button class="action-btn delete person-row" data-role="accompagnant" data-index="${idx}" data-name="${name}" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%;">
+          <span style="width:32px; height:32px; flex-shrink:0; background: rgba(199,146,112,0.2); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#c79270; font-size:13px;">👤</span>
+          <div style="flex:1;">
+            <div style="color:#fff; font-weight:700;">${name}</div>
+            <div style="font-size:11px; color:#d4a574; margin-top:2px;">Accompagnant ${idx + 1} — retire 1 place</div>
+          </div>
+          <span style="color:#f87171; font-size:18px;">🗑️</span>
+        </button>
+      `;
+    });
+    // Placeholder si accompagnants non renseignés mais qty > 1
+    const missing = (resa.qty || 1) - 1 - accomps.length;
+    for (let i = 0; i < missing; i++) {
+      html += `
+        <button class="action-btn delete person-row" data-role="placeholder" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%; opacity:0.7;">
+          <span style="width:32px; height:32px; flex-shrink:0; background: #3a2818; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#8a6648; font-size:13px;">?</span>
+          <div style="flex:1;">
+            <div style="color:#d4a574; font-weight:700; font-style:italic;">Accompagnant non renseigné</div>
+            <div style="font-size:11px; color:#8a6648; margin-top:2px;">Retire 1 place</div>
+          </div>
+          <span style="color:#f87171; font-size:18px;">🗑️</span>
+        </button>
+      `;
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('.person-row').forEach(btn => {
+      btn.addEventListener('click', () => handlePersonDelete(btn, resa));
+    });
+    document.getElementById('personModal').classList.add('show');
+  }
+
+  document.getElementById('personCancel').addEventListener('click', () => {
+    document.getElementById('personModal').classList.remove('show');
+  });
+
+  async function handlePersonDelete(btn, resa) {
+    const role = btn.dataset.role;
+    if (role === 'reservateur') {
+      if (!confirm(`⚠️ Supprimer la réservation entière de ${resa.prenom} ${resa.nom} ?\n\nLes ${resa.qty} places seront annulées et un mail d'annulation sera envoyé au client.`)) return;
+      document.getElementById('personModal').classList.remove('show');
+      if (await deleteReservation(resa.bookingId)) {
+        toast('🗑️ Réservation entière supprimée');
+        render();
+      }
+      return;
+    }
+    const personName = btn.dataset.name || 'cet accompagnant non renseigné';
+    if (!confirm(`Retirer ${personName} de la réservation ?\n\nLa résa passe de ${resa.qty} à ${resa.qty - 1} places (-${resa.ticketPrice || 35}€).`)) return;
+    document.getElementById('personModal').classList.remove('show');
+
+    const accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+    if (role === 'accompagnant') {
+      const idx = parseInt(btn.dataset.index, 10);
+      accomps.splice(idx, 1);
+    }
+
+    const newQty = resa.qty - 1;
+    const newTotal = (resa.ticketPrice || 35) * newQty;
+    let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
+    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
+    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
+    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
+    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+
+    if (await updateReservation(resa.bookingId, {
+      qty: newQty,
+      total: newTotal,
+      accompagnants: accomps.join(', ') || null,
+      ticketName: newTicketName,
+      ticketId: newTicketId
+    })) {
+      toast(`✓ ${personName} retiré · résa passée à ${newQty} place${newQty>1?'s':''}`);
+      render();
+    }
+  }
+
+  async function updateReservation(id, patch) {
+    if (!API_URL) { toast('Mode démo non supporté', true); return false; }
+    try {
+      const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_PWD },
+        body: JSON.stringify(patch)
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return true;
+    } catch(e) { console.error(e); toast('Erreur API : ' + e.message, true); return false; }
+  }
 
   // --- Modal suppression ---
   let pendingDeleteId = null;

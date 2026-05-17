@@ -199,7 +199,29 @@
   }
   .qty button:active { transform: scale(.92); }
   .qty button:disabled { opacity: .4; cursor: not-allowed; }
-  .qty-value { font-size: 18px; font-weight: 700; color: #fff; }
+  input.qty-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    background: transparent;
+    border: none;
+    text-align: center;
+    width: 70px;
+    padding: 6px 0;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: textfield;
+  }
+  input.qty-value::-webkit-outer-spin-button,
+  input.qty-value::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input.qty-value:focus {
+    outline: none;
+    color: #c79270;
+  }
 
   .menu-grid {
     display: grid;
@@ -567,7 +589,7 @@
       </div>
       <div class="qty">
         <button type="button" id="qtyMinus" aria-label="Diminuer">−</button>
-        <span class="qty-value" id="qtyValue">1</span>
+        <input type="number" id="qtyValue" class="qty-value" value="1" min="1" max="10" inputmode="numeric" pattern="[0-9]*" aria-label="Nombre de places">
         <button type="button" id="qtyPlus" aria-label="Augmenter">+</button>
       </div>
 
@@ -757,9 +779,34 @@
     if (state.qty < state.max) setQty(state.qty + 1);
   });
 
+  // 🆕 Saisie manuelle du nombre de places
+  qtyValueEl.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > state.max) val = state.max;
+    // On NE met PAS à jour le state ici pour permettre à l'user de taper sans interruption
+    // Mais on plafonne visuellement
+    if (val !== parseInt(e.target.value, 10)) e.target.value = val;
+    state.qty = val;
+    // Highlight + total + accompagnants
+    document.querySelectorAll('.ticket').forEach(t => {
+      t.classList.toggle('selected', parseInt(t.dataset.places, 10) === val);
+    });
+    updateTotal();
+    updateAccompagnantsFields();
+  });
+  // Au blur : si vide ou invalide, remet à 1
+  qtyValueEl.addEventListener('blur', () => {
+    let val = parseInt(qtyValueEl.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > state.max) val = state.max;
+    qtyValueEl.value = val;
+    setQty(val);
+  });
+
   function setQty(n) {
     state.qty = n;
-    qtyValueEl.textContent = n;
+    qtyValueEl.value = n;
     // Highlight la formule correspondante
     document.querySelectorAll('.ticket').forEach(t => {
       t.classList.toggle('selected', parseInt(t.dataset.places, 10) === n);
