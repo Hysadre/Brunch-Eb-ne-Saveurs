@@ -736,56 +736,80 @@
   </div>
 </div>
 
-<!-- Modal de confirmation suppression -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <h3>⚠️ Supprimer cette réservation ?</h3>
-    <p id="modalText">Cette action est irréversible. La réservation ne pourra pas être récupérée.</p>
-    <div class="modal-actions">
-      <button class="modal-cancel" id="modalCancel">Annuler</button>
-      <button class="modal-confirm" id="modalConfirm">Supprimer</button>
-    </div>
-  </div>
-</div>
+<!-- (Modal "suppression définitive" retiré — toutes les annulations passent par l'archivage avec motif) -->
 
-<!-- Modal sélection personne à supprimer (résa Duo/Trio) -->
-<div class="modal-overlay" id="personModal">
-  <div class="modal" style="max-width: 500px;">
-    <h3>🗑️ Qui souhaitez-vous retirer ?</h3>
-    <p id="personModalText" style="margin-bottom: 14px;">Cette réservation contient plusieurs personnes. Choisis qui retirer :</p>
-    <div id="personModalList" style="display:flex; flex-direction:column; gap:8px; text-align:left; margin-bottom: 14px;"></div>
-    <div class="modal-actions">
-      <button class="modal-cancel" id="personCancel">Annuler</button>
-    </div>
-  </div>
-</div>
+<!-- (Modal "personne à retirer" supprimé — fusionné dans archiveModal) -->
 
-<!-- Modal d'archivage avec motif -->
+<!-- 🗃️ Modal UNIFIÉ : Retirer/Annuler (qui + motif) — tout part en archive, rien supprimé -->
 <div class="modal-overlay" id="archiveModal">
-  <div class="modal" style="max-width: 480px;">
-    <h3>🗃️ Annuler cette réservation</h3>
-    <p id="archiveModalText" style="margin-bottom: 18px;">La réservation va être archivée. Indique le motif de l'annulation :</p>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; text-align: left;">
-      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
-        <input type="radio" name="cancelReason" value="Désistement client" style="accent-color: #b86a45;"> Désistement du client
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
-        <input type="radio" name="cancelReason" value="Impayé" style="accent-color: #b86a45;"> Impayé / Paiement non reçu
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
-        <input type="radio" name="cancelReason" value="Doublon" style="accent-color: #b86a45;"> Doublon
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
-        <input type="radio" name="cancelReason" value="Erreur de saisie" style="accent-color: #b86a45;"> Erreur de saisie
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
-        <input type="radio" name="cancelReason" value="other" style="accent-color: #b86a45;"> Autre (préciser) :
-      </label>
-      <input type="text" id="archiveReasonOther" placeholder="Tape le motif..." style="background: #0f0a06; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 14px;" disabled>
+  <div class="modal" style="max-width: 540px;">
+    <h3 id="archiveModalTitle">🗃️ Retirer / Annuler</h3>
+    <p id="archiveModalText" style="margin-bottom: 16px;"></p>
+
+    <!-- 1) Qui retirer ? (visible uniquement si qty > 1) -->
+    <div id="personSection" style="display:none; text-align:left; margin-bottom: 14px;">
+      <div style="font-size:11px; color:#c79270; letter-spacing:1.5px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">1️⃣ Qui souhaitez-vous retirer&nbsp;?</div>
+      <div id="personList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
     </div>
+
+    <!-- 2) Motif (toujours visible) -->
+    <div style="text-align:left; margin-bottom: 14px;">
+      <div id="reasonStepLabel" style="font-size:11px; color:#c79270; letter-spacing:1.5px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">Motif de l'annulation</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+          <input type="radio" name="cancelReason" value="Désistement client" style="accent-color: #b86a45;"> Désistement du client
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+          <input type="radio" name="cancelReason" value="Impayé" style="accent-color: #b86a45;"> Impayé / Paiement non reçu
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+          <input type="radio" name="cancelReason" value="Doublon" style="accent-color: #b86a45;"> Doublon
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+          <input type="radio" name="cancelReason" value="Erreur de saisie" style="accent-color: #b86a45;"> Erreur de saisie
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; padding: 10px 12px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 10px; cursor: pointer;">
+          <input type="radio" name="cancelReason" value="other" style="accent-color: #b86a45;"> Autre (préciser) :
+        </label>
+        <input type="text" id="archiveReasonOther" placeholder="Tape le motif..." style="background: #0f0a06; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 14px;" disabled>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="modal-cancel" id="archiveCancel">Annuler</button>
-      <button class="modal-confirm" id="archiveConfirm" style="background: #b86a45;">🗃️ Archiver</button>
+      <button class="modal-confirm" id="archiveConfirm" style="background: #b86a45;" disabled>🗃️ Archiver · Mail envoyé</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✏️ Modal MODIFICATION : ajouter des places à une résa existante -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width: 540px;">
+    <h3>✏️ Modifier la réservation</h3>
+    <p id="editModalText" style="margin-bottom: 14px; color:#d4a574;"></p>
+
+    <div style="text-align:left; margin-bottom: 16px;">
+      <div style="font-size:11px; color:#c79270; letter-spacing:1.5px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">Combien de places ajouter&nbsp;?</div>
+      <div style="display:flex; align-items:center; gap:10px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; padding:10px;">
+        <button type="button" id="editQtyMinus" style="width:38px; height:38px; border-radius:10px; background:#3a2818; border:none; color:#fff; font-size:20px; font-weight:800; cursor:pointer;">−</button>
+        <div style="flex:1; text-align:center;">
+          <div id="editAddCount" style="font-size:26px; font-weight:800; color:#c79270;">1</div>
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1px;">place(s) en plus</div>
+        </div>
+        <button type="button" id="editQtyPlus" style="width:38px; height:38px; border-radius:10px; background:#b86a45; border:none; color:#fff; font-size:20px; font-weight:800; cursor:pointer;">+</button>
+      </div>
+    </div>
+
+    <div style="text-align:left; margin-bottom: 16px;">
+      <div style="font-size:11px; color:#c79270; letter-spacing:1.5px; font-weight:800; text-transform:uppercase; margin-bottom:10px;">Nom des nouvelles personnes (facultatif)</div>
+      <div id="editNamesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div id="editRecap" style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#d4a574; text-align:left;"></div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" id="editCancel">Annuler</button>
+      <button class="modal-confirm" id="editConfirm" style="background:#16a34a;">✓ Enregistrer · Mail envoyé</button>
     </div>
   </div>
 </div>
@@ -794,9 +818,8 @@
 <div class="bulk-bar" id="bulkBar">
   <span class="bulk-count" id="bulkCount">0 sélectionnées</span>
   <button class="bulk-btn validate" id="bulkValidate">✓ Valider</button>
-  <button class="bulk-btn archive" id="bulkArchive">🗃️ Archiver</button>
-  <button class="bulk-btn delete" id="bulkDelete">🗑️ Supprimer</button>
-  <button class="bulk-btn cancel" id="bulkCancel">✕ Annuler</button>
+  <button class="bulk-btn archive" id="bulkArchive">🗃️ Annuler (archiver)</button>
+  <button class="bulk-btn cancel" id="bulkCancel">✕ Désélectionner</button>
 </div>
 
 <div class="toast" id="toast">✓</div>
@@ -1404,11 +1427,12 @@
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
             ${(!isArchived && isPaid) ? `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation (avec QR) au client">📧 Renvoyer QR</button>` : ''}
             ${isArchived
-              ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>`
+              ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>
+                 <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Supprimer définitivement de la base (irréversible)" style="background: rgba(185,28,28,0.12); border-color: rgba(248,113,113,0.4); color:#f87171;">🗑️ Supprimer définitivement</button>`
               : `${isPaid ? '' : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`}
-                 <button class="action-btn archive" data-action="archive" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Annuler la réservation avec motif">🗃️ Annuler</button>`
+                 <button class="action-btn edit" data-action="edit" data-id="${r.bookingId}" title="Modifier (ajouter des places)" style="background: rgba(22,163,74,0.12); border-color: rgba(22,163,74,0.4); color:#22c55e;">✏️ Modifier</button>
+                 <button class="action-btn archive" data-action="archive" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Retirer une personne ou annuler la réservation (avec motif)">🗃️ Annuler / Retirer</button>`
             }
-            <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}">🗑️</button>
           </td>
         </tr>
       `;
@@ -1441,16 +1465,19 @@
         } else if (action === 'unvalidate') {
           if (await updateStatus(id, 'en attente vérification')) { toast('↶ Statut remis en attente'); render(); }
         } else if (action === 'archive') {
-          openArchiveModal(id, b.dataset.name);
+          const resa = CACHE.find(x => x.bookingId === id);
+          openArchiveModal(id, b.dataset.name, resa);
         } else if (action === 'unarchive') {
           if (await archiveReservation(id, false)) { toast('↩ Réservation restaurée'); render(); }
-        } else if (action === 'delete') {
-          // Si Duo/Trio → choisir qui supprimer ; sinon delete direct
+        } else if (action === 'edit') {
           const resa = CACHE.find(x => x.bookingId === id);
-          if (resa && (resa.qty || 1) > 1) {
-            openPersonModal(resa);
-          } else {
-            openDeleteModal(id, b.dataset.name);
+          if (resa) openEditModal(resa);
+        } else if (action === 'delete') {
+          // 🗑️ Suppression DÉFINITIVE — uniquement depuis les archivées
+          if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT la réservation de ${b.dataset.name} (${id}) ?\n\nElle sera retirée de la base de données et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
+          if (await deleteReservation(id)) {
+            toast('🗑️ Réservation supprimée définitivement');
+            render();
           }
         } else if (action === 'resend') {
           const email = b.dataset.email;
@@ -1498,128 +1525,156 @@
     }
   });
 
-  // --- Modale "Qui supprimer ?" pour Duo/Trio ---
-  function openPersonModal(resa) {
+  // ====================================================
+  //  MODAL UNIFIÉ "Retirer / Annuler" (qui + motif)
+  //  Tout part en archive — rien n'est jamais supprimé
+  // ====================================================
+  let archiveContext = null;
+  // { mode: 'single' | 'bulk', resa: {...}, ids: [...] }
+
+  function openArchiveModal(id, name, resa) {
+    const personSection = document.getElementById('personSection');
+    const personList = document.getElementById('personList');
+    const titleEl = document.getElementById('archiveModalTitle');
+    const textEl = document.getElementById('archiveModalText');
+    const reasonLabel = document.getElementById('reasonStepLabel');
+    const confirmBtn = document.getElementById('archiveConfirm');
+
+    archiveContext = { mode: 'single', resa, id, name, selectedPerson: null };
+
+    // Reset
+    document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
+    document.getElementById('archiveReasonOther').value = '';
+    document.getElementById('archiveReasonOther').disabled = true;
+    confirmBtn.disabled = true;
+
+    if (!resa || (resa.qty || 1) <= 1) {
+      // Résa 1 place → on saute "qui retirer", motif seul = annulation totale
+      personSection.style.display = 'none';
+      titleEl.textContent = '🗃️ Annuler cette réservation';
+      textEl.innerHTML = `Réservation de <strong style="color:#c79270;">${name}</strong> (${id}).<br>Choisis le motif de l'annulation :`;
+      reasonLabel.innerHTML = 'Motif de l\'annulation';
+      archiveContext.selectedPerson = 'fullcancel';  // implicite
+      confirmBtn.textContent = '🗃️ Archiver · Mail envoyé';
+    } else {
+      // Résa multi-places → 2 sections
+      personSection.style.display = 'block';
+      titleEl.textContent = '🗃️ Retirer / Annuler';
+      textEl.innerHTML = `Réservation <strong style="color:#c79270;">${id}</strong> · ${resa.qty} places.`;
+      reasonLabel.innerHTML = '2️⃣ Motif';
+      renderPersonList(resa);
+      confirmBtn.textContent = 'Choisis qui retirer ↑';
+    }
+
+    document.getElementById('archiveModal').classList.add('show');
+  }
+
+  function renderPersonList(resa) {
     const accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
-    document.getElementById('personModalText').innerHTML = `Réservation <strong style="color:#c79270;">${resa.bookingId}</strong> · ${resa.qty} places.<br>Qui ne vient plus ? <span style="color:#8a6648; font-size:12px;">(les autres conservent leur place)</span>`;
-    const list = document.getElementById('personModalList');
+    const list = document.getElementById('personList');
     let html = '';
-    // Réservateur principal — retire juste 1 place, garde les accompagnants
+    // Réservateur
     html += `
-      <button class="action-btn delete person-row" data-role="reservateur" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%;">
-        <span style="width:32px; height:32px; flex-shrink:0; background: linear-gradient(135deg, #b86a45, #c79270); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#1a1108; font-size:13px;">${(resa.prenom||'?').charAt(0)}${(resa.nom||'?').charAt(0)}</span>
+      <label class="person-pick" data-role="reservateur" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer;">
+        <input type="radio" name="personPick" value="reservateur" style="accent-color:#b86a45;">
+        <span style="width:32px; height:32px; flex-shrink:0; background:linear-gradient(135deg, #b86a45, #c79270); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#1a1108; font-size:13px;">${(resa.prenom||'?').charAt(0)}${(resa.nom||'?').charAt(0)}</span>
         <div style="flex:1;">
           <div style="color:#fff; font-weight:800;">${resa.prenom} ${resa.nom}</div>
-          <div style="font-size:11px; color:#c79270; margin-top:2px;">⭐ Réservateur — retire 1 place (les accompagnants viennent toujours)</div>
+          <div style="font-size:11px; color:#c79270; margin-top:2px;">⭐ Réservateur — retire 1 place</div>
         </div>
-        <span style="color:#f87171; font-size:18px;">🗑️</span>
-      </button>
+      </label>
     `;
-    // Accompagnants
+    // Accompagnants nommés
     accomps.forEach((name, idx) => {
       html += `
-        <button class="action-btn delete person-row" data-role="accompagnant" data-index="${idx}" data-name="${name}" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%;">
-          <span style="width:32px; height:32px; flex-shrink:0; background: rgba(199,146,112,0.2); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#c79270; font-size:13px;">👤</span>
+        <label class="person-pick" data-role="accompagnant" data-index="${idx}" data-name="${name}" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer;">
+          <input type="radio" name="personPick" value="accompagnant-${idx}" style="accent-color:#b86a45;">
+          <span style="width:32px; height:32px; flex-shrink:0; background:rgba(199,146,112,0.2); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#c79270; font-size:13px;">👤</span>
           <div style="flex:1;">
             <div style="color:#fff; font-weight:700;">${name}</div>
             <div style="font-size:11px; color:#d4a574; margin-top:2px;">Accompagnant ${idx + 1} — retire 1 place</div>
           </div>
-          <span style="color:#f87171; font-size:18px;">🗑️</span>
-        </button>
+        </label>
       `;
     });
-    // Placeholder si accompagnants non renseignés mais qty > 1
+    // Placeholders pour accompagnants non renseignés
     const missing = (resa.qty || 1) - 1 - accomps.length;
     for (let i = 0; i < missing; i++) {
       html += `
-        <button class="action-btn delete person-row" data-role="placeholder" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%; opacity:0.7;">
-          <span style="width:32px; height:32px; flex-shrink:0; background: #3a2818; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#8a6648; font-size:13px;">?</span>
+        <label class="person-pick" data-role="placeholder" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer; opacity:0.75;">
+          <input type="radio" name="personPick" value="placeholder-${i}" style="accent-color:#b86a45;">
+          <span style="width:32px; height:32px; flex-shrink:0; background:#3a2818; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#8a6648; font-size:13px;">?</span>
           <div style="flex:1;">
             <div style="color:#d4a574; font-weight:700; font-style:italic;">Accompagnant non renseigné</div>
             <div style="font-size:11px; color:#8a6648; margin-top:2px;">Retire 1 place</div>
           </div>
-          <span style="color:#f87171; font-size:18px;">🗑️</span>
-        </button>
+        </label>
       `;
     }
-    // Séparateur + bouton annuler TOUTE la résa (option nucléaire) — bien visible
+    // Séparateur + "Annuler TOUTE"
     html += `
-      <div style="margin: 14px 0 6px; padding: 0 4px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <div style="height:1px; flex:1; background:#3a2818;"></div>
-          <span style="font-size:10px; color:#8a6648; letter-spacing:1.5px; font-weight:700; text-transform:uppercase;">OU</span>
-          <div style="height:1px; flex:1; background:#3a2818;"></div>
-        </div>
+      <div style="display:flex; align-items:center; gap:8px; margin: 6px 0;">
+        <div style="height:1px; flex:1; background:#3a2818;"></div>
+        <span style="font-size:10px; color:#8a6648; letter-spacing:1.5px; font-weight:700;">OU</span>
+        <div style="height:1px; flex:1; background:#3a2818;"></div>
       </div>
-      <button class="action-btn person-row" data-role="fullcancel" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%; background: rgba(185, 28, 28, 0.10); border: 1px solid rgba(248,113,113,0.5); color: #fca5a5;">
-        <span style="width:32px; height:32px; flex-shrink:0; background: rgba(185, 28, 28, 0.25); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:16px;">🚫</span>
+      <label class="person-pick" data-role="fullcancel" style="display:flex; align-items:center; gap:10px; padding:12px; background:rgba(185,28,28,0.10); border:1.5px solid rgba(248,113,113,0.5); border-radius:12px; cursor:pointer;">
+        <input type="radio" name="personPick" value="fullcancel" style="accent-color:#ef4444;">
+        <span style="width:32px; height:32px; flex-shrink:0; background:rgba(185,28,28,0.25); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:16px;">🚫</span>
         <div style="flex:1;">
           <div style="color:#fca5a5; font-weight:800;">Annuler TOUTE la réservation</div>
-          <div style="font-size:11px; color:#d4a574; margin-top:2px;">Supprime les ${resa.qty} places · <strong style="color:#fca5a5;">1 seul mail d'annulation envoyé</strong></div>
+          <div style="font-size:11px; color:#d4a574; margin-top:2px;">Archive les ${resa.qty} places · 1 seul mail envoyé</div>
         </div>
-        <span style="color:#f87171; font-size:18px;">🗑️</span>
-      </button>
+      </label>
     `;
     list.innerHTML = html;
-    list.querySelectorAll('.person-row').forEach(btn => {
-      btn.addEventListener('click', () => handlePersonDelete(btn, resa));
+
+    list.querySelectorAll('input[name="personPick"]').forEach(input => {
+      input.addEventListener('change', () => {
+        archiveContext.selectedPerson = input.value;
+        // Visualise la sélection
+        list.querySelectorAll('.person-pick').forEach(l => l.style.borderColor = '#3a2818');
+        input.closest('.person-pick').style.borderColor = '#b86a45';
+        updateArchiveConfirmState();
+      });
     });
-    document.getElementById('personModal').classList.add('show');
   }
 
-  document.getElementById('personCancel').addEventListener('click', () => {
-    document.getElementById('personModal').classList.remove('show');
-  });
+  function updateArchiveConfirmState() {
+    const btn = document.getElementById('archiveConfirm');
+    const radio = document.querySelector('input[name="cancelReason"]:checked');
+    const hasPerson = !!archiveContext?.selectedPerson;
+    const hasReason = !!radio;
 
-  async function handlePersonDelete(btn, resa) {
-    const role = btn.dataset.role;
-
-    // ⚠️ Suppression totale (option nucléaire)
-    if (role === 'fullcancel') {
-      if (!confirm(`⚠️ Annuler ENTIÈREMENT la réservation de ${resa.prenom} ${resa.nom} ?\n\nLes ${resa.qty} places seront supprimées et un mail d'annulation sera envoyé au client.`)) return;
-      document.getElementById('personModal').classList.remove('show');
-      if (await deleteReservation(resa.bookingId)) {
-        toast('🗑️ Réservation entière supprimée');
-        render();
-      }
+    if (!hasPerson) {
+      btn.disabled = true;
+      btn.textContent = 'Choisis qui retirer ↑';
       return;
     }
-
-    // Réservateur ou accompagnant → on retire juste 1 place
-    let label, accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
-    if (role === 'reservateur') {
-      label = `${resa.prenom} ${resa.nom} (réservateur)`;
-      if (!confirm(`Retirer ${label} ?\n\nLe réservateur ne vient pas, mais ses ${resa.qty - 1} accompagnant(s) viennent toujours.\nLa résa passe de ${resa.qty} à ${resa.qty - 1} places.`)) return;
-    } else {
-      label = btn.dataset.name || 'cet accompagnant non renseigné';
-      if (!confirm(`Retirer ${label} de la réservation ?\n\nLa résa passe de ${resa.qty} à ${resa.qty - 1} places (-${resa.ticketPrice || 35}€).`)) return;
-      if (role === 'accompagnant') {
-        const idx = parseInt(btn.dataset.index, 10);
-        accomps.splice(idx, 1);
-      }
+    if (!hasReason) {
+      btn.disabled = true;
+      btn.textContent = 'Choisis un motif ↑';
+      return;
     }
-    document.getElementById('personModal').classList.remove('show');
-
-    const newQty = resa.qty - 1;
-    const newTotal = (resa.ticketPrice || 35) * newQty;
-    let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
-    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
-    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
-    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
-    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
-
-    if (await updateReservation(resa.bookingId, {
-      qty: newQty,
-      total: newTotal,
-      accompagnants: accomps.join(', ') || null,
-      ticketName: newTicketName,
-      ticketId: newTicketId,
-      removedName: label  // 📧 utilisé par le backend pour le mail de modification
-    })) {
-      toast(`✓ ${label} retiré · résa passée à ${newQty} place${newQty>1?'s':''}`);
-      render();
-    }
+    btn.disabled = false;
+    const isFullCancel = archiveContext.selectedPerson === 'fullcancel' || archiveContext.mode === 'bulk';
+    btn.textContent = isFullCancel ? '🗃️ Archiver · Mail envoyé' : '✓ Retirer cette personne · Mail envoyé';
   }
+
+  // Champ "autre" actif si radio "Autre" coché + recalcul du bouton
+  document.querySelectorAll('input[name="cancelReason"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const otherInput = document.getElementById('archiveReasonOther');
+      otherInput.disabled = r.value !== 'other';
+      if (r.value === 'other') otherInput.focus();
+      updateArchiveConfirmState();
+    });
+  });
+
+  document.getElementById('archiveCancel').addEventListener('click', () => {
+    document.getElementById('archiveModal').classList.remove('show');
+    archiveContext = null;
+  });
 
   async function updateReservation(id, patch) {
     if (!API_URL) { toast('Mode démo non supporté', true); return false; }
@@ -1633,53 +1688,6 @@
       return true;
     } catch(e) { console.error(e); toast('Erreur API : ' + e.message, true); return false; }
   }
-
-  // --- Modal suppression ---
-  let pendingDeleteId = null;
-  function openDeleteModal(id, name) {
-    pendingDeleteId = id;
-    document.getElementById('modalText').innerHTML = `Tu vas supprimer la réservation de <strong style="color:#c79270;">${name}</strong> (${id}).<br>Cette action est irréversible.`;
-    document.getElementById('modal').classList.add('show');
-  }
-  document.getElementById('modalCancel').addEventListener('click', () => {
-    document.getElementById('modal').classList.remove('show');
-    pendingDeleteId = null;
-  });
-  document.getElementById('modalConfirm').addEventListener('click', async () => {
-    if (!pendingDeleteId) return;
-    if (await deleteReservation(pendingDeleteId)) {
-      toast('🗑️ Réservation supprimée');
-      document.getElementById('modal').classList.remove('show');
-      pendingDeleteId = null;
-      render();
-    }
-  });
-
-  // --- Modale archivage ---
-  let pendingArchiveId = null;
-  function openArchiveModal(id, name) {
-    pendingArchiveId = id;
-    document.getElementById('archiveModalText').innerHTML = `Tu vas annuler la réservation de <strong style="color:#c79270;">${name}</strong> (${id}).<br>Choisis le motif de l'annulation :`;
-    // Reset radios
-    document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
-    document.getElementById('archiveReasonOther').value = '';
-    document.getElementById('archiveReasonOther').disabled = true;
-    document.getElementById('archiveModal').classList.add('show');
-  }
-  document.getElementById('archiveCancel').addEventListener('click', () => {
-    document.getElementById('archiveModal').classList.remove('show');
-    pendingArchiveId = null;
-    // Si on était en mode bulk → on garde la sélection pour permettre une autre action
-    bulkMode = null;
-  });
-  // Active le champ texte "autre" si on coche "Autre"
-  document.querySelectorAll('input[name="cancelReason"]').forEach(r => {
-    r.addEventListener('change', () => {
-      const otherInput = document.getElementById('archiveReasonOther');
-      otherInput.disabled = r.value !== 'other';
-      if (r.value === 'other') otherInput.focus();
-    });
-  });
   // === Tout sélectionner ===
   document.getElementById('selectAll').addEventListener('change', (e) => {
     const checked = e.target.checked;
@@ -1690,8 +1698,6 @@
   });
 
   // === Bulk actions ===
-  let bulkMode = null;  // 'archive' ou null
-
   document.getElementById('bulkCancel').addEventListener('click', clearSelection);
 
   // ✓ Valider toutes les sélectionnées
@@ -1707,33 +1713,27 @@
     render();
   });
 
-  // 🗑️ Supprimer toutes les sélectionnées
-  document.getElementById('bulkDelete').addEventListener('click', async () => {
-    const ids = Array.from(SELECTED);
-    if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT ${ids.length} réservation${ids.length>1?'s':''} ?\n\nCette action est irréversible.`)) return;
-    clearSelection();  // 👈 cache la barre immédiatement
-    let ok = 0, fail = 0;
-    for (const id of ids) {
-      if (await deleteReservation(id)) ok++; else fail++;
-    }
-    toast(`🗑️ ${ok} supprimée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
-    render();
-  });
-
   // 🗃️ Archiver toutes les sélectionnées (avec motif)
   document.getElementById('bulkArchive').addEventListener('click', () => {
-    bulkMode = 'bulk';
     const count = SELECTED.size;
+    archiveContext = { mode: 'bulk', ids: Array.from(SELECTED), selectedPerson: 'fullcancel' };
+    document.getElementById('personSection').style.display = 'none';
+    document.getElementById('archiveModalTitle').textContent = '🗃️ Annuler en masse';
     document.getElementById('archiveModalText').innerHTML = `Tu vas archiver <strong style="color:#c79270;">${count} réservations</strong>.<br>Choisis le motif commun :`;
+    document.getElementById('reasonStepLabel').innerHTML = 'Motif commun';
     document.querySelectorAll('input[name="cancelReason"]').forEach(r => r.checked = false);
     document.getElementById('archiveReasonOther').value = '';
     document.getElementById('archiveReasonOther').disabled = true;
+    document.getElementById('archiveConfirm').disabled = true;
+    document.getElementById('archiveConfirm').textContent = 'Choisis un motif ↑';
     document.getElementById('archiveModal').classList.add('show');
   });
 
+  // === CONFIRMATION du modal unifié (retirer / annuler / bulk) ===
   document.getElementById('archiveConfirm').addEventListener('click', async () => {
+    if (!archiveContext) return;
     const radio = document.querySelector('input[name="cancelReason"]:checked');
-    if (!radio) { toast('Choisis un motif d\'annulation', true); return; }
+    if (!radio) { toast('Choisis un motif', true); return; }
     let reason = radio.value;
     if (reason === 'other') {
       const custom = document.getElementById('archiveReasonOther').value.trim();
@@ -1741,14 +1741,15 @@
       reason = custom;
     }
 
-    // Bulk archive
-    if (bulkMode === 'bulk') {
-      const ids = Array.from(SELECTED);
-      bulkMode = null;
-      clearSelection();  // 👈 cache la barre immédiatement
-      document.getElementById('archiveModal').classList.remove('show');
+    const ctx = archiveContext;
+    document.getElementById('archiveModal').classList.remove('show');
+    archiveContext = null;
+
+    // BULK : on archive tout
+    if (ctx.mode === 'bulk') {
+      clearSelection();
       let ok = 0, fail = 0;
-      for (const id of ids) {
+      for (const id of ctx.ids) {
         if (await archiveReservation(id, true, reason)) ok++; else fail++;
       }
       toast(`🗃️ ${ok} archivée${ok>1?'s':''} (${reason})${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
@@ -1756,12 +1757,146 @@
       return;
     }
 
-    // Single archive
-    if (!pendingArchiveId) return;
-    if (await archiveReservation(pendingArchiveId, true, reason)) {
-      toast(`🗃️ Réservation archivée (${reason})`);
-      document.getElementById('archiveModal').classList.remove('show');
-      pendingArchiveId = null;
+    // SINGLE : qui retirer ?
+    const sel = ctx.selectedPerson;
+    if (sel === 'fullcancel') {
+      // Annulation totale → archive la résa entière (1 mail)
+      if (await archiveReservation(ctx.id, true, reason)) {
+        toast(`🗃️ Réservation archivée (${reason})`);
+        render();
+      }
+      return;
+    }
+
+    // Retrait d'1 personne (réservateur ou accompagnant) → PATCH qty/total/accompagnants + mail modif
+    const resa = ctx.resa;
+    let label, accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+
+    if (sel === 'reservateur') {
+      label = `${resa.prenom} ${resa.nom} (réservateur)`;
+    } else if (sel.startsWith('accompagnant-')) {
+      const idx = parseInt(sel.split('-')[1], 10);
+      label = accomps[idx] || `Accompagnant ${idx + 1}`;
+      accomps.splice(idx, 1);
+    } else if (sel.startsWith('placeholder-')) {
+      label = 'Accompagnant non renseigné';
+    } else {
+      toast('Sélection invalide', true);
+      return;
+    }
+
+    const newQty = resa.qty - 1;
+    const newTotal = (resa.ticketPrice || 35) * newQty;
+    let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
+    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
+    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
+    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
+    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+
+    if (await updateReservation(resa.bookingId, {
+      qty: newQty,
+      total: newTotal,
+      accompagnants: accomps.join(', ') || null,
+      ticketName: newTicketName,
+      ticketId: newTicketId,
+      removedName: label,
+      cancelReason: reason  // motif aussi transmis pour traçabilité
+    })) {
+      toast(`✓ ${label} retiré (${reason}) · résa passée à ${newQty} place${newQty>1?'s':''}`);
+      render();
+    }
+  });
+
+  // ====================================================
+  //  MODAL "MODIFIER" — ajouter des places à une résa
+  // ====================================================
+  let editContext = null;
+  function openEditModal(resa) {
+    editContext = { resa, addCount: 1, names: [''] };
+    document.getElementById('editModalText').innerHTML = `Réservation <strong style="color:#c79270;">${resa.bookingId}</strong> · actuellement <strong style="color:#fff;">${resa.qty} place${resa.qty>1?'s':''}</strong> (${resa.ticketName})`;
+    renderEditForm();
+    document.getElementById('editModal').classList.add('show');
+  }
+  function renderEditForm() {
+    const { resa, addCount, names } = editContext;
+    document.getElementById('editAddCount').textContent = addCount;
+    // Champs noms
+    const list = document.getElementById('editNamesList');
+    list.innerHTML = '';
+    for (let i = 0; i < addCount; i++) {
+      const row = document.createElement('div');
+      row.innerHTML = `
+        <input type="text" data-idx="${i}" class="edit-name-input" placeholder="Nom de la place #${resa.qty + i + 1} (facultatif)" value="${names[i] || ''}" style="width:100%; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px;">
+      `;
+      list.appendChild(row);
+    }
+    list.querySelectorAll('.edit-name-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const i = parseInt(inp.dataset.idx, 10);
+        editContext.names[i] = inp.value;
+      });
+    });
+    // Recap
+    const newQty = resa.qty + addCount;
+    const newTotal = (resa.ticketPrice || 35) * newQty;
+    let newFormula = resa.ticketName;
+    if (newQty === 1) newFormula = 'Standard';
+    else if (newQty === 2) newFormula = 'Duo';
+    else if (newQty === 3) newFormula = 'Trio';
+    else if (newQty > 3) newFormula = `Groupe (${newQty} places)`;
+    document.getElementById('editRecap').innerHTML = `
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Places</span><span><strong style="text-decoration:line-through; color:#8a6648;">${resa.qty}</strong> → <strong style="color:#22c55e;">${newQty}</strong></span></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Formule</span><span><strong style="color:#fff;">${newFormula}</strong></span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Nouveau total</span><span><strong style="color:#c79270;">${newTotal.toFixed(2).replace('.', ',')} €</strong> <span style="color:#8a6648; font-size:11px;">(+${(newTotal - (resa.total||0)).toFixed(2).replace('.', ',')} €)</span></span></div>
+    `;
+  }
+  document.getElementById('editQtyMinus').addEventListener('click', () => {
+    if (editContext.addCount > 1) {
+      editContext.addCount--;
+      editContext.names = editContext.names.slice(0, editContext.addCount);
+      renderEditForm();
+    }
+  });
+  document.getElementById('editQtyPlus').addEventListener('click', () => {
+    if (editContext.addCount < 10) {
+      editContext.addCount++;
+      editContext.names.push('');
+      renderEditForm();
+    }
+  });
+  document.getElementById('editCancel').addEventListener('click', () => {
+    document.getElementById('editModal').classList.remove('show');
+    editContext = null;
+  });
+  document.getElementById('editConfirm').addEventListener('click', async () => {
+    if (!editContext) return;
+    const { resa, addCount, names } = editContext;
+    const newQty = resa.qty + addCount;
+    const newTotal = (resa.ticketPrice || 35) * newQty;
+    let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
+    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
+    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
+    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
+    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+
+    // Concat des accompagnants existants + nouveaux
+    const oldAccomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+    const newNames = names.filter(n => n.trim()).map(n => n.trim());
+    const allAccomps = [...oldAccomps, ...newNames];
+
+    document.getElementById('editModal').classList.remove('show');
+
+    if (await updateReservation(resa.bookingId, {
+      qty: newQty,
+      total: newTotal,
+      accompagnants: allAccomps.join(', ') || null,
+      ticketName: newTicketName,
+      ticketId: newTicketId,
+      addedCount: addCount,
+      addedNames: newNames.join(', ') || null
+    })) {
+      toast(`✓ ${addCount} place${addCount>1?'s':''} ajoutée${addCount>1?'s':''} · résa passée à ${newQty}`);
+      editContext = null;
       render();
     }
   });
