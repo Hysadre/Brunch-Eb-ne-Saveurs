@@ -640,6 +640,8 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
 });
 
 // Créer une réservation — l'ID est TOUJOURS généré côté serveur (séquentiel)
+// ⚠️ AUCUN email envoyé à ce stade — le client n'a pas encore cliqué "J'ai payé"
+//    Les emails partent dans POST /api/payment-method/:id (étape suivante)
 app.post('/api/reservations', async (req, res) => {
   try {
     const b = req.body || {};
@@ -650,12 +652,13 @@ app.post('/api/reservations', async (req, res) => {
     // 🆕 ID séquentiel généré server-side — ignore tout bookingId envoyé par le client
     b.bookingId = await generateBookingId(b.nom);
     b.serverReceivedAt = new Date().toISOString();
+    // Marqueur : résa créée mais paiement pas encore confirmé par le client
+    if (!b.status) b.status = 'paiement non confirmé';
 
     await insertReservation(b);
 
-    // email async (n'attend pas)
-    sendConfirmationEmails(b).catch(err => console.error('email error', err));
-    // 📊 PAS de sync Sheet ici — on attend la validation du paiement (cf. action 'validation' dans PATCH)
+    // 📭 PAS d'email ici — uniquement quand le client clique "J'ai payé"
+    // 📊 PAS de sync Sheet ici — on attend la validation du paiement
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
@@ -666,6 +669,7 @@ app.post('/api/reservations', async (req, res) => {
 
 // 🆕 Met à jour le moyen de paiement choisi par le client (public, pas d'auth)
 //    Appelé depuis paiement.html quand le client clique "J'ai payé"
+//    👉 C'EST ICI qu'on envoie les emails client + admin
 app.post('/api/payment-method/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -673,10 +677,18 @@ app.post('/api/payment-method/:id', async (req, res) => {
     if (!method) return res.status(400).json({ error: 'missing method' });
     const r = await findReservation(id);
     if (!r) return res.status(404).json({ error: 'not found' });
-    await patchReservation(id, {
+
+    const patch = {
       paymentMethod: method,
-      paidAt: new Date().toISOString()
-    });
+      paidAt: new Date().toISOString(),
+      status: 'en attente vérification'  // déclenche le bon statut visible côté admin
+    };
+    await patchReservation(id, patch);
+
+    // 📧 Envoi des emails (client confirmation + admin notification)
+    const updated = { ...r, ...patch };
+    sendConfirmationEmails(updated).catch(err => console.error('email error', err));
+
     res.json({ ok: true });
   } catch(e) {
     console.error('payment-method error:', e.message);
