@@ -1542,11 +1542,22 @@
         </button>
       `;
     }
-    // Séparateur + bouton annuler TOUTE la résa (option nucléaire)
+    // Séparateur + bouton annuler TOUTE la résa (option nucléaire) — bien visible
     html += `
-      <div style="height: 1px; background: #3a2818; margin: 6px 0;"></div>
-      <button class="action-btn delete person-row" data-role="fullcancel" data-id="${resa.bookingId}" style="text-align:center; padding:12px; width:100%; color:#f87171; border-color: rgba(248,113,113,0.5);">
-        🗑️ Annuler TOUTE la réservation (${resa.qty} places)
+      <div style="margin: 14px 0 6px; padding: 0 4px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <div style="height:1px; flex:1; background:#3a2818;"></div>
+          <span style="font-size:10px; color:#8a6648; letter-spacing:1.5px; font-weight:700; text-transform:uppercase;">OU</span>
+          <div style="height:1px; flex:1; background:#3a2818;"></div>
+        </div>
+      </div>
+      <button class="action-btn person-row" data-role="fullcancel" data-id="${resa.bookingId}" style="text-align:left; padding:14px; display:flex; align-items:center; gap:10px; width:100%; background: rgba(185, 28, 28, 0.10); border: 1px solid rgba(248,113,113,0.5); color: #fca5a5;">
+        <span style="width:32px; height:32px; flex-shrink:0; background: rgba(185, 28, 28, 0.25); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:16px;">🚫</span>
+        <div style="flex:1;">
+          <div style="color:#fca5a5; font-weight:800;">Annuler TOUTE la réservation</div>
+          <div style="font-size:11px; color:#d4a574; margin-top:2px;">Supprime les ${resa.qty} places · <strong style="color:#fca5a5;">1 seul mail d'annulation envoyé</strong></div>
+        </div>
+        <span style="color:#f87171; font-size:18px;">🗑️</span>
       </button>
     `;
     list.innerHTML = html;
