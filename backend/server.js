@@ -165,6 +165,53 @@ async function sendEmail({ to, subject, html, text }) {
 // Wrapper rétro-compatible
 const resendSend = sendEmail;
 
+// ----- ✏️ Email de modification (retrait d'une place sans tout annuler) -----
+async function sendModificationEmail(booking, removedName, newQty, oldQty) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #b86a45, #c79270); padding: 28px 24px; text-align: center; color: white;">
+      <div style="font-size: 40px; margin-bottom: 6px;">✏️</div>
+      <h1 style="margin: 0; font-size: 22px;">Réservation modifiée</h1>
+      <p style="margin: 6px 0 0; opacity: .95;">Une place a été retirée de votre réservation</p>
+    </div>
+
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Nous vous informons qu'une modification a été apportée à votre réservation : <strong style="color:#c79270;">${removedName}</strong> a été retiré(e) de la liste.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">Nombre de places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;"><span style="text-decoration:line-through; color:#8a6648;">${oldQty}</span> → <strong style="color:#c79270;">${newQty}</strong></td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Nouveau total</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; color: #c79270;">${totalFmt} €</td></tr>
+      </table>
+
+      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #b86a45, #8a4a2e); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center;">🔎 Voir ma réservation à jour</a>
+
+      <div style="background: rgba(199, 146, 112, 0.10); border: 1px solid rgba(199, 146, 112, 0.3); border-radius: 12px; padding: 14px; margin-top: 16px; font-size: 13px; color: #ede5d1; line-height: 1.6;">
+        💡 Si cette modification vous semble erronée, n'hésitez pas à nous contacter rapidement.
+      </div>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `✏️ Votre réservation pour ${EVENT.name} a été modifiée`,
+    html
+  });
+}
+
 // ----- 🚫 Email d'annulation (sans QR, ton chic et bienveillant) -----
 async function sendCancellationEmail(booking, reason) {
   if (!booking.email) return;
@@ -451,7 +498,10 @@ app.get('/api/verify/:id', async (req, res) => {
       ticketName: r.ticketName,
       ticketId: r.ticketId,
       qty: r.qty,
-      status: r.status
+      status: r.status,
+      archived: r.archived === true,
+      cancelReason: r.cancelReason || null,
+      accompagnants: r.accompagnants || null
     });
   } catch (e) {
     console.error('verify error:', e.message);
@@ -549,6 +599,19 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
       sendCancellationEmail(updated, req.body.cancelReason)
         .then(() => console.log(`✅ Mail annulation envoyé à ${updated.email}`))
         .catch(err => console.error(`❌ Mail annulation ÉCHEC pour ${updated.email}:`, err.message));
+    }
+
+    // ✏️ Si la qty diminue (retrait d'un accompagnant) sans archivage → mail de modification
+    const isQtyDecrease = typeof req.body.qty === 'number'
+                        && req.body.qty < before.qty
+                        && !isNowArchived;
+    if (isQtyDecrease && before.email) {
+      const updated = { ...before, ...patch };
+      const removedName = req.body.removedName || 'Un accompagnant';
+      console.log(`📤 Envoi mail modification à ${updated.email} pour ${id} (retiré: ${removedName}, ${before.qty} → ${req.body.qty})`);
+      sendModificationEmail(updated, removedName, req.body.qty, before.qty)
+        .then(() => console.log(`✅ Mail modification envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail modification ÉCHEC pour ${updated.email}:`, err.message));
     }
 
     // 📊 Sync Google Sheet à chaque mise à jour (statut, archive, check-in, etc.)
