@@ -647,6 +647,19 @@
         <option value="all">📂📦 Tout voir</option>
         <option value="archived">📦 Archivées uniquement</option>
       </select>
+      <select id="filterDate">
+        <option value="">📅 Toutes dates</option>
+        <option value="today">Aujourd'hui</option>
+        <option value="yesterday">Hier</option>
+        <option value="7days">7 derniers jours</option>
+        <option value="thisweek">Cette semaine</option>
+        <option value="lastweek">Semaine dernière</option>
+        <option value="thismonth">Ce mois-ci</option>
+        <option value="lastmonth">Mois dernier</option>
+        <option value="custom">📆 Période personnalisée…</option>
+      </select>
+      <input type="date" id="filterDateFrom" style="display:none;" title="Du">
+      <input type="date" id="filterDateTo" style="display:none;" title="Au">
     </div>
 
     <!-- 🚪 Historique des entrées (check-ins du jour J) -->
@@ -1342,6 +1355,39 @@
     `;
   }
 
+  // 📅 Helper : retourne [start, end] (timestamps) pour un range de date
+  function getDateRange(preset, customFrom, customTo) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(startOfToday.getTime() + 24*60*60*1000);
+    const day = startOfToday.getDay() || 7;  // 1=lundi ... 7=dimanche
+
+    if (preset === 'today') return [startOfToday, endOfToday];
+    if (preset === 'yesterday') return [new Date(startOfToday.getTime() - 24*60*60*1000), startOfToday];
+    if (preset === '7days') return [new Date(startOfToday.getTime() - 7*24*60*60*1000), endOfToday];
+    if (preset === 'thisweek') {
+      const monday = new Date(startOfToday.getTime() - (day - 1) * 24*60*60*1000);
+      return [monday, endOfToday];
+    }
+    if (preset === 'lastweek') {
+      const thisMon = new Date(startOfToday.getTime() - (day - 1) * 24*60*60*1000);
+      const lastMon = new Date(thisMon.getTime() - 7*24*60*60*1000);
+      return [lastMon, thisMon];
+    }
+    if (preset === 'thismonth') {
+      return [new Date(now.getFullYear(), now.getMonth(), 1), endOfToday];
+    }
+    if (preset === 'lastmonth') {
+      return [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1)];
+    }
+    if (preset === 'custom') {
+      const from = customFrom ? new Date(customFrom + 'T00:00:00') : null;
+      const to = customTo ? new Date(customTo + 'T23:59:59') : null;
+      return [from, to];
+    }
+    return [null, null];  // pas de filtre
+  }
+
   function renderTable(all) {
     const q = (document.getElementById('search').value || '').toLowerCase();
     const m = document.getElementById('filterMethod').value;
@@ -1350,6 +1396,10 @@
     const urlId = new URLSearchParams(window.location.search).get('id');
 
     const archivedFilter = document.getElementById('filterArchived').value || 'active';
+    const datePreset = document.getElementById('filterDate').value;
+    const customFrom = document.getElementById('filterDateFrom').value;
+    const customTo = document.getElementById('filterDateTo').value;
+    const [dateStart, dateEnd] = datePreset ? getDateRange(datePreset, customFrom, customTo) : [null, null];
 
     const filtered = all.filter(r => {
       // Filtre archives
@@ -1358,6 +1408,13 @@
       if (m && r.paymentMethod !== m) return false;
       if (s && r.status !== s) return false;
       if (t && r.ticketId !== t) return false;
+      // 📅 Filtre date (sur le champ timestamp de la résa)
+      if (dateStart || dateEnd) {
+        const d = r.timestamp ? new Date(r.timestamp) : null;
+        if (!d) return false;
+        if (dateStart && d < dateStart) return false;
+        if (dateEnd && d >= dateEnd) return false;
+      }
       if (q) {
         const blob = `${r.prenom} ${r.nom} ${r.email} ${r.bookingId} ${r.telephone}`.toLowerCase();
         if (!blob.includes(q)) return false;
@@ -1503,6 +1560,15 @@
   document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterArchived').addEventListener('change', () => renderTable(CACHE));
+  // 📅 Filtre date — montre/cache les inputs date si "custom"
+  document.getElementById('filterDate').addEventListener('change', e => {
+    const isCustom = e.target.value === 'custom';
+    document.getElementById('filterDateFrom').style.display = isCustom ? '' : 'none';
+    document.getElementById('filterDateTo').style.display = isCustom ? '' : 'none';
+    renderTable(CACHE);
+  });
+  document.getElementById('filterDateFrom').addEventListener('change', () => renderTable(CACHE));
+  document.getElementById('filterDateTo').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('refreshBtn').addEventListener('click', async () => {
     const btn = document.getElementById('refreshBtn');
     const oldHtml = btn.innerHTML;
