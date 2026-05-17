@@ -726,21 +726,22 @@
     booking.status = 'en attente vérification';
     booking.paidAt = new Date().toISOString();
 
-    // Sauvegarde localStorage (toujours, pour la démo)
+    // Sauvegarde localStorage
     const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
     reservations.push(booking);
     localStorage.setItem('reservations', JSON.stringify(reservations));
     localStorage.setItem('currentBooking', JSON.stringify(booking));
 
-    // Push vers l'API si configurée
-    if (API_URL) {
+    // 📤 Met à jour le moyen de paiement côté serveur
+    // (la résa a déjà été créée dans index.html, donc on n'envoie QUE le method)
+    if (API_URL && booking.bookingId) {
       try {
-        await fetch(API_URL + '/reservations', {
+        await fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(booking)
+          body: JSON.stringify({ method })
         });
-      } catch(e) { console.warn('API push failed', e); }
+      } catch(e) { console.warn('API payment-method update failed', e); }
     }
 
     setTimeout(() => { window.location.href = 'confirmation.html'; }, 1500);
