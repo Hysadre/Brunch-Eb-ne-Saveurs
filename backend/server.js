@@ -165,6 +165,58 @@ async function sendEmail({ to, subject, html, text }) {
 // Wrapper rétro-compatible
 const resendSend = sendEmail;
 
+// ----- 🚫 Email d'annulation (sans QR, ton chic et bienveillant) -----
+async function sendCancellationEmail(booking, reason) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+  const reasonText = reason || booking.cancelReason || 'annulation';
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #5a4028, #3a2818); padding: 32px 24px; text-align: center; color: white;">
+      <div style="display:inline-block; width:70px; height:70px; background:#ede5d1; border-radius:50%; line-height:70px; font-size:36px; color:#8a4a2e; margin-bottom:10px;">🚫</div>
+      <h1 style="margin: 0; font-size: 22px;">Réservation annulée</h1>
+      <p style="margin: 6px 0 0; opacity: .9; font-size:14px;">Votre place pour le brunch a été annulée</p>
+    </div>
+
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Nous vous confirmons que votre réservation pour le <strong>${EVENT.name}</strong> a été annulée.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">📅 Événement</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;">${EVENT.date}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">🎫 Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">👥 Places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.qty}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">💰 Montant</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${totalFmt} €</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">📝 Motif</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; font-style: italic;">${reasonText}</td></tr>
+      </table>
+
+      <div style="background: rgba(199, 146, 112, 0.10); border: 1px solid rgba(199, 146, 112, 0.3); border-radius: 12px; padding: 14px 16px; font-size: 13px; color: #ede5d1; line-height: 1.6;">
+        💡 Si cette annulation vous semble erronée ou si vous souhaitez en discuter, n'hésitez pas à nous contacter via WhatsApp. Nous restons disponibles.
+      </div>
+
+      <p style="margin: 20px 0 0; font-size: 13px; color: #d4a574; text-align: center; line-height: 1.6;">
+        Au plaisir de vous accueillir à l'une de nos prochaines éditions 🌴
+      </p>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <p style="margin: 0 0 10px; font-size: 11px; color: #8a6648; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">Une question ?</p>
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `🚫 Votre réservation pour ${EVENT.name} a été annulée`,
+    html
+  });
+}
+
 // ----- 📊 Google Sheets sync (via Apps Script webhook) -----
 async function syncToSheet(action, booking) {
   if (!SHEET_WEBHOOK) return;  // pas configuré → on skip silencieusement
@@ -481,6 +533,17 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
         .catch(err => console.error(`❌ Mail validation ÉCHEC pour ${updated.email}:`, err.message));
     }
 
+    // 🚫 Si passage à archivé → envoie le mail d'annulation au client
+    const wasNotArchived = !before.archived;
+    const isNowArchived  = req.body.archived === true;
+    if (wasNotArchived && isNowArchived) {
+      const updated = { ...before, ...patch };
+      console.log(`📤 Envoi mail annulation à ${updated.email} pour ${id} (motif: ${req.body.cancelReason})`);
+      sendCancellationEmail(updated, req.body.cancelReason)
+        .then(() => console.log(`✅ Mail annulation envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail annulation ÉCHEC pour ${updated.email}:`, err.message));
+    }
+
     // 📊 Sync Google Sheet à chaque mise à jour (statut, archive, check-in, etc.)
     const final = { ...before, ...patch };
     let action = 'update';
@@ -585,8 +648,19 @@ app.post('/api/resend/:id', requireAdmin, async (req, res) => {
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const before = await findReservation(req.params.id);
+    if (!before) return res.status(404).json({ error: 'not found' });
+
+    // 🚫 Envoie le mail d'annulation AVANT de supprimer (sauf si déjà archivée avec mail envoyé)
+    // Si on supprime directement (sans archiver d'abord) → on prévient le client
+    if (before.email && !before.archived) {
+      console.log(`📤 Envoi mail annulation (suppression directe) à ${before.email} pour ${req.params.id}`);
+      sendCancellationEmail(before, 'Suppression de la réservation')
+        .then(() => console.log(`✅ Mail annulation (suppression) envoyé à ${before.email}`))
+        .catch(err => console.error(`❌ Mail annulation (suppression) ÉCHEC:`, err.message));
+    }
+
     await removeReservation(req.params.id);
-    if (before) syncToSheet('suppression', before);
+    syncToSheet('suppression', before);
     res.json({ ok: true });
   } catch (e) {
     console.error('delete error:', e.message);
