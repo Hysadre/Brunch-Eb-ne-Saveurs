@@ -662,13 +662,14 @@
       <input type="date" id="filterDateTo" style="display:none;" title="Au">
     </div>
 
-    <!-- 🚪 Historique des entrées (check-ins du jour J) -->
-    <details style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+    <!-- 🚪 Historique des entrées (check-ins du jour J) — ouvert par défaut -->
+    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
       <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
         <span style="display:flex; align-items:center; gap:8px;">
           <span style="color:#22c55e;">🚪</span>
-          <span>Historique des entrées</span>
-          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ Cliquer pour ouvrir</span>
+          <span>Historique des scans</span>
+          <span id="checkinCountBadge" style="background: rgba(34,197,94,.15); color:#22c55e; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 800;"></span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
         </span>
       </summary>
       <div style="padding: 0 18px 18px;" id="checkinHistory"></div>
@@ -1254,54 +1255,75 @@
     }
   }
 
-  // 🚪 Historique des entrées (check-ins) — derniers scans
+  // 🚪 Historique des entrées (check-ins) — UN événement par scan
   function renderCheckinHistory(data) {
     const container = document.getElementById('checkinHistory');
+    const badge = document.getElementById('checkinCountBadge');
     if (!container) return;
-    // Filtre les résa avec au moins 1 entrée, trie par enteredAt desc
-    const withEntries = data
-      .filter(r => (r.enteredCount || 0) > 0 && r.enteredAt)
-      .sort((a, b) => new Date(b.enteredAt) - new Date(a.enteredAt))
-      .slice(0, 30);
 
-    if (withEntries.length === 0) {
+    // Construit la liste plate des événements de scan
+    // Si scanLog existe (nouveau format) → utilise chaque entrée
+    // Sinon (rétro-compat) → utilise enteredAt + enteredCount (1 ligne par résa)
+    const events = [];
+    data.forEach(r => {
+      const count = r.enteredCount || 0;
+      if (count === 0) return;
+      const scanLog = Array.isArray(r.scanLog) ? r.scanLog : null;
+      if (scanLog && scanLog.length > 0) {
+        // Nouveau format : 1 ligne par scan
+        scanLog.forEach((entry, idx) => {
+          const t = entry.at || entry;  // accept string or {at}
+          events.push({ resa: r, when: t, scanIdx: idx + 1 });
+        });
+      } else if (r.enteredAt) {
+        // Rétro-compat : 1 seule entrée connue (enteredAt = 1er scan)
+        events.push({ resa: r, when: r.enteredAt, scanIdx: count, fallback: true });
+      }
+    });
+
+    events.sort((a, b) => new Date(b.when) - new Date(a.when));
+    const recent = events.slice(0, 50);
+
+    const totalEntered = data.reduce((s, r) => s + (r.enteredCount || 0), 0);
+    const totalExpected = data.filter(r => !r.archived && r.status === 'confirmé').reduce((s, r) => s + (r.qty || 0), 0);
+
+    if (badge) badge.textContent = `${totalEntered}/${totalExpected}`;
+
+    if (events.length === 0) {
       container.innerHTML = `
         <div style="text-align:center; padding: 30px 20px; color: #8a6648;">
           <div style="font-size: 32px; margin-bottom: 8px;">🚪</div>
-          <p style="margin: 0;">Aucune entrée pour le moment</p>
-          <p style="margin: 4px 0 0; font-size: 12px;">L'historique apparaîtra ici quand tu commenceras à scanner les billets le jour J.</p>
+          <p style="margin: 0;">Aucun scan pour le moment</p>
+          <p style="margin: 4px 0 0; font-size: 12px;">L'historique apparaîtra ici dès que tu commenceras à scanner les billets le jour J.</p>
         </div>
       `;
       return;
     }
 
-    const totalEntered = data.reduce((s, r) => s + (r.enteredCount || 0), 0);
-    const totalExpected = data.filter(r => !r.archived && r.status === 'confirmé').reduce((s, r) => s + (r.qty || 0), 0);
-
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 0 12px; border-bottom: 1px solid #3a2818; margin-bottom: 12px;">
         <div style="font-size: 13px; color: #d4a574;">
-          <strong style="color: #22c55e; font-size: 16px;">${totalEntered}</strong> / ${totalExpected} entrées
+          <strong style="color: #22c55e; font-size: 16px;">${totalEntered}</strong> personne${totalEntered>1?'s':''} entrée${totalEntered>1?'s':''} · <span style="color:#8a6648;">${totalExpected} attendue${totalExpected>1?'s':''}</span>
         </div>
-        <div style="font-size: 11px; color: #8a6648;">${withEntries.length} dernier${withEntries.length>1?'s':''}</div>
+        <div style="font-size: 11px; color: #8a6648;">${recent.length} dernier${recent.length>1?'s':''} scan${recent.length>1?'s':''}</div>
       </div>
-      <div style="max-height: 360px; overflow-y: auto;">
-        ${withEntries.map(r => {
-          const d = new Date(r.enteredAt);
-          const dateStr = d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      <div style="max-height: 420px; overflow-y: auto;">
+        ${recent.map(ev => {
+          const r = ev.resa;
+          const d = new Date(ev.when);
+          const dateStr = d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
           const count = r.enteredCount || 0;
           const qty = r.qty || 1;
-          const full = count >= qty;
           return `
             <div style="display:flex; align-items:center; gap:12px; padding: 10px 0; border-bottom: 1px solid #2a1810; font-size: 13px;">
-              <div style="flex:0 0 32px; height:32px; background: ${full ? 'rgba(34,197,94,.15)' : 'rgba(251,191,36,.15)'}; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 14px;">${full ? '✓' : '🚪'}</div>
+              <div style="flex:0 0 36px; height:36px; background: rgba(34,197,94,.15); border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 14px; color:#22c55e; font-weight:800;">🚪</div>
               <div style="flex:1; min-width: 0;">
-                <div style="color: #fff; font-weight: 700;">${r.prenom} ${r.nom}</div>
-                <div style="color: #8a6648; font-size: 11px;">${dateStr} · ${r.ticketName}</div>
+                <div style="color: #fff; font-weight: 700;">${r.prenom} ${r.nom}${qty > 1 ? ` <span style="color:#8a6648; font-weight:500; font-size:11px;">· scan ${ev.scanIdx}/${qty}</span>` : ''}</div>
+                <div style="color: #8a6648; font-size: 11px;">${dateStr} · ${r.ticketName}${ev.fallback ? ' · première entrée' : ''}</div>
               </div>
               <div style="text-align:right;">
-                <div style="color: ${full ? '#22c55e' : '#c79270'}; font-weight: 800; font-size: 14px;">${count}/${qty}</div>
-                <div style="color: #8a6648; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">${full ? 'Complet' : 'Partiel'}</div>
+                <div style="color: #22c55e; font-weight: 800; font-size: 13px;">${count}/${qty}</div>
+                <div style="color: #8a6648; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">${count >= qty ? 'Complet' : 'En cours'}</div>
               </div>
             </div>
           `;
