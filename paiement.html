@@ -388,6 +388,31 @@
   .ref-copy-btn:active { transform: scale(.97); }
   .ref-copy-btn:hover { background: #2a1810; }
   .ref-copy-btn.copied { background: #16a34a; color: white; animation: none; }
+
+  /* 🔒 État verrouillé : tant que la référence n'est pas copiée, on grise tout */
+  .pay-locked {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.6);
+    transition: opacity .4s, filter .4s;
+    position: relative;
+  }
+  .pay-locked::after {
+    content: "🔒 Copiez d'abord la référence ↑";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
+    background: rgba(15, 10, 6, 0.55);
+    border-radius: inherit;
+    pointer-events: auto;
+    cursor: not-allowed;
+    letter-spacing: 0.3px;
+  }
   .ref-bigbox-hint {
     margin-top: 12px;
     font-size: 12px;
@@ -468,6 +493,9 @@
       <div class="ref-bigbox-hint">Sans cette référence, nous ne pourrons pas relier votre paiement à votre réservation 🙏</div>
     </div>
 
+    <!-- 🔒 Wrapper verrouillé tant que la référence n'est pas copiée -->
+    <div id="payMethodsLock" class="pay-locked">
+
     <!-- REVOLUT -->
     <label class="payment-option selected" data-method="revolut">
       <span class="pay-radio"></span>
@@ -536,6 +564,9 @@
         ⚠️ <strong>IBAN à remplacer</strong> par vos vraies coordonnées dans le code avant la mise en ligne. <strong>Collez la référence en libellé</strong> du virement.
       </div>
     </div>
+
+    </div>
+    <!-- 🔒 Fin wrapper verrouillé -->
   </div>
 
   <div class="contact-footer">
@@ -601,6 +632,29 @@
   // Grosse référence en haut
   document.getElementById('bigRef').textContent = booking.bookingId;
 
+  // 🔒 Si l'utilisateur tente de cliquer sur une option verrouillée → scroll vers la référence
+  const payLockEl = document.getElementById('payMethodsLock');
+  if (payLockEl) {
+    payLockEl.addEventListener('click', (e) => {
+      if (payLockEl.classList.contains('pay-locked')) {
+        e.preventDefault(); e.stopPropagation();
+        const refBox = document.querySelector('.ref-bigbox');
+        if (refBox) {
+          refBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const btn = document.getElementById('bigRefCopy');
+          if (btn) {
+            btn.style.animation = 'none';
+            requestAnimationFrame(() => {
+              btn.style.animation = '';
+              btn.style.transform = 'scale(1.08)';
+              setTimeout(() => { btn.style.transform = ''; }, 280);
+            });
+          }
+        }
+      }
+    }, true);
+  }
+
   // Bouton copier la référence — DÉBLOQUE aussi le bouton "J'ai payé"
   const bigRefCopy = document.getElementById('bigRefCopy');
   bigRefCopy.addEventListener('click', async () => {
@@ -617,6 +671,10 @@
       payBtn.disabled = false;
       const securedText = document.getElementById('securedText');
       if (securedText) securedText.innerHTML = 'Paiement sécurisé · Confirmation par email';
+
+      // 🔓 Déverrouille les options de paiement (Revolut/Wero/SEPA)
+      const lock = document.getElementById('payMethodsLock');
+      if (lock) lock.classList.remove('pay-locked');
 
       setTimeout(() => {
         bigRefCopy.textContent = '📋 Copier la référence';
