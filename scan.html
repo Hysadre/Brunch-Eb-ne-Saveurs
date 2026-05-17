@@ -540,35 +540,35 @@
     if (state === 'ok') {
       banner.classList.add('ok');
       icon.textContent = count > 0 ? `${count + 1}/${qty}` : '✓';
-      title.textContent = 'BILLET VALIDE';
+      title.textContent = '✓ RÉSERVATION VALIDE';
       sub.textContent = count > 0
-        ? `Place ${count + 1}/${qty} · ${qty - count} restante${qty - count > 1 ? 's' : ''}`
-        : `Paiement confirmé · prêt à entrer (${qty} place${qty>1?'s':''})`;
+        ? `Place ${count + 1}/${qty} · ${qty - count} restante${qty - count > 1 ? 's' : ''} · Amusez-vous bien 🌴`
+        : `${data.prenom} ${data.nom} · ${qty} place${qty>1?'s':''} · Amusez-vous bien 🌴`;
       playSound('success');
     } else if (state === 'already') {
       banner.classList.add('already');
       icon.textContent = `${count}/${qty}`;
       title.textContent = 'TOUS DÉJÀ ENTRÉS';
       const t = data.enteredAt ? new Date(data.enteredAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '';
-      sub.textContent = `Cette résa a été utilisée intégralement${t ? ' depuis ' + t : ''}`;
+      sub.textContent = `Cette réservation a été utilisée intégralement${t ? ' depuis ' + t : ''}`;
       playSound('already');
     } else if (state === 'cancelled') {
       banner.classList.add('danger');
       icon.textContent = '🚫';
-      title.textContent = 'RÉSA ANNULÉE';
-      sub.textContent = data.cancelReason ? `Motif : ${data.cancelReason}` : 'Cette réservation a été annulée';
+      title.textContent = '🚫 RÉSERVATION ANNULÉE';
+      sub.textContent = data.cancelReason ? `Motif : ${data.cancelReason} — Refuser l'entrée` : 'Cette réservation a été annulée — Refuser l\'entrée';
       playSound('error');
     } else if (state === 'unpaid') {
       banner.classList.add('warning');
       icon.textContent = '⏳';
-      title.textContent = 'PAIEMENT EN ATTENTE';
-      sub.textContent = 'À vérifier dans le dashboard avant d\'entrer';
+      title.textContent = '⏳ RÉSERVATION À VALIDER';
+      sub.textContent = 'Le paiement n\'a pas encore été confirmé. À vérifier dans le dashboard avant d\'entrer.';
       playSound('pending');
     } else if (state === 'notfound') {
       banner.classList.add('danger');
       icon.textContent = '✕';
-      title.textContent = 'INTROUVABLE';
-      sub.textContent = `Aucune résa pour ${data.bookingId}`;
+      title.textContent = '✕ RÉSERVATION INTROUVABLE';
+      sub.textContent = `Aucune réservation ne correspond à ${data.bookingId} — Refuser l'entrée`;
       playSound('error');
     } else {
       banner.classList.add('danger');

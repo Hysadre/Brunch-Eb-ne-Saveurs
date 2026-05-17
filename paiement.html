@@ -305,58 +305,85 @@
   }
   .info-note strong { color: #c79270; }
 
-  /* GROSSE BOÎTE RÉFÉRENCE */
+  /* GROSSE BOÎTE RÉFÉRENCE — ULTRA VISIBLE */
+  @keyframes refPulse {
+    0%, 100% { box-shadow: 0 6px 25px rgba(184, 106, 69, 0.4), 0 0 0 0 rgba(184, 106, 69, 0.6); }
+    50% { box-shadow: 0 10px 35px rgba(184, 106, 69, 0.55), 0 0 0 12px rgba(184, 106, 69, 0); }
+  }
+  @keyframes arrowBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
   .ref-bigbox {
     background: linear-gradient(135deg, #b86a45 0%, #c79270 100%);
-    border-radius: 18px;
-    padding: 18px;
-    margin-bottom: 18px;
+    border: 3px solid #ede5d1;
+    border-radius: 20px;
+    padding: 22px 20px;
+    margin-bottom: 22px;
     text-align: center;
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+    animation: refPulse 2.5s ease-in-out infinite;
+    position: relative;
   }
   .ref-bigbox-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
     color: #1a1108;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   .ref-bigbox-code {
     font-family: 'SF Mono', Menlo, Consolas, monospace;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     color: #1a1108;
     background: #fff8e7;
-    border-radius: 12px;
-    padding: 14px 10px;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
+    border-radius: 14px;
+    padding: 18px 12px;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
     word-break: break-all;
     line-height: 1.2;
-    border: 2px dashed #1a1108;
+    border: 2.5px dashed #1a1108;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .ref-arrow {
+    color: #1a1108;
+    font-size: 24px;
+    margin: 4px 0 0;
+    animation: arrowBounce 1.2s ease-in-out infinite;
+    line-height: 1;
+    font-weight: 800;
   }
   .ref-copy-btn {
     width: 100%;
+    margin-top: 6px;
     background: #1a1108;
-    color: #c79270;
+    color: #ede5d1;
     border: none;
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 14px;
-    font-weight: 700;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
     cursor: pointer;
     font-family: inherit;
+    box-shadow: 0 4px 14px rgba(26, 17, 8, 0.4);
     transition: transform .1s, background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    letter-spacing: 0.5px;
   }
   .ref-copy-btn:active { transform: scale(.97); }
-  .ref-copy-btn.copied { background: #16a34a; color: white; }
+  .ref-copy-btn:hover { background: #2a1810; }
+  .ref-copy-btn.copied { background: #16a34a; color: white; animation: none; }
   .ref-bigbox-hint {
-    margin-top: 10px;
+    margin-top: 12px;
     font-size: 12px;
     color: #1a1108;
     font-weight: 600;
-    opacity: 0.85;
+    opacity: 0.9;
   }
 
   @media (max-width: 380px) {
@@ -424,8 +451,9 @@
 
     <!-- BLOC RÉFÉRENCE ÉNORME -->
     <div class="ref-bigbox">
-      <div class="ref-bigbox-label">⚠️ À indiquer en note de votre paiement</div>
+      <div class="ref-bigbox-label">⚠️ Référence à indiquer dans votre paiement</div>
       <div class="ref-bigbox-code" id="bigRef">EBENE-XXX</div>
+      <div class="ref-arrow">↓</div>
       <button type="button" class="ref-copy-btn" id="bigRefCopy">📋 Copier la référence</button>
       <div class="ref-bigbox-hint">Sans cette référence, nous ne pourrons pas relier votre paiement à votre réservation 🙏</div>
     </div>
