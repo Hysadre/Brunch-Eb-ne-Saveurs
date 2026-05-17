@@ -33,6 +33,7 @@
   .status-hero.paid { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; }
   .status-hero.pending { background: linear-gradient(135deg, #b86a45, #c79270); color: #1a1108; }
   .status-hero.error { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; }
+  .status-hero.cancelled { background: linear-gradient(135deg, #5a4028, #3a2818); color: white; }
   .status-icon {
     width: 70px; height: 70px;
     background: white;
@@ -45,6 +46,24 @@
   .status-hero.paid .status-icon { color: #16a34a; }
   .status-hero.pending .status-icon { color: #b86a45; }
   .status-hero.error .status-icon { color: #b91c1c; }
+  .status-hero.cancelled .status-icon { color: #8a4a2e; }
+  .ticket-card.cancelled { opacity: 0.55; filter: grayscale(0.6); }
+  .ticket-card.cancelled .ticket-name { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.5); }
+  .cancelled-banner {
+    background: rgba(185, 28, 28, 0.12);
+    border: 1px solid rgba(185, 28, 28, 0.4);
+    border-radius: 14px;
+    padding: 18px;
+    margin-top: 14px;
+    color: #fca5a5;
+    text-align: center;
+  }
+  .cancelled-banner .reason {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #ede5d1;
+    font-style: italic;
+  }
   @keyframes pop {
     0% { transform: scale(0); opacity: 0; }
     60% { transform: scale(1.15); }
@@ -230,13 +249,32 @@
     const content = document.getElementById('content');
     content.style.display = 'block';
 
-    const isPaid = b.status === 'confirmé';
-    const statusClass = isPaid ? 'paid' : 'pending';
-    const statusIcon = isPaid ? '✓' : '⏳';
-    const statusTitle = isPaid ? 'Réservation confirmée' : 'Paiement en attente';
-    const statusSub = isPaid
-      ? `Vous êtes bien sur la liste pour le brunch, ${b.prenom} 🎉`
-      : `Votre paiement est en cours de vérification. Nous validons cela dès que possible.`;
+    // 🎯 4 états distincts :
+    //   1. annulée (archived === true)  → rouge sombre, pas de QR, motif affiché
+    //   2. validée (confirmé, !archivée) → vert, QR
+    //   3. en cours (status !== confirmé, !archivée) → orange, pas de QR
+    //   4. introuvable (404) → géré par renderError
+    const isCancelled = b.archived === true;
+    const isPaid = !isCancelled && b.status === 'confirmé';
+    const isPending = !isCancelled && !isPaid;
+
+    let statusClass, statusIcon, statusTitle, statusSub;
+    if (isCancelled) {
+      statusClass = 'cancelled';
+      statusIcon = '🚫';
+      statusTitle = 'Réservation annulée';
+      statusSub = `Cette réservation a été annulée et n'est plus valable pour le brunch.`;
+    } else if (isPaid) {
+      statusClass = 'paid';
+      statusIcon = '✓';
+      statusTitle = 'Réservation validée';
+      statusSub = `Vous êtes bien sur la liste pour le brunch, ${b.prenom} 🎉`;
+    } else {
+      statusClass = 'pending';
+      statusIcon = '⏳';
+      statusTitle = 'Réservation en cours';
+      statusSub = `Votre paiement est en cours de vérification. Nous validons cela dès que possible.`;
+    }
 
     content.innerHTML = `
       <div class="status-hero ${statusClass}">
@@ -245,7 +283,17 @@
         <p class="status-sub">${statusSub}</p>
       </div>
 
-      <div class="ticket-card">
+      ${isCancelled ? `
+      <div class="cancelled-banner">
+        <div style="font-weight:800; font-size:15px;">⚠️ Cette réservation n'est plus active</div>
+        ${b.cancelReason ? `<div class="reason">Motif : ${b.cancelReason}</div>` : ''}
+        <div style="margin-top:10px; font-size:13px; color:#d4a574;">
+          Si vous pensez qu'il s'agit d'une erreur, contactez-nous via WhatsApp ci-dessous.
+        </div>
+      </div>
+      ` : ''}
+
+      <div class="ticket-card ${isCancelled ? 'cancelled' : ''}">
         <div class="ticket-top">
           <div class="ticket-eyebrow">🌴 Billet électronique</div>
           <div class="ticket-name">Brunch <span class="accent">Ébène &amp; Saveurs</span></div>
@@ -270,6 +318,16 @@
             <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(window.location.href)}&size=400x400&margin=10" alt="QR code de réservation">
           </div>
           <div class="qr-caption">📸 À présenter à l'entrée pour scan</div>
+        </div>
+        ` : isCancelled ? `
+        <div class="ticket-stub" style="text-align: center;">
+          <div style="background: rgba(185, 28, 28, 0.10); border: 1px dashed rgba(185, 28, 28, 0.4); border-radius: 14px; padding: 24px;">
+            <div style="font-size: 36px; margin-bottom: 8px;">🚫</div>
+            <p style="margin: 0 0 6px; font-weight: 700; color: #fca5a5;">QR code désactivé</p>
+            <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.5;">
+              Cette réservation a été annulée — le QR code n'est plus valide à l'entrée du brunch.
+            </p>
+          </div>
         </div>
         ` : `
         <div class="ticket-stub" style="text-align: center;">
@@ -304,12 +362,14 @@
         </div>
       </div>
 
-      <!-- 📤 Bouton partager -->
+      ${!isCancelled ? `
+      <!-- 📤 Bouton partager (masqué si annulée) -->
       <div style="margin-top: 14px;">
         <button id="shareBtn" style="width:100%; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;">
           📤 Inviter des amis au brunch
         </button>
       </div>
+      ` : ''}
 
       <div class="booking-ref-box">
         <div class="booking-ref-label">N° de réservation</div>

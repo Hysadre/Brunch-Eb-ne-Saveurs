@@ -1602,7 +1602,8 @@
       total: newTotal,
       accompagnants: accomps.join(', ') || null,
       ticketName: newTicketName,
-      ticketId: newTicketId
+      ticketId: newTicketId,
+      removedName: label  // 📧 utilisé par le backend pour le mail de modification
     })) {
       toast(`✓ ${label} retiré · résa passée à ${newQty} place${newQty>1?'s':''}`);
       render();
