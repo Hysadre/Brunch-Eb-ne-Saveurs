@@ -260,7 +260,17 @@
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .btn-primary:active { transform: scale(.98); }
-  .btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+  .btn-primary:disabled {
+    background: #3a2818;
+    color: #8a6648;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 1;
+  }
+  .btn-primary:disabled::before {
+    content: "🔒 ";
+    margin-right: 4px;
+  }
 
   .secured {
     text-align: center;
@@ -537,8 +547,8 @@
   </div>
 
   <div class="total-bar">
-    <button class="btn-primary" id="payBtn">
-      <span id="btnLabel">✓ J'ai payé · Valider <span id="btnAmount"></span></span>
+    <button class="btn-primary" id="payBtn" disabled>
+      <span id="btnLabel">Copiez la référence ↑ pour activer</span>
     </button>
     <div class="secured">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -577,7 +587,7 @@
   // Grosse référence en haut
   document.getElementById('bigRef').textContent = booking.bookingId;
 
-  // Bouton copier la référence
+  // Bouton copier la référence — DÉBLOQUE aussi le bouton "J'ai payé"
   const bigRefCopy = document.getElementById('bigRefCopy');
   bigRefCopy.addEventListener('click', async () => {
     try {
@@ -585,14 +595,23 @@
       bigRefCopy.textContent = '✓ Copié !';
       bigRefCopy.classList.add('copied');
       const t = document.getElementById('toast');
-      t.textContent = '✓ Référence copiée — collez-la en note de votre paiement';
+      t.textContent = '✓ Référence copiée — vous pouvez maintenant valider après paiement';
       t.classList.add('show');
+
+      // 🔓 Active le bouton "J'ai payé"
+      const payBtn = document.getElementById('payBtn');
+      const btnLabel = document.getElementById('btnLabel');
+      payBtn.disabled = false;
+      btnLabel.innerHTML = '✓ J\'ai payé · Valider <span id="btnAmount">(' + fmt(booking.total) + ')</span>';
+
       setTimeout(() => {
         bigRefCopy.textContent = '📋 Copier la référence';
         bigRefCopy.classList.remove('copied');
         t.classList.remove('show');
       }, 2500);
-    } catch(err) {}
+    } catch(err) {
+      alert('Impossible de copier automatiquement. Sélectionnez la référence à la main puis cliquez à nouveau.');
+    }
   });
 
   let method = 'revolut';
