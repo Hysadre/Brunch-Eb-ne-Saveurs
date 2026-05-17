@@ -94,6 +94,52 @@ async function removeReservation(bookingId) {
   });
 }
 
+// 🆕 Normalise le nom de famille pour le bookingId
+//   "Abayo Déborah Assi" → "ASSI" (dernier mot, sans accent, sans caractère spécial)
+function normalizeLastName(nom) {
+  if (!nom) return 'INCONNU';
+  const cleaned = String(nom).normalize('NFD').replace(/[̀-ͯ]/g, '');  // retire accents
+  // On prend le DERNIER mot (souvent le vrai nom de famille)
+  const parts = cleaned.split(/[\s-]+/).filter(p => p.length > 0);
+  const last = parts.length > 0 ? parts[parts.length - 1] : cleaned;
+  const upper = last.toUpperCase().replace(/[^A-Z]/g, '');
+  return (upper.slice(0, 10) || 'INCONNU');
+}
+
+// 🆕 Compte les résa existantes pour générer le prochain numéro séquentiel
+async function countReservations() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/reservations?select=bookingId`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Prefer': 'count=exact'
+    }
+  });
+  // Le header Content-Range contient "0-N/total"
+  const range = r.headers.get('content-range') || '';
+  const m = range.match(/\/(\d+)$/);
+  if (m) return parseInt(m[1], 10);
+  // Fallback : récupère et compte
+  const list = await r.json();
+  return Array.isArray(list) ? list.length : 0;
+}
+
+// 🆕 Génère un bookingId séquentiel — EBENE-NOM-Y{NNN}
+// Si collision (très rare race condition) → incrémente jusqu'à trouver libre
+async function generateBookingId(nom) {
+  const lastName = normalizeLastName(nom);
+  let n = (await countReservations()) + 1;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const padded = String(n).padStart(3, '0');
+    const candidate = `EBENE-${lastName}-Y${padded}`;
+    const existing = await findReservation(candidate);
+    if (!existing) return candidate;
+    n++;  // collision → essaie le suivant
+  }
+  // Sécurité ultime : suffixe aléatoire
+  return `EBENE-${lastName}-Y${String(n).padStart(3, '0')}X${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+}
+
 // ----- Auth middleware -----
 function requireAdmin(req, res, next) {
   const token = req.header('X-Admin-Token');
@@ -593,28 +639,47 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
   }
 });
 
-// Créer une réservation
+// Créer une réservation — l'ID est TOUJOURS généré côté serveur (séquentiel)
 app.post('/api/reservations', async (req, res) => {
   try {
     const b = req.body || {};
-    if (!b.bookingId || !b.email || !b.qty) {
-      return res.status(400).json({ error: 'missing fields' });
+    if (!b.email || !b.qty || !b.nom) {
+      return res.status(400).json({ error: 'missing fields (nom, email, qty)' });
     }
-    // anti-doublon
-    const existing = await findReservation(b.bookingId);
-    if (existing) return res.json({ ok: true, duplicate: true });
 
+    // 🆕 ID séquentiel généré server-side — ignore tout bookingId envoyé par le client
+    b.bookingId = await generateBookingId(b.nom);
     b.serverReceivedAt = new Date().toISOString();
+
     await insertReservation(b);
 
     // email async (n'attend pas)
     sendConfirmationEmails(b).catch(err => console.error('email error', err));
     // 📊 PAS de sync Sheet ici — on attend la validation du paiement (cf. action 'validation' dans PATCH)
-    // syncToSheet('création', b);  ← retiré volontairement
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
     console.error('insert error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🆕 Met à jour le moyen de paiement choisi par le client (public, pas d'auth)
+//    Appelé depuis paiement.html quand le client clique "J'ai payé"
+app.post('/api/payment-method/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { method } = req.body || {};
+    if (!method) return res.status(400).json({ error: 'missing method' });
+    const r = await findReservation(id);
+    if (!r) return res.status(404).json({ error: 'not found' });
+    await patchReservation(id, {
+      paymentMethod: method,
+      paidAt: new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('payment-method error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
