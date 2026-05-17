@@ -519,6 +519,13 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
       if (req.body.cancelReason !== undefined) patch.cancelReason = req.body.cancelReason || null;
     }
 
+    // 🆕 Suppression partielle d'un accompagnant (réduit qty + total + accompagnants)
+    if (typeof req.body.qty === 'number') patch.qty = req.body.qty;
+    if (typeof req.body.total === 'number') patch.total = req.body.total;
+    if (req.body.accompagnants !== undefined) patch.accompagnants = req.body.accompagnants;
+    if (req.body.ticketName) patch.ticketName = req.body.ticketName;
+    if (req.body.ticketId) patch.ticketId = req.body.ticketId;
+
     await patchReservation(id, patch);
 
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
