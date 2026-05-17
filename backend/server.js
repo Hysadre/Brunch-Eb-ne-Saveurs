@@ -212,6 +212,53 @@ async function sendModificationEmail(booking, removedName, newQty, oldQty) {
   });
 }
 
+// ----- ➕ Email d'ajout de places (qty augmente) -----
+async function sendAdditionEmail(booking, addedCount, addedNames, oldQty) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+  const namesList = addedNames && addedNames.trim()
+    ? `<div style="margin-top:10px; padding:10px 14px; background: rgba(34, 197, 94, 0.10); border-radius:8px; font-size:13px; color:#86efac;">Nouvelles personnes : <strong style="color:#22c55e;">${addedNames}</strong></div>`
+    : '';
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 28px 24px; text-align: center; color: white;">
+      <div style="font-size: 40px; margin-bottom: 6px;">➕</div>
+      <h1 style="margin: 0; font-size: 22px;">Places ajoutées</h1>
+      <p style="margin: 6px 0 0; opacity: .95;">Votre réservation a été mise à jour</p>
+    </div>
+
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Excellente nouvelle ! Nous avons ajouté <strong style="color:#22c55e;">${addedCount} place${addedCount>1?'s':''}</strong> à votre réservation.
+      </p>
+      ${namesList}
+
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">Nombre de places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;"><span style="text-decoration:line-through; color:#8a6648;">${oldQty}</span> → <strong style="color:#22c55e;">${booking.qty}</strong></td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Nouveau total</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; color: #c79270;">${totalFmt} €</td></tr>
+      </table>
+
+      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center;">🔎 Voir ma réservation à jour</a>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `➕ ${addedCount} place${addedCount>1?'s':''} ajoutée${addedCount>1?'s':''} à votre réservation`,
+    html
+  });
+}
+
 // ----- 🚫 Email d'annulation (sans QR, ton chic et bienveillant) -----
 async function sendCancellationEmail(booking, reason) {
   if (!booking.email) return;
@@ -265,17 +312,43 @@ async function sendCancellationEmail(booking, reason) {
 }
 
 // ----- 📊 Google Sheets sync (via Apps Script webhook) -----
+// Règles :
+//   - On ne crée une ligne dans le Sheet QUE quand la résa est VALIDÉE (status="confirmé")
+//   - Après création, on met à jour la colonne "Statut actuel" pour refléter
+//     les modifications (modifiée / annulée / restaurée / supprimée)
 async function syncToSheet(action, booking) {
   if (!SHEET_WEBHOOK) return;  // pas configuré → on skip silencieusement
+
+  const isConfirmed = booking.status === 'confirmé';
+  const isArchived  = booking.archived === true;
+
+  // Calcul du "statut actuel" lisible dans le Sheet
+  let statusLabel;
+  if (action === 'suppression')      statusLabel = '🗑️ Supprimée définitivement';
+  else if (isArchived)               statusLabel = `🚫 Annulée${booking.cancelReason ? ` (${booking.cancelReason})` : ''}`;
+  else if (action === 'modification') statusLabel = '✏️ Modifiée';
+  else if (action === 'restauration') statusLabel = '↩️ Restaurée';
+  else if (action === 'check-in')    statusLabel = booking.entered ? '✅ Présent · entrée(s) complète(s)' : `🚪 Présent · ${booking.enteredCount}/${booking.qty}`;
+  else if (isConfirmed)              statusLabel = '✓ Validée';
+  else                                statusLabel = '⏳ En attente';
+
+  // ⛔ Filtre : ne JAMAIS pousser une résa qui n'a jamais été validée
+  // Sauf si c'est une suppression (pour nettoyer une ligne qui aurait été créée à tort)
+  // OU si elle a déjà été dans le sheet (archived = true implique qu'elle a été validée avant)
+  const everConfirmed = isConfirmed || isArchived || booking.paidAt;
+  if (!everConfirmed && action !== 'suppression') {
+    console.log(`📊 Sheet sync SKIP ${booking.bookingId} — pas encore validée (status="${booking.status}")`);
+    return;
+  }
+
   try {
-    const payload = { action, ...booking };
-    // Fire-and-forget : ne bloque pas la requête principale
+    const payload = { action, statusLabel, ...booking };
     fetch(SHEET_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).then(r => {
-      if (r.ok) console.log(`📊 Sheet sync OK [${action}] ${booking.bookingId}`);
+      if (r.ok) console.log(`📊 Sheet sync OK [${action}/${statusLabel}] ${booking.bookingId}`);
       else console.warn(`📊 Sheet sync ${r.status} pour ${booking.bookingId}`);
     }).catch(e => console.warn(`📊 Sheet sync erreur: ${e.message}`));
   } catch(e) {
@@ -536,7 +609,8 @@ app.post('/api/reservations', async (req, res) => {
 
     // email async (n'attend pas)
     sendConfirmationEmails(b).catch(err => console.error('email error', err));
-    syncToSheet('création', b);
+    // 📊 PAS de sync Sheet ici — on attend la validation du paiement (cf. action 'validation' dans PATCH)
+    // syncToSheet('création', b);  ← retiré volontairement
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
@@ -614,12 +688,27 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
         .catch(err => console.error(`❌ Mail modification ÉCHEC pour ${updated.email}:`, err.message));
     }
 
-    // 📊 Sync Google Sheet à chaque mise à jour (statut, archive, check-in, etc.)
+    // ➕ Si la qty augmente (ajout de places) → mail d'ajout
+    const isQtyIncrease = typeof req.body.qty === 'number'
+                        && req.body.qty > before.qty
+                        && !isNowArchived;
+    if (isQtyIncrease && before.email) {
+      const updated = { ...before, ...patch };
+      const addedCount = req.body.qty - before.qty;
+      const addedNames = req.body.addedNames || '';
+      console.log(`📤 Envoi mail ajout à ${updated.email} pour ${id} (+${addedCount} places, ${before.qty} → ${req.body.qty})`);
+      sendAdditionEmail(updated, addedCount, addedNames, before.qty)
+        .then(() => console.log(`✅ Mail ajout envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail ajout ÉCHEC pour ${updated.email}:`, err.message));
+    }
+
+    // 📊 Sync Google Sheet à chaque mise à jour pertinente
     const final = { ...before, ...patch };
     let action = 'update';
-    if (isNowConfirmed && wasNotConfirmed) action = 'validation';
-    else if (req.body.archived === true) action = 'archivage';
-    else if (req.body.archived === false) action = 'restauration';
+    if (isNowConfirmed && wasNotConfirmed) action = 'validation';      // crée la ligne dans le Sheet
+    else if (req.body.archived === true)    action = 'archivage';      // marque "Annulée"
+    else if (req.body.archived === false)   action = 'restauration';   // marque "Restaurée"
+    else if (typeof req.body.qty === 'number' && req.body.qty !== before.qty) action = 'modification';  // marque "Modifiée"
     syncToSheet(action, final);
 
     res.json({ ok: true });
