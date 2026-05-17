@@ -739,12 +739,26 @@ app.post('/api/checkin/:id', requireAdmin, async (req, res) => {
     }
 
     const newCount = currentCount + 1;
+    const nowIso = new Date().toISOString();
+    // 📝 Journal détaillé des scans (1 entrée par scan, avec timestamp)
+    const prevLog = Array.isArray(r.scanLog) ? r.scanLog : [];
+    const newScanLog = [...prevLog, { at: nowIso, n: newCount }];
     const patch = {
       enteredCount: newCount,
-      entered: newCount >= qty,  // rétro-compat : entered = true quand tout le monde est entré
-      enteredAt: r.enteredAt || new Date().toISOString()  // 1ère arrivée
+      entered: newCount >= qty,                  // rétro-compat
+      enteredAt: r.enteredAt || nowIso,           // 1ère arrivée
+      scanLog: newScanLog                          // 🆕 historique scan par scan
     };
-    await patchReservation(id, patch);
+    try {
+      await patchReservation(id, patch);
+    } catch(e) {
+      // Si la colonne scanLog n'existe pas encore en BDD → retombe sur l'ancien comportement
+      if (e.message && e.message.includes('scanLog')) {
+        console.warn('⚠️  Colonne scanLog manquante, fallback sans journal :', e.message);
+        delete patch.scanLog;
+        await patchReservation(id, patch);
+      } else { throw e; }
+    }
     syncToSheet('check-in', { ...r, ...patch });
 
     res.json({
@@ -768,11 +782,22 @@ app.post('/api/checkin/:id/undo', requireAdmin, async (req, res) => {
     const currentCount = r.enteredCount || 0;
     if (currentCount === 0) return res.json({ ok: false, enteredCount: 0 });
     const newCount = currentCount - 1;
-    await patchReservation(id, {
+    const prevLog = Array.isArray(r.scanLog) ? r.scanLog : [];
+    const trimmedLog = prevLog.slice(0, -1);  // retire le dernier scan
+    const patch = {
       enteredCount: newCount,
       entered: false,
-      enteredAt: newCount === 0 ? null : r.enteredAt
-    });
+      enteredAt: newCount === 0 ? null : r.enteredAt,
+      scanLog: trimmedLog
+    };
+    try {
+      await patchReservation(id, patch);
+    } catch(e) {
+      if (e.message && e.message.includes('scanLog')) {
+        delete patch.scanLog;
+        await patchReservation(id, patch);
+      } else { throw e; }
+    }
     res.json({ ok: true, enteredCount: newCount, qty: r.qty });
   } catch (e) {
     console.error('undo checkin error:', e.message);
