@@ -678,8 +678,24 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
     Object.keys(byPage).forEach(p => {
       result[p] = { views: byPage[p], uniqueVisitors: sessionsByPage[p].size };
     });
+
+    // 🔁 Rebond : sessions qui ont vu l'accueil mais n'ont JAMAIS continué (pas de paiement ni confirmation)
+    const accueilSessions = sessionsByPage['accueil'] || new Set();
+    const paiementSessions = sessionsByPage['paiement'] || new Set();
+    const confirmSessions  = sessionsByPage['confirmation'] || new Set();
+    let bouncedCount = 0;
+    for (const sid of accueilSessions) {
+      if (!paiementSessions.has(sid) && !confirmSessions.has(sid)) bouncedCount++;
+    }
+    const bounceRate = accueilSessions.size > 0 ? Math.round((bouncedCount / accueilSessions.size) * 100) : 0;
+
     res.json({
       pages: result,
+      bounce: {
+        count: bouncedCount,
+        rate: bounceRate,
+        totalAccueil: accueilSessions.size
+      },
       totalViews: data.length,
       lastViews: data.slice(0, 30)
     });
