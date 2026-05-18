@@ -1390,6 +1390,25 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
 
+      // 🚨 Table manquante → message d'aide explicite
+      if (d.warning === 'TABLE_MISSING') {
+        if (badge) badge.textContent = '⚙️ Setup requis';
+        container.innerHTML = `
+          <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 12px; padding: 16px; color: #fbbf24; font-size: 13px; line-height: 1.6;">
+            <div style="font-weight: 800; margin-bottom: 6px;">⚙️ Le tracking n'est pas encore actif</div>
+            <div style="color: #d4a574; font-weight: 500;">
+              Pour activer le suivi du trafic, crée la table <code style="background:#0f0a06; padding:2px 6px; border-radius:4px; color:#c79270;">pageviews</code> dans Supabase :<br>
+              Table Editor → New Table → "pageviews" avec colonnes :<br>
+              • <code>id</code> (int8, PK)<br>
+              • <code>page</code> (text)<br>
+              • <code>sessionId</code> (text)<br>
+              • <code>bookingId</code> (text, nullable)<br>
+              • <code>timestamp</code> (timestamptz, default now())
+            </div>
+          </div>`;
+        return;
+      }
+
       const accueil   = d.pages?.accueil      || { uniqueVisitors: 0, views: 0 };
       const paiement  = d.pages?.paiement     || { uniqueVisitors: 0, views: 0 };
       const confirm_  = d.pages?.confirmation || { uniqueVisitors: 0, views: 0 };
