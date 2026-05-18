@@ -34,7 +34,7 @@ const WHATSAPP_DISPLAY = '+33 6 68 29 50 77';
 const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
-  time: '12h00',
+  time: '13h00',
   place: 'Salle de Ronchin, 59790 Ronchin (Lille)'
 };
 
@@ -94,11 +94,83 @@ async function removeReservation(bookingId) {
   });
 }
 
+// 🆕 Normalise le nom de famille pour le bookingId
+//   "Abayo Déborah Assi" → "ASSI" (dernier mot, sans accent, sans caractère spécial)
+function normalizeLastName(nom) {
+  if (!nom) return 'INCONNU';
+  const cleaned = String(nom).normalize('NFD').replace(/[̀-ͯ]/g, '');  // retire accents
+  // On prend le DERNIER mot (souvent le vrai nom de famille)
+  const parts = cleaned.split(/[\s-]+/).filter(p => p.length > 0);
+  const last = parts.length > 0 ? parts[parts.length - 1] : cleaned;
+  const upper = last.toUpperCase().replace(/[^A-Z]/g, '');
+  return (upper.slice(0, 10) || 'INCONNU');
+}
+
+// 🆕 Compte les résa existantes pour générer le prochain numéro séquentiel
+async function countReservations() {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/reservations?select=bookingId`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Prefer': 'count=exact'
+    }
+  });
+  // Le header Content-Range contient "0-N/total"
+  const range = r.headers.get('content-range') || '';
+  const m = range.match(/\/(\d+)$/);
+  if (m) return parseInt(m[1], 10);
+  // Fallback : récupère et compte
+  const list = await r.json();
+  return Array.isArray(list) ? list.length : 0;
+}
+
+// 🆕 Génère un bookingId séquentiel — EBENE-NOM-Y{NNN}
+// Si collision (très rare race condition) → incrémente jusqu'à trouver libre
+async function generateBookingId(nom) {
+  const lastName = normalizeLastName(nom);
+  let n = (await countReservations()) + 1;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const padded = String(n).padStart(3, '0');
+    const candidate = `EBENE-${lastName}-Y${padded}`;
+    const existing = await findReservation(candidate);
+    if (!existing) return candidate;
+    n++;  // collision → essaie le suivant
+  }
+  // Sécurité ultime : suffixe aléatoire
+  return `EBENE-${lastName}-Y${String(n).padStart(3, '0')}X${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+}
+
 // ----- Auth middleware -----
 function requireAdmin(req, res, next) {
   const token = req.header('X-Admin-Token');
   if (token !== ADMIN_TOKEN) return res.status(401).json({ error: 'unauthorized' });
   next();
+}
+
+// ====================================================
+// 📊 TRACKING — pageviews + événements par résa
+// ====================================================
+async function insertPageview(row) {
+  try {
+    await supa('pageviews', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(row)
+    });
+  } catch(e) { console.warn('pageview insert error:', e.message); }
+}
+
+async function appendEvent(bookingId, evt) {
+  try {
+    const r = await findReservation(bookingId);
+    if (!r) return;
+    const prev = Array.isArray(r.events) ? r.events : [];
+    const next = [...prev, { ...evt, at: new Date().toISOString() }];
+    await patchReservation(bookingId, { events: next });
+  } catch(e) {
+    // Si la colonne events n'existe pas, on log mais on ne casse pas
+    if (!e.message?.includes('events')) console.warn('event append error:', e.message);
+  }
 }
 
 // ----- Email — Resend (primaire, domaine vérifié) ou Brevo (fallback) -----
@@ -165,6 +237,100 @@ async function sendEmail({ to, subject, html, text }) {
 // Wrapper rétro-compatible
 const resendSend = sendEmail;
 
+// ----- ✏️ Email de modification (retrait d'une place sans tout annuler) -----
+async function sendModificationEmail(booking, removedName, newQty, oldQty) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #b86a45, #c79270); padding: 28px 24px; text-align: center; color: white;">
+      <div style="font-size: 40px; margin-bottom: 6px;">✏️</div>
+      <h1 style="margin: 0; font-size: 22px;">Réservation modifiée</h1>
+      <p style="margin: 6px 0 0; opacity: .95;">Une place a été retirée de votre réservation</p>
+    </div>
+
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Nous vous informons qu'une modification a été apportée à votre réservation : <strong style="color:#c79270;">${removedName}</strong> a été retiré(e) de la liste.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">Nombre de places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;"><span style="text-decoration:line-through; color:#8a6648;">${oldQty}</span> → <strong style="color:#c79270;">${newQty}</strong></td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Nouveau total</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; color: #c79270;">${totalFmt} €</td></tr>
+      </table>
+
+      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #b86a45, #8a4a2e); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center;">🔎 Voir ma réservation à jour</a>
+
+      <div style="background: rgba(199, 146, 112, 0.10); border: 1px solid rgba(199, 146, 112, 0.3); border-radius: 12px; padding: 14px; margin-top: 16px; font-size: 13px; color: #ede5d1; line-height: 1.6;">
+        💡 Si cette modification vous semble erronée, n'hésitez pas à nous contacter rapidement.
+      </div>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `✏️ Votre réservation pour ${EVENT.name} a été modifiée`,
+    html
+  });
+}
+
+// ----- ➕ Email d'ajout de places (qty augmente) -----
+async function sendAdditionEmail(booking, addedCount, addedNames, oldQty) {
+  if (!booking.email) return;
+  const totalFmt = Number(booking.total).toFixed(2).replace('.', ',');
+  const ticketUrl = `${SITE_URL}/ticket.html?id=${encodeURIComponent(booking.bookingId)}`;
+  const waLink = `https://wa.me/${WHATSAPP_NUMBER}`;
+  const telLink = `tel:+${WHATSAPP_NUMBER}`;
+  const namesList = addedNames && addedNames.trim()
+    ? `<div style="margin-top:10px; padding:10px 14px; background: rgba(34, 197, 94, 0.10); border-radius:8px; font-size:13px; color:#86efac;">Nouvelles personnes : <strong style="color:#22c55e;">${addedNames}</strong></div>`
+    : '';
+
+  const html = `
+  <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #0f0a06; color: #ede5d1; border-radius: 16px; overflow: hidden;">
+    <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 28px 24px; text-align: center; color: white;">
+      <div style="font-size: 40px; margin-bottom: 6px;">➕</div>
+      <h1 style="margin: 0; font-size: 22px;">Places ajoutées</h1>
+      <p style="margin: 6px 0 0; opacity: .95;">Votre réservation a été mise à jour</p>
+    </div>
+
+    <div style="padding: 24px; background: #1a1108;">
+      <p style="margin: 0 0 16px; font-size: 15px; color: #ede5d1; line-height: 1.6;">
+        Bonjour <strong>${booking.prenom}</strong>,<br><br>
+        Excellente nouvelle ! Nous avons ajouté <strong style="color:#22c55e;">${addedCount} place${addedCount>1?'s':''}</strong> à votre réservation.
+      </p>
+      ${namesList}
+
+      <table style="width: 100%; border-collapse: collapse; margin-top: 16px; color: #ede5d1; background: #14100a; border-radius: 10px;">
+        <tr><td style="padding: 10px 14px; color: #d4a574;">Nombre de places</td><td style="padding: 10px 14px; text-align: right; font-weight: 700;"><span style="text-decoration:line-through; color:#8a6648;">${oldQty}</span> → <strong style="color:#22c55e;">${booking.qty}</strong></td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Formule</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818;">${booking.ticketName}</td></tr>
+        <tr><td style="padding: 10px 14px; color: #d4a574; border-top: 1px solid #3a2818;">Nouveau total</td><td style="padding: 10px 14px; text-align: right; font-weight: 700; border-top: 1px solid #3a2818; color: #c79270;">${totalFmt} €</td></tr>
+      </table>
+
+      <a href="${ticketUrl}" style="display:block; margin-top: 16px; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 700; text-align: center;">🔎 Voir ma réservation à jour</a>
+    </div>
+    <div style="padding: 18px 24px; text-align: center; background: #14100a; border-top: 1px solid #3a2818;">
+      <a href="${waLink}" style="display: inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">💬 WhatsApp</a>
+      <a href="${telLink}" style="display: inline-block; background: #c79270; color: #1a1108; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px; margin: 4px;">📞 ${WHATSAPP_DISPLAY}</a>
+    </div>
+  </div>`;
+
+  await resendSend({
+    to: booking.email,
+    subject: `➕ ${addedCount} place${addedCount>1?'s':''} ajoutée${addedCount>1?'s':''} à votre réservation`,
+    html
+  });
+}
+
 // ----- 🚫 Email d'annulation (sans QR, ton chic et bienveillant) -----
 async function sendCancellationEmail(booking, reason) {
   if (!booking.email) return;
@@ -218,17 +384,43 @@ async function sendCancellationEmail(booking, reason) {
 }
 
 // ----- 📊 Google Sheets sync (via Apps Script webhook) -----
+// Règles :
+//   - On ne crée une ligne dans le Sheet QUE quand la résa est VALIDÉE (status="confirmé")
+//   - Après création, on met à jour la colonne "Statut actuel" pour refléter
+//     les modifications (modifiée / annulée / restaurée / supprimée)
 async function syncToSheet(action, booking) {
   if (!SHEET_WEBHOOK) return;  // pas configuré → on skip silencieusement
+
+  const isConfirmed = booking.status === 'confirmé';
+  const isArchived  = booking.archived === true;
+
+  // Calcul du "statut actuel" lisible dans le Sheet
+  let statusLabel;
+  if (action === 'suppression')      statusLabel = '🗑️ Supprimée définitivement';
+  else if (isArchived)               statusLabel = `🚫 Annulée${booking.cancelReason ? ` (${booking.cancelReason})` : ''}`;
+  else if (action === 'modification') statusLabel = '✏️ Modifiée';
+  else if (action === 'restauration') statusLabel = '↩️ Restaurée';
+  else if (action === 'check-in')    statusLabel = booking.entered ? '✅ Présent · entrée(s) complète(s)' : `🚪 Présent · ${booking.enteredCount}/${booking.qty}`;
+  else if (isConfirmed)              statusLabel = '✓ Validée';
+  else                                statusLabel = '⏳ En attente';
+
+  // ⛔ Filtre : ne JAMAIS pousser une résa qui n'a jamais été validée
+  // Sauf si c'est une suppression (pour nettoyer une ligne qui aurait été créée à tort)
+  // OU si elle a déjà été dans le sheet (archived = true implique qu'elle a été validée avant)
+  const everConfirmed = isConfirmed || isArchived || booking.paidAt;
+  if (!everConfirmed && action !== 'suppression') {
+    console.log(`📊 Sheet sync SKIP ${booking.bookingId} — pas encore validée (status="${booking.status}")`);
+    return;
+  }
+
   try {
-    const payload = { action, ...booking };
-    // Fire-and-forget : ne bloque pas la requête principale
+    const payload = { action, statusLabel, ...booking };
     fetch(SHEET_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).then(r => {
-      if (r.ok) console.log(`📊 Sheet sync OK [${action}] ${booking.bookingId}`);
+      if (r.ok) console.log(`📊 Sheet sync OK [${action}/${statusLabel}] ${booking.bookingId}`);
       else console.warn(`📊 Sheet sync ${r.status} pour ${booking.bookingId}`);
     }).catch(e => console.warn(`📊 Sheet sync erreur: ${e.message}`));
   } catch(e) {
@@ -401,6 +593,80 @@ async function sendValidationEmail(booking) {
 
 app.get('/', (req, res) => res.send('Brunch Ébène & Saveurs API ✅'));
 
+// 📊 TRACKING — vue d'une page (public)
+app.post('/api/track/pageview', async (req, res) => {
+  try {
+    const { page, sessionId, bookingId, referrer } = req.body || {};
+    if (!page || !sessionId) return res.status(400).json({ error: 'missing page or sessionId' });
+    // Fire-and-forget (n'attend pas l'écriture)
+    insertPageview({
+      page,
+      sessionId,
+      bookingId: bookingId || null,
+      referrer: referrer || null,
+      userAgent: (req.headers['user-agent'] || '').slice(0, 200),
+      timestamp: new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch(e) { res.json({ ok: false }); }
+});
+
+// 📊 TRACKING — événement lié à une résa (public)
+//   ex: ref_copied, method_picked, payment_link_clicked, paid_clicked, payment_failed
+app.post('/api/track/event/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, data } = req.body || {};
+    if (!type) return res.status(400).json({ error: 'missing type' });
+    // Fire-and-forget
+    appendEvent(id, { type, data: data || null });
+    res.json({ ok: true });
+  } catch(e) { res.json({ ok: false }); }
+});
+
+// 📊 FUNNEL (admin) — stats des pages + conversion
+app.get('/api/track/funnel', requireAdmin, async (req, res) => {
+  try {
+    let data = [];
+    try {
+      data = await supa('pageviews?select=page,sessionId,bookingId,timestamp&order=timestamp.desc') || [];
+    } catch(e) {
+      // Si la table n'existe pas → on retourne des stats vides + un message d'aide
+      const msg = e.message || '';
+      const tableMissing = msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01') || msg.includes('Could not find the table');
+      if (tableMissing) {
+        return res.json({
+          pages: {},
+          totalViews: 0,
+          lastViews: [],
+          warning: 'TABLE_MISSING',
+          message: 'La table "pageviews" n\'existe pas encore dans Supabase. Crée-la pour activer le tracking.'
+        });
+      }
+      throw e;
+    }
+    const byPage = {};
+    const sessionsByPage = {};
+    data.forEach(v => {
+      if (!byPage[v.page]) { byPage[v.page] = 0; sessionsByPage[v.page] = new Set(); }
+      byPage[v.page]++;
+      sessionsByPage[v.page].add(v.sessionId);
+    });
+    const result = {};
+    Object.keys(byPage).forEach(p => {
+      result[p] = { views: byPage[p], uniqueVisitors: sessionsByPage[p].size };
+    });
+    res.json({
+      pages: result,
+      totalViews: data.length,
+      lastViews: data.slice(0, 30)
+    });
+  } catch(e) {
+    console.error('funnel error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Stats publiques (compteur de places sur la home + formule la plus populaire)
 app.get('/api/stats', async (req, res) => {
   try {
@@ -451,7 +717,10 @@ app.get('/api/verify/:id', async (req, res) => {
       ticketName: r.ticketName,
       ticketId: r.ticketId,
       qty: r.qty,
-      status: r.status
+      status: r.status,
+      archived: r.archived === true,
+      cancelReason: r.cancelReason || null,
+      accompagnants: r.accompagnants || null
     });
   } catch (e) {
     console.error('verify error:', e.message);
@@ -470,27 +739,59 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
   }
 });
 
-// Créer une réservation
+// Créer une réservation — l'ID est TOUJOURS généré côté serveur (séquentiel)
+// ⚠️ AUCUN email envoyé à ce stade — le client n'a pas encore cliqué "J'ai payé"
+//    Les emails partent dans POST /api/payment-method/:id (étape suivante)
 app.post('/api/reservations', async (req, res) => {
   try {
     const b = req.body || {};
-    if (!b.bookingId || !b.email || !b.qty) {
-      return res.status(400).json({ error: 'missing fields' });
+    if (!b.email || !b.qty || !b.nom) {
+      return res.status(400).json({ error: 'missing fields (nom, email, qty)' });
     }
-    // anti-doublon
-    const existing = await findReservation(b.bookingId);
-    if (existing) return res.json({ ok: true, duplicate: true });
 
+    // 🆕 ID séquentiel généré server-side — ignore tout bookingId envoyé par le client
+    b.bookingId = await generateBookingId(b.nom);
     b.serverReceivedAt = new Date().toISOString();
+    // Marqueur : résa créée mais paiement pas encore confirmé par le client
+    if (!b.status) b.status = 'paiement non confirmé';
+
     await insertReservation(b);
 
-    // email async (n'attend pas)
-    sendConfirmationEmails(b).catch(err => console.error('email error', err));
-    syncToSheet('création', b);
+    // 📭 PAS d'email ici — uniquement quand le client clique "J'ai payé"
+    // 📊 PAS de sync Sheet ici — on attend la validation du paiement
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
     console.error('insert error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🆕 Met à jour le moyen de paiement choisi par le client (public, pas d'auth)
+//    Appelé depuis paiement.html quand le client clique "J'ai payé"
+//    👉 C'EST ICI qu'on envoie les emails client + admin
+app.post('/api/payment-method/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { method } = req.body || {};
+    if (!method) return res.status(400).json({ error: 'missing method' });
+    const r = await findReservation(id);
+    if (!r) return res.status(404).json({ error: 'not found' });
+
+    const patch = {
+      paymentMethod: method,
+      paidAt: new Date().toISOString(),
+      status: 'en attente vérification'  // déclenche le bon statut visible côté admin
+    };
+    await patchReservation(id, patch);
+
+    // 📧 Envoi des emails (client confirmation + admin notification)
+    const updated = { ...r, ...patch };
+    sendConfirmationEmails(updated).catch(err => console.error('email error', err));
+
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('payment-method error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -519,6 +820,16 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
       if (req.body.cancelReason !== undefined) patch.cancelReason = req.body.cancelReason || null;
     }
 
+    // 🆕 Suppression partielle d'un accompagnant (réduit qty + total + accompagnants)
+    if (typeof req.body.qty === 'number') patch.qty = req.body.qty;
+    if (typeof req.body.total === 'number') patch.total = req.body.total;
+    if (req.body.accompagnants !== undefined) patch.accompagnants = req.body.accompagnants;
+    if (req.body.ticketName) patch.ticketName = req.body.ticketName;
+    if (req.body.ticketId) patch.ticketId = req.body.ticketId;
+
+    // 📝 Note admin (texte libre, jamais visible côté client)
+    if (req.body.adminNote !== undefined) patch.adminNote = req.body.adminNote || null;
+
     await patchReservation(id, patch);
 
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
@@ -544,12 +855,40 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
         .catch(err => console.error(`❌ Mail annulation ÉCHEC pour ${updated.email}:`, err.message));
     }
 
-    // 📊 Sync Google Sheet à chaque mise à jour (statut, archive, check-in, etc.)
+    // ✏️ Si la qty diminue (retrait d'un accompagnant) sans archivage → mail de modification
+    const isQtyDecrease = typeof req.body.qty === 'number'
+                        && req.body.qty < before.qty
+                        && !isNowArchived;
+    if (isQtyDecrease && before.email) {
+      const updated = { ...before, ...patch };
+      const removedName = req.body.removedName || 'Un accompagnant';
+      console.log(`📤 Envoi mail modification à ${updated.email} pour ${id} (retiré: ${removedName}, ${before.qty} → ${req.body.qty})`);
+      sendModificationEmail(updated, removedName, req.body.qty, before.qty)
+        .then(() => console.log(`✅ Mail modification envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail modification ÉCHEC pour ${updated.email}:`, err.message));
+    }
+
+    // ➕ Si la qty augmente (ajout de places) → mail d'ajout
+    const isQtyIncrease = typeof req.body.qty === 'number'
+                        && req.body.qty > before.qty
+                        && !isNowArchived;
+    if (isQtyIncrease && before.email) {
+      const updated = { ...before, ...patch };
+      const addedCount = req.body.qty - before.qty;
+      const addedNames = req.body.addedNames || '';
+      console.log(`📤 Envoi mail ajout à ${updated.email} pour ${id} (+${addedCount} places, ${before.qty} → ${req.body.qty})`);
+      sendAdditionEmail(updated, addedCount, addedNames, before.qty)
+        .then(() => console.log(`✅ Mail ajout envoyé à ${updated.email}`))
+        .catch(err => console.error(`❌ Mail ajout ÉCHEC pour ${updated.email}:`, err.message));
+    }
+
+    // 📊 Sync Google Sheet à chaque mise à jour pertinente
     const final = { ...before, ...patch };
     let action = 'update';
-    if (isNowConfirmed && wasNotConfirmed) action = 'validation';
-    else if (req.body.archived === true) action = 'archivage';
-    else if (req.body.archived === false) action = 'restauration';
+    if (isNowConfirmed && wasNotConfirmed) action = 'validation';      // crée la ligne dans le Sheet
+    else if (req.body.archived === true)    action = 'archivage';      // marque "Annulée"
+    else if (req.body.archived === false)   action = 'restauration';   // marque "Restaurée"
+    else if (typeof req.body.qty === 'number' && req.body.qty !== before.qty) action = 'modification';  // marque "Modifiée"
     syncToSheet(action, final);
 
     res.json({ ok: true });
@@ -580,12 +919,26 @@ app.post('/api/checkin/:id', requireAdmin, async (req, res) => {
     }
 
     const newCount = currentCount + 1;
+    const nowIso = new Date().toISOString();
+    // 📝 Journal détaillé des scans (1 entrée par scan, avec timestamp)
+    const prevLog = Array.isArray(r.scanLog) ? r.scanLog : [];
+    const newScanLog = [...prevLog, { at: nowIso, n: newCount }];
     const patch = {
       enteredCount: newCount,
-      entered: newCount >= qty,  // rétro-compat : entered = true quand tout le monde est entré
-      enteredAt: r.enteredAt || new Date().toISOString()  // 1ère arrivée
+      entered: newCount >= qty,                  // rétro-compat
+      enteredAt: r.enteredAt || nowIso,           // 1ère arrivée
+      scanLog: newScanLog                          // 🆕 historique scan par scan
     };
-    await patchReservation(id, patch);
+    try {
+      await patchReservation(id, patch);
+    } catch(e) {
+      // Si la colonne scanLog n'existe pas encore en BDD → retombe sur l'ancien comportement
+      if (e.message && e.message.includes('scanLog')) {
+        console.warn('⚠️  Colonne scanLog manquante, fallback sans journal :', e.message);
+        delete patch.scanLog;
+        await patchReservation(id, patch);
+      } else { throw e; }
+    }
     syncToSheet('check-in', { ...r, ...patch });
 
     res.json({
@@ -609,11 +962,22 @@ app.post('/api/checkin/:id/undo', requireAdmin, async (req, res) => {
     const currentCount = r.enteredCount || 0;
     if (currentCount === 0) return res.json({ ok: false, enteredCount: 0 });
     const newCount = currentCount - 1;
-    await patchReservation(id, {
+    const prevLog = Array.isArray(r.scanLog) ? r.scanLog : [];
+    const trimmedLog = prevLog.slice(0, -1);  // retire le dernier scan
+    const patch = {
       enteredCount: newCount,
       entered: false,
-      enteredAt: newCount === 0 ? null : r.enteredAt
-    });
+      enteredAt: newCount === 0 ? null : r.enteredAt,
+      scanLog: trimmedLog
+    };
+    try {
+      await patchReservation(id, patch);
+    } catch(e) {
+      if (e.message && e.message.includes('scanLog')) {
+        delete patch.scanLog;
+        await patchReservation(id, patch);
+      } else { throw e; }
+    }
     res.json({ ok: true, enteredCount: newCount, qty: r.qty });
   } catch (e) {
     console.error('undo checkin error:', e.message);
@@ -648,8 +1012,19 @@ app.post('/api/resend/:id', requireAdmin, async (req, res) => {
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const before = await findReservation(req.params.id);
+    if (!before) return res.status(404).json({ error: 'not found' });
+
+    // 🚫 Envoie le mail d'annulation AVANT de supprimer (sauf si déjà archivée avec mail envoyé)
+    // Si on supprime directement (sans archiver d'abord) → on prévient le client
+    if (before.email && !before.archived) {
+      console.log(`📤 Envoi mail annulation (suppression directe) à ${before.email} pour ${req.params.id}`);
+      sendCancellationEmail(before, 'Suppression de la réservation')
+        .then(() => console.log(`✅ Mail annulation (suppression) envoyé à ${before.email}`))
+        .catch(err => console.error(`❌ Mail annulation (suppression) ÉCHEC:`, err.message));
+    }
+
     await removeReservation(req.params.id);
-    if (before) syncToSheet('suppression', before);
+    syncToSheet('suppression', before);
     res.json({ ok: true });
   } catch (e) {
     console.error('delete error:', e.message);
