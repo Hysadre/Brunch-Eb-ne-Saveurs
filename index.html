@@ -756,8 +756,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ page, sessionId: sid, referrer: document.referrer || null })
       })
-      .then(r => console.log('[📊 tracking] response', r.status, page))
-      .catch(e => console.warn('[📊 tracking] failed', e.message));
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) console.log('[📊 tracking] ✅ enregistré :', page);
+        else console.error('[📊 tracking] ❌ ÉCHEC', r.status, page, '·', data.error || '');
+      })
+      .catch(e => console.warn('[📊 tracking] network failed', e.message));
     } catch(e) { console.warn('[📊 tracking] error', e.message); }
   }
   // Envoie la vue dès le chargement
