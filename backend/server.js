@@ -34,7 +34,7 @@ const WHATSAPP_DISPLAY = '+33 6 68 29 50 77';
 const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
-  time: '12h00',
+  time: '13h00',
   place: 'Salle de Ronchin, 59790 Ronchin (Lille)'
 };
 
