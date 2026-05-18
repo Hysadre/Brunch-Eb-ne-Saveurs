@@ -814,6 +814,9 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
     if (req.body.ticketName) patch.ticketName = req.body.ticketName;
     if (req.body.ticketId) patch.ticketId = req.body.ticketId;
 
+    // 📝 Note admin (texte libre, jamais visible côté client)
+    if (req.body.adminNote !== undefined) patch.adminNote = req.body.adminNote || null;
+
     await patchReservation(id, patch);
 
     // 🎉 Si passage à "confirmé" → envoie le mail de validation au client
