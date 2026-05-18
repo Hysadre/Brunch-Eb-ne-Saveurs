@@ -157,7 +157,10 @@ async function insertPageview(row) {
       headers: { 'Prefer': 'return=minimal' },
       body: JSON.stringify(row)
     });
-  } catch(e) { console.warn('pageview insert error:', e.message); }
+    console.log(`📊 pageview enregistrée : ${row.page} (session=${row.sessionId.slice(0,12)}…)`);
+  } catch(e) {
+    console.warn(`⚠️  pageview insert ÉCHEC pour ${row.page} : ${e.message}`);
+  }
 }
 
 async function appendEvent(bookingId, evt) {
@@ -593,22 +596,35 @@ async function sendValidationEmail(booking) {
 
 app.get('/', (req, res) => res.send('Brunch Ébène & Saveurs API ✅'));
 
-// 📊 TRACKING — vue d'une page (public)
+// 📊 TRACKING — vue d'une page (public) — attend l'insert pour remonter les erreurs
 app.post('/api/track/pageview', async (req, res) => {
   try {
     const { page, sessionId, bookingId, referrer } = req.body || {};
     if (!page || !sessionId) return res.status(400).json({ error: 'missing page or sessionId' });
-    // Fire-and-forget (n'attend pas l'écriture)
-    insertPageview({
+    const row = {
       page,
       sessionId,
       bookingId: bookingId || null,
       referrer: referrer || null,
       userAgent: (req.headers['user-agent'] || '').slice(0, 200),
       timestamp: new Date().toISOString()
-    });
-    res.json({ ok: true });
-  } catch(e) { res.json({ ok: false }); }
+    };
+    try {
+      await supa('pageviews', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal' },
+        body: JSON.stringify(row)
+      });
+      console.log(`📊 pageview OK : ${page} (session=${sessionId.slice(0,14)}…)`);
+      return res.json({ ok: true });
+    } catch(e) {
+      console.error(`❌ pageview INSERT FAIL pour "${page}" : ${e.message}`);
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  } catch(e) {
+    console.error('pageview route error:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // 📊 TRACKING — événement lié à une résa (public)
@@ -625,11 +641,17 @@ app.post('/api/track/event/:id', async (req, res) => {
 });
 
 // 📊 FUNNEL (admin) — stats des pages + conversion
+//   ?from=ISO&to=ISO → filtre les pageviews sur cette période
 app.get('/api/track/funnel', requireAdmin, async (req, res) => {
   try {
+    const { from, to } = req.query;
+    let qParts = ['select=page,sessionId,bookingId,timestamp', 'order=timestamp.desc'];
+    if (from) qParts.push(`timestamp=gte.${encodeURIComponent(from)}`);
+    if (to)   qParts.push(`timestamp=lt.${encodeURIComponent(to)}`);
+    const path = `pageviews?${qParts.join('&')}`;
     let data = [];
     try {
-      data = await supa('pageviews?select=page,sessionId,bookingId,timestamp&order=timestamp.desc') || [];
+      data = await supa(path) || [];
     } catch(e) {
       // Si la table n'existe pas → on retourne des stats vides + un message d'aide
       const msg = e.message || '';
