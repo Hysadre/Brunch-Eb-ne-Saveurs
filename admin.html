@@ -622,7 +622,7 @@
   <div class="tab-panel active" id="panel-resa">
     <div class="stats" id="stats"></div>
 
-    <!-- 📊 Funnel : combien de visiteurs par page -->
+    <!-- 📊 Funnel : combien de visiteurs par page (avec filtre date indépendant) -->
     <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
       <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style:none;">
         <span style="display:flex; align-items:center; gap:8px;">
@@ -632,7 +632,28 @@
           <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
         </span>
       </summary>
-      <div style="padding: 0 18px 18px;" id="funnelContent"></div>
+      <div style="padding: 0 18px 18px;">
+        <!-- 📅 Filtre période (indépendant du tableau) -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding-bottom: 14px; border-bottom: 1px solid #3a2818; margin-bottom: 14px;">
+          <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">📅 Période :</span>
+          <select id="funnelDateRange" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
+            <option value="all">Depuis le début</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="yesterday">Hier</option>
+            <option value="7days">7 derniers jours</option>
+            <option value="30days">30 derniers jours</option>
+            <option value="thisweek">Cette semaine</option>
+            <option value="lastweek">Semaine dernière</option>
+            <option value="thismonth">Ce mois-ci</option>
+            <option value="lastmonth">Mois dernier</option>
+            <option value="custom">📆 Période perso…</option>
+          </select>
+          <input type="date" id="funnelDateFrom" style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
+          <input type="date" id="funnelDateTo"   style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
+          <button id="funnelRefreshBtn" style="background:#3a2818; border:none; color:#c79270; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;">🔄 Rafraîchir</button>
+        </div>
+        <div id="funnelContent"></div>
+      </div>
     </details>
 
     <div class="filters">
@@ -880,6 +901,8 @@
   <span class="bulk-count" id="bulkCount">0 sélectionnées</span>
   <button class="bulk-btn validate" id="bulkValidate">✓ Valider</button>
   <button class="bulk-btn archive" id="bulkArchive">🗃️ Annuler (archiver)</button>
+  <!-- 🗑️ Visible uniquement dans le filtre "Archivées uniquement" -->
+  <button class="bulk-btn delete" id="bulkDelete" style="display:none;">🗑️ Supprimer définitivement</button>
   <button class="bulk-btn cancel" id="bulkCancel">✕ Désélectionner</button>
 </div>
 
@@ -1212,6 +1235,14 @@
     } else {
       bar.classList.remove('show');
     }
+    // 🗑️ "Supprimer définitivement" visible UNIQUEMENT dans le filtre archives
+    //    Et on cache "Valider" + "Annuler/archiver" dans ce contexte (déjà archivées)
+    const archivedFilter = document.getElementById('filterArchived')?.value || 'active';
+    const isArchivedView = archivedFilter === 'archived';
+    document.getElementById('bulkDelete').style.display    = isArchivedView ? '' : 'none';
+    document.getElementById('bulkValidate').style.display  = isArchivedView ? 'none' : '';
+    document.getElementById('bulkArchive').style.display   = isArchivedView ? 'none' : '';
+
     // Met à jour la case "tout sélectionner"
     const selectAll = document.getElementById('selectAll');
     const visibleCheckboxes = document.querySelectorAll('.row-check-item');
@@ -1380,13 +1411,44 @@
     `;
   }
 
-  // 📊 Funnel — vues par page + taux de conversion
+  // 📊 Funnel — vues par page + taux de conversion (avec filtre date indépendant)
+  function getFunnelDateRange() {
+    const preset = document.getElementById('funnelDateRange')?.value || 'all';
+    if (preset === 'all') return [null, null];
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(startOfToday.getTime() + 24*60*60*1000);
+    const day = startOfToday.getDay() || 7;
+    if (preset === 'today')     return [startOfToday, endOfToday];
+    if (preset === 'yesterday') return [new Date(startOfToday.getTime() - 24*60*60*1000), startOfToday];
+    if (preset === '7days')     return [new Date(startOfToday.getTime() - 7*24*60*60*1000), endOfToday];
+    if (preset === '30days')    return [new Date(startOfToday.getTime() - 30*24*60*60*1000), endOfToday];
+    if (preset === 'thisweek')  return [new Date(startOfToday.getTime() - (day-1)*24*60*60*1000), endOfToday];
+    if (preset === 'lastweek') {
+      const thisMon = new Date(startOfToday.getTime() - (day-1)*24*60*60*1000);
+      return [new Date(thisMon.getTime() - 7*24*60*60*1000), thisMon];
+    }
+    if (preset === 'thismonth') return [new Date(now.getFullYear(), now.getMonth(), 1), endOfToday];
+    if (preset === 'lastmonth') return [new Date(now.getFullYear(), now.getMonth()-1, 1), new Date(now.getFullYear(), now.getMonth(), 1)];
+    if (preset === 'custom') {
+      const f = document.getElementById('funnelDateFrom').value;
+      const t = document.getElementById('funnelDateTo').value;
+      return [f ? new Date(f + 'T00:00:00') : null, t ? new Date(t + 'T23:59:59') : null];
+    }
+    return [null, null];
+  }
+
   async function renderFunnel() {
     const container = document.getElementById('funnelContent');
     const badge = document.getElementById('funnelTotalBadge');
     if (!container) return;
     try {
-      const r = await fetch(`${API_URL}/track/funnel`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      const [from, to] = getFunnelDateRange();
+      const params = new URLSearchParams();
+      if (from) params.set('from', from.toISOString());
+      if (to)   params.set('to',   to.toISOString());
+      const url = `${API_URL}/track/funnel${params.toString() ? '?' + params.toString() : ''}`;
+      const r = await fetch(url, { headers: { 'X-Admin-Token': ADMIN_PWD } });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
 
@@ -1791,7 +1853,10 @@
   document.getElementById('filterMethod').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
-  document.getElementById('filterArchived').addEventListener('change', () => renderTable(CACHE));
+  document.getElementById('filterArchived').addEventListener('change', () => {
+    renderTable(CACHE);
+    updateBulkBar();  // pour montrer/cacher "Supprimer définitivement"
+  });
   // 📅 Filtre date — montre/cache les inputs date si "custom"
   document.getElementById('filterDate').addEventListener('change', e => {
     const isCustom = e.target.value === 'custom';
@@ -2016,6 +2081,20 @@
       if (await updateStatus(id, 'confirmé')) ok++; else fail++;
     }
     toast(`✓ ${ok} validée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
+    render();
+  });
+
+  // 🗑️ Supprimer définitivement (uniquement visible dans "Archivées uniquement")
+  document.getElementById('bulkDelete').addEventListener('click', async () => {
+    const ids = Array.from(SELECTED);
+    if (!ids.length) return;
+    if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT ${ids.length} réservation${ids.length>1?'s':''} archivée${ids.length>1?'s':''} ?\n\nElles seront retirées de la base et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
+    clearSelection();
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      if (await deleteReservation(id)) ok++; else fail++;
+    }
+    toast(`🗑️ ${ok} supprimée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
     render();
   });
 
