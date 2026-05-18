@@ -88,10 +88,17 @@ async function patchReservation(bookingId, patch) {
   });
 }
 async function removeReservation(bookingId) {
-  await supa(`reservations?"bookingId"=eq.${encodeURIComponent(bookingId)}`, {
-    method: 'DELETE',
-    headers: { 'Prefer': 'return=minimal' }
-  });
+  console.log(`🗑️ removeReservation appelée pour : ${bookingId}`);
+  try {
+    await supa(`reservations?"bookingId"=eq.${encodeURIComponent(bookingId)}`, {
+      method: 'DELETE',
+      headers: { 'Prefer': 'return=minimal' }
+    });
+    console.log(`✅ ${bookingId} supprimé de Supabase`);
+  } catch(e) {
+    console.error(`❌ removeReservation ${bookingId} ÉCHEC : ${e.message}`);
+    throw e;
+  }
 }
 
 // 🆕 Normalise le nom de famille pour le bookingId
