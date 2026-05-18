@@ -147,6 +147,32 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// ====================================================
+// 📊 TRACKING — pageviews + événements par résa
+// ====================================================
+async function insertPageview(row) {
+  try {
+    await supa('pageviews', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(row)
+    });
+  } catch(e) { console.warn('pageview insert error:', e.message); }
+}
+
+async function appendEvent(bookingId, evt) {
+  try {
+    const r = await findReservation(bookingId);
+    if (!r) return;
+    const prev = Array.isArray(r.events) ? r.events : [];
+    const next = [...prev, { ...evt, at: new Date().toISOString() }];
+    await patchReservation(bookingId, { events: next });
+  } catch(e) {
+    // Si la colonne events n'existe pas, on log mais on ne casse pas
+    if (!e.message?.includes('events')) console.warn('event append error:', e.message);
+  }
+}
+
 // ----- Email — Resend (primaire, domaine vérifié) ou Brevo (fallback) -----
 async function sendEmail({ to, subject, html, text }) {
   const recipients = (Array.isArray(to) ? to : [to]);
@@ -566,6 +592,67 @@ async function sendValidationEmail(booking) {
 // ============ ROUTES ============
 
 app.get('/', (req, res) => res.send('Brunch Ébène & Saveurs API ✅'));
+
+// 📊 TRACKING — vue d'une page (public)
+app.post('/api/track/pageview', async (req, res) => {
+  try {
+    const { page, sessionId, bookingId, referrer } = req.body || {};
+    if (!page || !sessionId) return res.status(400).json({ error: 'missing page or sessionId' });
+    // Fire-and-forget (n'attend pas l'écriture)
+    insertPageview({
+      page,
+      sessionId,
+      bookingId: bookingId || null,
+      referrer: referrer || null,
+      userAgent: (req.headers['user-agent'] || '').slice(0, 200),
+      timestamp: new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch(e) { res.json({ ok: false }); }
+});
+
+// 📊 TRACKING — événement lié à une résa (public)
+//   ex: ref_copied, method_picked, payment_link_clicked, paid_clicked, payment_failed
+app.post('/api/track/event/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, data } = req.body || {};
+    if (!type) return res.status(400).json({ error: 'missing type' });
+    // Fire-and-forget
+    appendEvent(id, { type, data: data || null });
+    res.json({ ok: true });
+  } catch(e) { res.json({ ok: false }); }
+});
+
+// 📊 FUNNEL (admin) — stats des pages + conversion
+app.get('/api/track/funnel', requireAdmin, async (req, res) => {
+  try {
+    // Compte uniques par page (par sessionId distinct)
+    const data = await supa('pageviews?select=page,sessionId,bookingId,timestamp&order=timestamp.desc');
+    const byPage = {};
+    const sessionsByPage = {};
+    (data || []).forEach(v => {
+      if (!byPage[v.page]) { byPage[v.page] = 0; sessionsByPage[v.page] = new Set(); }
+      byPage[v.page]++;
+      sessionsByPage[v.page].add(v.sessionId);
+    });
+    const result = {};
+    Object.keys(byPage).forEach(p => {
+      result[p] = {
+        views: byPage[p],
+        uniqueVisitors: sessionsByPage[p].size
+      };
+    });
+    res.json({
+      pages: result,
+      totalViews: (data || []).length,
+      lastViews: (data || []).slice(0, 30)
+    });
+  } catch(e) {
+    console.error('funnel error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // Stats publiques (compteur de places sur la home + formule la plus populaire)
 app.get('/api/stats', async (req, res) => {
