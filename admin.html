@@ -655,6 +655,15 @@
         <option value="trio">Trio</option>
         <option value="groupe">Groupe</option>
       </select>
+      <select id="filterAmount" title="Filtrer par montant — utile pour matcher un paiement reçu sans référence">
+        <option value="">💰 Tous montants</option>
+        <option value="35">35 €</option>
+        <option value="70">70 €</option>
+        <option value="105">105 €</option>
+        <option value="other">Autre montant…</option>
+      </select>
+      <input type="number" id="filterAmountCustom" placeholder="Montant exact (€)" style="display:none;" min="0" step="1">
+
       <select id="filterArchived">
         <option value="active">📂 Actives uniquement</option>
         <option value="all">📂📦 Tout voir</option>
@@ -766,6 +775,19 @@
 <!-- (Modal "suppression définitive" retiré — toutes les annulations passent par l'archivage avec motif) -->
 
 <!-- (Modal "personne à retirer" supprimé — fusionné dans archiveModal) -->
+
+<!-- 📝 Modal Note admin -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal" style="max-width: 480px;">
+    <h3>📝 Note admin</h3>
+    <p id="noteModalText" style="margin-bottom: 14px; color:#d4a574;"></p>
+    <textarea id="noteModalInput" placeholder="Ex: Paiement reçu de Jean Dupont le 25/06 via Revolut sans référence" rows="5" style="width:100%; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:10px; padding:12px; font-family:inherit; font-size:14px; resize:vertical; margin-bottom:14px;"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="noteCancel">Annuler</button>
+      <button class="modal-confirm" id="noteSave" style="background:#22c55e;">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- 📊 Modal Timeline d'activité par résa -->
 <div class="modal-overlay" id="timelineModal">
@@ -1457,6 +1479,30 @@
     document.getElementById('timelineModal').classList.remove('show');
   });
 
+  // 📝 Note admin par résa
+  let noteContext = null;
+  function openNoteModal(resa) {
+    noteContext = resa;
+    document.getElementById('noteModalText').innerHTML = `<strong style="color:#c79270;">${resa.prenom} ${resa.nom}</strong> · ${resa.bookingId}`;
+    document.getElementById('noteModalInput').value = resa.adminNote || '';
+    document.getElementById('noteModal').classList.add('show');
+    setTimeout(() => document.getElementById('noteModalInput').focus(), 50);
+  }
+  document.getElementById('noteCancel').addEventListener('click', () => {
+    document.getElementById('noteModal').classList.remove('show');
+    noteContext = null;
+  });
+  document.getElementById('noteSave').addEventListener('click', async () => {
+    if (!noteContext) return;
+    const note = document.getElementById('noteModalInput').value.trim();
+    if (await updateReservation(noteContext.bookingId, { adminNote: note || null })) {
+      toast(note ? '📝 Note enregistrée' : '🗑️ Note supprimée');
+      document.getElementById('noteModal').classList.remove('show');
+      noteContext = null;
+      render();
+    }
+  });
+
   function renderStats(data) {
     const total = data.length;
     const paid = data.filter(r => r.status === 'confirmé' && !r.archived);
@@ -1548,6 +1594,11 @@
     const customTo = document.getElementById('filterDateTo').value;
     const [dateStart, dateEnd] = datePreset ? getDateRange(datePreset, customFrom, customTo) : [null, null];
 
+    // 💰 Filtre montant
+    const amountPreset = document.getElementById('filterAmount').value;
+    const amountCustom = parseFloat(document.getElementById('filterAmountCustom').value);
+    const amountTarget = amountPreset === 'other' ? (isNaN(amountCustom) ? null : amountCustom) : (amountPreset ? parseFloat(amountPreset) : null);
+
     const filtered = all.filter(r => {
       // Filtre archives
       if (archivedFilter === 'active' && r.archived) return false;
@@ -1555,6 +1606,7 @@
       if (m && r.paymentMethod !== m) return false;
       if (s && r.status !== s) return false;
       if (t && r.ticketId !== t) return false;
+      if (amountTarget !== null && Math.abs((r.total || 0) - amountTarget) > 0.01) return false;
       // 📅 Filtre date (sur le champ timestamp de la résa)
       if (dateStart || dateEnd) {
         const d = r.timestamp ? new Date(r.timestamp) : null;
@@ -1633,7 +1685,9 @@
               const evts = Array.isArray(r.events) ? r.events : [];
               const score = evts.length;
               const scoreColor = score >= 3 ? '#22c55e' : (score >= 1 ? '#c79270' : '#8a6648');
-              return `<button class="action-btn activity" data-action="activity" data-id="${r.bookingId}" title="Voir l'historique d'activité (clics, copies, etc.)" style="background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.4); color:${scoreColor};">📊 Activité${score > 0 ? ` (${score})` : ''}</button>`;
+              const note = (r.adminNote || '').trim();
+              const noteBtn = `<button class="action-btn note" data-action="note" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="${note ? 'Note : ' + note.replace(/"/g,'&quot;') : 'Ajouter une note admin'}" style="background:${note ? 'rgba(251,191,36,0.18)' : 'rgba(251,191,36,0.08)'}; border-color: rgba(251,191,36,0.4); color:${note ? '#fbbf24' : '#8a6648'};">${note ? '📝 ✓' : '📝'}</button>`;
+              return `<button class="action-btn activity" data-action="activity" data-id="${r.bookingId}" title="Voir l'historique d'activité (clics, copies, etc.)" style="background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.4); color:${scoreColor};">📊 Activité${score > 0 ? ` (${score})` : ''}</button>${noteBtn}`;
             })()}
             ${(!isArchived && isPaid) ? `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation (avec QR) au client">📧 Renvoyer QR</button>` : ''}
             ${isArchived
@@ -1685,6 +1739,9 @@
         } else if (action === 'activity') {
           const resa = CACHE.find(x => x.bookingId === id);
           if (resa) openTimelineModal(resa);
+        } else if (action === 'note') {
+          const resa = CACHE.find(x => x.bookingId === id);
+          if (resa) openNoteModal(resa);
         } else if (action === 'delete') {
           // 🗑️ Suppression DÉFINITIVE — uniquement depuis les archivées
           if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT la réservation de ${b.dataset.name} (${id}) ?\n\nElle sera retirée de la base de données et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
@@ -1725,6 +1782,14 @@
   });
   document.getElementById('filterDateFrom').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterDateTo').addEventListener('change', () => renderTable(CACHE));
+  // 💰 Filtre montant
+  document.getElementById('filterAmount').addEventListener('change', e => {
+    const customInput = document.getElementById('filterAmountCustom');
+    customInput.style.display = e.target.value === 'other' ? '' : 'none';
+    if (e.target.value !== 'other') customInput.value = '';
+    renderTable(CACHE);
+  });
+  document.getElementById('filterAmountCustom').addEventListener('input', () => renderTable(CACHE));
   document.getElementById('refreshBtn').addEventListener('click', async () => {
     const btn = document.getElementById('refreshBtn');
     const oldHtml = btn.innerHTML;

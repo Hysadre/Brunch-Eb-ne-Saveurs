@@ -579,6 +579,12 @@
       <a href="https://wa.me/33668295077" class="contact-pill whatsapp">💬 WhatsApp +33 6 68 29 50 77</a>
       <a href="tel:+33668295077" class="contact-pill">📞 Appeler</a>
     </div>
+    <!-- 🆘 J'ai oublié de mettre la référence (apparaît seulement après copie) -->
+    <div id="forgotRefBox" style="display:none; margin-top: 14px; padding: 14px 16px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 12px;">
+      <div style="font-size: 13px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé sans mettre la référence ?</div>
+      <div style="font-size: 12px; color: #d4a574; margin-bottom: 10px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+      <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px;">💬 Je nous écris sur WhatsApp</a>
+    </div>
   </div>
 
   <div class="total-bar">
@@ -628,6 +634,41 @@
     } catch(e) {}
   }
   trackPageview('paiement');
+
+  // 🆘 Pré-remplit le lien WhatsApp "J'ai oublié la référence"
+  function buildForgotRefLink() {
+    const msg = [
+      `Bonjour, j'ai payé pour le Brunch Ébène & Saveurs mais j'ai oublié de mettre la référence.`,
+      ``,
+      `Mes infos :`,
+      `• Nom : ${booking?.prenom || ''} ${booking?.nom || ''}`,
+      `• Email : ${booking?.email || ''}`,
+      `• Téléphone : ${booking?.telephone || ''}`,
+      `• Montant payé : ${(booking?.total || 0).toFixed(2).replace('.', ',')} €`,
+      `• Formule : ${booking?.ticketName || ''}`,
+      `• Référence à associer : ${booking?.bookingId || ''}`,
+      ``,
+      `Pouvez-vous retrouver mon paiement svp ?`
+    ].join('\n');
+    return `https://wa.me/33668295077?text=${encodeURIComponent(msg)}`;
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('forgotRefBtn');
+    if (btn) {
+      btn.href = buildForgotRefLink();
+      btn.addEventListener('click', () => trackEvent('forgot_ref_clicked'));
+    }
+  });
+  // Au cas où DOMContentLoaded est déjà passé
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => {
+      const btn = document.getElementById('forgotRefBtn');
+      if (btn && !btn.href.includes('text=')) {
+        btn.href = buildForgotRefLink();
+        btn.addEventListener('click', () => trackEvent('forgot_ref_clicked'));
+      }
+    }, 0);
+  }
 
   function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
 
@@ -707,6 +748,10 @@
       // 🔓 Déverrouille les options de paiement (Revolut/Wero/SEPA)
       const lock = document.getElementById('payMethodsLock');
       if (lock) lock.classList.remove('pay-locked');
+
+      // 🆘 Affiche le bouton "J'ai oublié la référence"
+      const forgotBox = document.getElementById('forgotRefBox');
+      if (forgotBox) forgotBox.style.display = 'block';
 
       // 📊 TRACKING : référence copiée
       trackEvent('ref_copied');
