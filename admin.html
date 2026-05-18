@@ -1164,13 +1164,23 @@
   async function deleteReservation(id) {
     if (API_URL) {
       try {
+        console.log(`[🗑️ DELETE] tentative pour ${id}`);
         const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: { 'X-Admin-Token': ADMIN_PWD }
         });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        if (!r.ok) {
+          const errBody = await r.text().catch(() => '');
+          console.error(`[🗑️ DELETE] ÉCHEC ${id} → HTTP ${r.status}`, errBody);
+          throw new Error(`HTTP ${r.status} : ${errBody.slice(0,200)}`);
+        }
+        console.log(`[🗑️ DELETE] ✅ ${id} supprimé en BDD`);
         return true;
-      } catch(e) { console.error(e); toast('Erreur API', true); return false; }
+      } catch(e) {
+        console.error(`[🗑️ DELETE] ${id} échec :`, e);
+        toast(`Erreur suppression : ${e.message}`, true);
+        return false;
+      }
     }
     const local = JSON.parse(localStorage.getItem('reservations') || '[]');
     const filtered = local.filter(x => x.bookingId !== id);
@@ -1479,6 +1489,32 @@
       const confirm_  = d.pages?.confirmation || { uniqueVisitors: 0, views: 0 };
       const bounce    = d.bounce              || { count: 0, rate: 0 };
 
+      // 🚫 Résa annulées (archivées) — calculé depuis CACHE
+      //    Optionnellement filtré sur la même période que le funnel
+      const [dateStart, dateEnd] = getFunnelDateRange();
+      const cancelledList = (CACHE || []).filter(r => {
+        if (!r.archived) return false;
+        if (dateStart || dateEnd) {
+          const t = r.archivedAt || r.timestamp;
+          if (!t) return false;
+          const d = new Date(t);
+          if (dateStart && d < dateStart) return false;
+          if (dateEnd && d >= dateEnd) return false;
+        }
+        return true;
+      });
+      const cancelledCount = cancelledList.length;
+      const totalResa = (CACHE || []).filter(r => {
+        if (dateStart || dateEnd) {
+          const d = r.timestamp ? new Date(r.timestamp) : null;
+          if (!d) return false;
+          if (dateStart && d < dateStart) return false;
+          if (dateEnd && d >= dateEnd) return false;
+        }
+        return true;
+      }).length;
+      const cancelRate = totalResa > 0 ? Math.round((cancelledCount / totalResa) * 100) : 0;
+
       const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
       const a2p = pct(paiement.uniqueVisitors, accueil.uniqueVisitors);
       const p2c = pct(confirm_.uniqueVisitors, paiement.uniqueVisitors);
@@ -1500,8 +1536,11 @@
       // Couleurs : rebond = rouge si élevé, vert si bas (logique inversée)
       const bounceColor = bounce.rate >= 70 ? '#f87171' : (bounce.rate >= 40 ? '#c79270' : '#22c55e');
 
+      // 🚫 Couleur pour les annulations (rouge si beaucoup)
+      const cancelColor = cancelRate >= 30 ? '#f87171' : (cancelRate >= 15 ? '#c79270' : '#8a6648');
+
       container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 10px;">
           ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} vue${accueil.views>1?'s':''} totales`, '#06b6d4', null, null)}
           ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} vue${paiement.views>1?'s':''} totales`, '#c79270',
                   `${a2p}% conversion`, a2p >= 50 ? '#22c55e' : (a2p >= 25 ? '#c79270' : '#f87171'))}
@@ -1509,12 +1548,15 @@
                   `${p2c}% conversion`, p2c >= 50 ? '#22c55e' : (p2c >= 25 ? '#c79270' : '#f87171'))}
           ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin`, bounceColor,
                   `${bounce.rate}% rebond`, bounceColor)}
+          ${step('5️⃣ Annulées',     cancelledCount,          `Résa annulées / archivées`, cancelColor,
+                  `${cancelRate}% / ${totalResa} résa`, cancelColor)}
         </div>
-        <div style="font-size:12px; color:#8a6648; padding-top:8px; border-top:1px solid #3a2818;">
+        <div style="font-size:12px; color:#8a6648; padding-top:8px; border-top:1px solid #3a2818; line-height: 1.8;">
           🎯 <strong style="color:#c79270;">Conversion accueil → confirmation : ${pct(confirm_.uniqueVisitors, accueil.uniqueVisitors)}%</strong>
           &nbsp;·&nbsp;
           🚪 <strong style="color:${bounceColor};">Rebond : ${bounce.rate}%</strong>
-          <span style="color:#8a6648; font-style:italic;">(visiteurs qui sont arrivés sur l'accueil mais sont repartis sans aller au paiement)</span>
+          &nbsp;·&nbsp;
+          🚫 <strong style="color:${cancelColor};">Annulations : ${cancelRate}%</strong>
         </div>
       `;
     } catch(e) {
