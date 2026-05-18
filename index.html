@@ -748,13 +748,17 @@
     return s;
   }
   function trackPageview(page) {
+    const sid = getSessionId();
+    console.log('[📊 tracking] pageview =', page, '· sessionId =', sid);
     try {
       fetch(API_URL + '/track/pageview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ page, sessionId: getSessionId(), referrer: document.referrer || null })
-      }).catch(()=>{});
-    } catch(e) {}
+        body: JSON.stringify({ page, sessionId: sid, referrer: document.referrer || null })
+      })
+      .then(r => console.log('[📊 tracking] response', r.status, page))
+      .catch(e => console.warn('[📊 tracking] failed', e.message));
+    } catch(e) { console.warn('[📊 tracking] error', e.message); }
   }
   // Envoie la vue dès le chargement
   trackPageview('accueil');
