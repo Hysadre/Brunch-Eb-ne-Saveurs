@@ -1235,11 +1235,14 @@
     } else {
       bar.classList.remove('show');
     }
-    // 🗑️ "Supprimer définitivement" visible UNIQUEMENT dans le filtre archives
-    //    Et on cache "Valider" + "Annuler/archiver" dans ce contexte (déjà archivées)
+    // 🗑️ "Supprimer définitivement" visible dans :
+    //   - "Archivées uniquement" (toutes archivées → delete OK)
+    //   - "Tout voir" (mix → delete utile)
+    //   Caché dans "Actives uniquement" (on force l'archivage avec motif d'abord)
     const archivedFilter = document.getElementById('filterArchived')?.value || 'active';
     const isArchivedView = archivedFilter === 'archived';
-    document.getElementById('bulkDelete').style.display    = isArchivedView ? '' : 'none';
+    const isAllView = archivedFilter === 'all';
+    document.getElementById('bulkDelete').style.display    = (isArchivedView || isAllView) ? '' : 'none';
     document.getElementById('bulkValidate').style.display  = isArchivedView ? 'none' : '';
     document.getElementById('bulkArchive').style.display   = isArchivedView ? 'none' : '';
 
@@ -1474,6 +1477,7 @@
       const accueil   = d.pages?.accueil      || { uniqueVisitors: 0, views: 0 };
       const paiement  = d.pages?.paiement     || { uniqueVisitors: 0, views: 0 };
       const confirm_  = d.pages?.confirmation || { uniqueVisitors: 0, views: 0 };
+      const bounce    = d.bounce              || { count: 0, rate: 0 };
 
       const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
       const a2p = pct(paiement.uniqueVisitors, accueil.uniqueVisitors);
@@ -1482,25 +1486,35 @@
 
       if (badge) badge.textContent = `${total} visiteur${total>1?'s':''} unique${total>1?'s':''}`;
 
-      const step = (label, value, sub, color, dropPct) => `
+      const step = (label, value, sub, color, rightLabel, rightColor) => `
         <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding:14px 16px;">
-          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap: 6px;">
             <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">${label}</div>
-            ${dropPct !== null ? `<div style="font-size:11px; color:${dropPct >= 50 ? '#22c55e' : (dropPct >= 25 ? '#c79270' : '#f87171')}; font-weight:800;">${dropPct}% conversion</div>` : ''}
+            ${rightLabel ? `<div style="font-size:11px; color:${rightColor}; font-weight:800;">${rightLabel}</div>` : ''}
           </div>
           <div style="font-size:28px; font-weight:800; color:${color}; margin: 6px 0 2px;">${value}</div>
           <div style="font-size:12px; color:#d4a574;">${sub}</div>
         </div>
       `;
 
+      // Couleurs : rebond = rouge si élevé, vert si bas (logique inversée)
+      const bounceColor = bounce.rate >= 70 ? '#f87171' : (bounce.rate >= 40 ? '#c79270' : '#22c55e');
+
       container.innerHTML = `
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
-          ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} vue${accueil.views>1?'s':''} totales`, '#06b6d4', null)}
-          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} vue${paiement.views>1?'s':''} totales`, '#c79270', a2p)}
-          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} vue${confirm_.views>1?'s':''} totales`, '#22c55e', p2c)}
+          ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} vue${accueil.views>1?'s':''} totales`, '#06b6d4', null, null)}
+          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} vue${paiement.views>1?'s':''} totales`, '#c79270',
+                  `${a2p}% conversion`, a2p >= 50 ? '#22c55e' : (a2p >= 25 ? '#c79270' : '#f87171'))}
+          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} vue${confirm_.views>1?'s':''} totales`, '#22c55e',
+                  `${p2c}% conversion`, p2c >= 50 ? '#22c55e' : (p2c >= 25 ? '#c79270' : '#f87171'))}
+          ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin`, bounceColor,
+                  `${bounce.rate}% rebond`, bounceColor)}
         </div>
         <div style="font-size:12px; color:#8a6648; padding-top:8px; border-top:1px solid #3a2818;">
           🎯 <strong style="color:#c79270;">Conversion accueil → confirmation : ${pct(confirm_.uniqueVisitors, accueil.uniqueVisitors)}%</strong>
+          &nbsp;·&nbsp;
+          🚪 <strong style="color:${bounceColor};">Rebond : ${bounce.rate}%</strong>
+          <span style="color:#8a6648; font-style:italic;">(visiteurs qui sont arrivés sur l'accueil mais sont repartis sans aller au paiement)</span>
         </div>
       `;
     } catch(e) {
