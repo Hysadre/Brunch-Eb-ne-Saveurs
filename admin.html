@@ -606,7 +606,7 @@
     <div>
       <div class="countdown-label">⏳ Compte à rebours</div>
       <div class="countdown-event">Brunch <span class="accent">Ébène &amp; Saveurs</span></div>
-      <div class="countdown-event-date">📅 Samedi 22 août 2026 · 12h00 · Ronchin</div>
+      <div class="countdown-event-date">📅 Samedi 22 août 2026 · 13h00 · Ronchin</div>
     </div>
     <div class="countdown-timer" id="countdownTimer"></div>
   </div>
@@ -916,8 +916,8 @@
     setInterval(updateCountdown, 1000);
   }
 
-  // ⏳ Compte à rebours jusqu'au 22 août 2026 à 12h00
-  const EVENT_DATE = new Date('2026-08-22T12:00:00+02:00');
+  // ⏳ Compte à rebours jusqu'au 22 août 2026 à 13h00
+  const EVENT_DATE = new Date('2026-08-22T13:00:00+02:00');
   function updateCountdown() {
     const now = new Date();
     const diff = EVENT_DATE - now;
