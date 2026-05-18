@@ -496,39 +496,16 @@
     <!-- 🔒 Wrapper verrouillé tant que la référence n'est pas copiée -->
     <div id="payMethodsLock" class="pay-locked">
 
-    <!-- REVOLUT -->
-    <label class="payment-option selected" data-method="revolut">
-      <span class="pay-radio"></span>
-      <span class="pay-logo revolut">R</span>
-      <div class="pay-info">
-        <div class="pay-name">Revolut <span class="pay-badge fast">Recommandé</span></div>
-        <div class="pay-desc">Paiement instantané · sans frais</div>
-      </div>
-    </label>
-    <div class="pay-details show" data-panel="revolut">
-      <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-revolut"></span></div>
-      <a href="https://revolut.me/abayoa" target="_blank" rel="noopener" class="pay-action-btn" id="revolutBtn">
-        Ouvrir Revolut →
-      </a>
-      <div class="info-note">
-        <strong>💡 Comment faire :</strong><br>
-        1. Copiez la <strong>référence</strong> ci-dessus<br>
-        2. Cliquez sur "Ouvrir Revolut" → saisissez le montant<br>
-        3. <strong>Collez la référence en note</strong> du paiement<br>
-        4. Revenez ici et cliquez sur "J'ai payé" en bas
-      </div>
-    </div>
-
-    <!-- WERO -->
-    <label class="payment-option" data-method="wero">
+    <!-- WERO (1er - recommandé, sélectionné par défaut) -->
+    <label class="payment-option selected" data-method="wero">
       <span class="pay-radio"></span>
       <span class="pay-logo wero">wero</span>
       <div class="pay-info">
-        <div class="pay-name">Wero <span class="pay-badge">Instantané</span></div>
-        <div class="pay-desc">Avec votre numéro de téléphone</div>
+        <div class="pay-name">Wero <span class="pay-badge fast">Recommandé</span></div>
+        <div class="pay-desc">Paiement instantané · avec votre numéro</div>
       </div>
     </label>
-    <div class="pay-details" data-panel="wero">
+    <div class="pay-details show" data-panel="wero">
       <div class="row">
         <span class="k">Numéro Wero 1</span>
         <span class="v">+33 6 68 29 50 77 <button class="copy-btn" data-copy="+33668295077">Copier</button></span>
@@ -547,7 +524,7 @@
       </div>
     </div>
 
-    <!-- VIREMENT -->
+    <!-- VIREMENT (2e) -->
     <label class="payment-option" data-method="virement">
       <span class="pay-radio"></span>
       <span class="pay-logo virement">€</span>
@@ -566,6 +543,29 @@
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-virement"></span></div>
       <div class="info-note">
         💡 <strong>Collez la référence en libellé</strong> du virement pour que nous puissions relier votre paiement à votre réservation.
+      </div>
+    </div>
+
+    <!-- REVOLUT (3e) -->
+    <label class="payment-option" data-method="revolut">
+      <span class="pay-radio"></span>
+      <span class="pay-logo revolut">R</span>
+      <div class="pay-info">
+        <div class="pay-name">Revolut</div>
+        <div class="pay-desc">Paiement instantané · sans frais</div>
+      </div>
+    </label>
+    <div class="pay-details" data-panel="revolut">
+      <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-revolut"></span></div>
+      <a href="https://revolut.me/abayoa" target="_blank" rel="noopener" class="pay-action-btn" id="revolutBtn" onclick="trackEvent('payment_link_clicked', { method: 'revolut' })">
+        Ouvrir Revolut →
+      </a>
+      <div class="info-note">
+        <strong>💡 Comment faire :</strong><br>
+        1. Copiez la <strong>référence</strong> ci-dessus<br>
+        2. Cliquez sur "Ouvrir Revolut" → saisissez le montant<br>
+        3. <strong>Collez la référence en note</strong> du paiement<br>
+        4. Revenez ici et cliquez sur "J'ai payé" en bas
       </div>
     </div>
 
@@ -600,6 +600,34 @@
 
   const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
   if (!booking) { window.location.href = 'index.html'; }
+
+  // 📊 TRACKING — vue de page + événements
+  function getSessionId() {
+    let s = localStorage.getItem('ebene_session_id');
+    if (!s) {
+      s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('ebene_session_id', s);
+    }
+    return s;
+  }
+  function trackPageview(page) {
+    try {
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page, sessionId: getSessionId(), bookingId: booking?.bookingId, referrer: document.referrer || null })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  function trackEvent(type, data) {
+    if (!booking?.bookingId) return;
+    try {
+      fetch(API_URL + '/track/event/' + encodeURIComponent(booking.bookingId), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, data: data || null })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  trackPageview('paiement');
 
   function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
 
@@ -680,6 +708,9 @@
       const lock = document.getElementById('payMethodsLock');
       if (lock) lock.classList.remove('pay-locked');
 
+      // 📊 TRACKING : référence copiée
+      trackEvent('ref_copied');
+
       setTimeout(() => {
         bigRefCopy.textContent = '📋 Copier la référence';
         bigRefCopy.classList.remove('copied');
@@ -690,7 +721,7 @@
     }
   });
 
-  let method = 'revolut';
+  let method = 'wero';  // Wero sélectionné par défaut (recommandé)
   document.querySelectorAll('.payment-option').forEach(opt => {
     opt.addEventListener('click', (e) => {
       e.preventDefault();
@@ -698,6 +729,8 @@
       opt.classList.add('selected');
       method = opt.dataset.method;
       document.querySelectorAll('.pay-details').forEach(p => p.classList.toggle('show', p.dataset.panel === method));
+      // 📊 TRACKING : choix du moyen de paiement
+      trackEvent('method_picked', { method });
       // Scroll vers les détails de paiement
       setTimeout(() => {
         const detail = document.querySelector(`.pay-details[data-panel="${method}"]`);
@@ -725,6 +758,9 @@
     const label = document.getElementById('btnLabel');
     btn.disabled = true;
     label.innerHTML = '<span class="spinner"></span> Validation en cours...';
+
+    // 📊 TRACKING : clic sur "J'ai payé"
+    trackEvent('paid_clicked', { method });
 
     booking.paymentMethod = method;
     booking.status = 'en attente vérification';

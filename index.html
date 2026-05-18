@@ -737,6 +737,27 @@
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
   const CAPACITY = 200;
   const UNIT_PRICE = 35;
+
+  // 📊 TRACKING — identifiant unique par visiteur (persistant)
+  function getSessionId() {
+    let s = localStorage.getItem('ebene_session_id');
+    if (!s) {
+      s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('ebene_session_id', s);
+    }
+    return s;
+  }
+  function trackPageview(page) {
+    try {
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page, sessionId: getSessionId(), referrer: document.referrer || null })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  // Envoie la vue dès le chargement
+  trackPageview('accueil');
   const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
 
   // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci

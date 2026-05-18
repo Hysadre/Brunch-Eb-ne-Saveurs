@@ -353,6 +353,19 @@
   const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
   if (!booking) { window.location.href = 'index.html'; }
 
+  // 📊 TRACKING — vue de la page confirmation
+  (function() {
+    try {
+      const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
+      let s = localStorage.getItem('ebene_session_id');
+      if (!s) { s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); localStorage.setItem('ebene_session_id', s); }
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'confirmation', sessionId: s, bookingId: booking?.bookingId })
+      }).catch(()=>{});
+    } catch(e) {}
+  })();
+
   document.getElementById('ticketType').textContent = booking.ticketName;
   document.getElementById('ticketQty').textContent = booking.qty;
   document.getElementById('bookingId').textContent = booking.bookingId;

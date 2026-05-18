@@ -622,6 +622,19 @@
   <div class="tab-panel active" id="panel-resa">
     <div class="stats" id="stats"></div>
 
+    <!-- 📊 Funnel : combien de visiteurs par page -->
+    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style:none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#06b6d4;">📊</span>
+          <span>Funnel de conversion</span>
+          <span id="funnelTotalBadge" style="background: rgba(6,182,212,.15); color:#06b6d4; padding:2px 10px; border-radius:99px; font-size:12px; font-weight:800;"></span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
+        </span>
+      </summary>
+      <div style="padding: 0 18px 18px;" id="funnelContent"></div>
+    </details>
+
     <div class="filters">
       <input type="text" id="search" placeholder="🔍 Nom, email, n° résa...">
       <select id="filterMethod">
@@ -753,6 +766,18 @@
 <!-- (Modal "suppression définitive" retiré — toutes les annulations passent par l'archivage avec motif) -->
 
 <!-- (Modal "personne à retirer" supprimé — fusionné dans archiveModal) -->
+
+<!-- 📊 Modal Timeline d'activité par résa -->
+<div class="modal-overlay" id="timelineModal">
+  <div class="modal" style="max-width: 540px;">
+    <h3>📊 Activité de la réservation</h3>
+    <p id="timelineModalText" style="margin-bottom: 14px; color:#d4a574;"></p>
+    <div id="timelineList" style="display:flex; flex-direction:column; gap:8px; text-align:left; margin-bottom: 14px; max-height: 400px; overflow-y: auto;"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="timelineClose">Fermer</button>
+    </div>
+  </div>
+</div>
 
 <!-- 🗃️ Modal UNIFIÉ : Retirer/Annuler (qui + motif) — tout part en archive, rien supprimé -->
 <div class="modal-overlay" id="archiveModal">
@@ -1248,6 +1273,7 @@
     renderStats(CACHE);
     renderTable(CACHE);
     renderCheckinHistory(CACHE);
+    renderFunnel();
 
     if (previousCount > 0 && CACHE.length > previousCount) {
       const diff = CACHE.length - previousCount;
@@ -1331,6 +1357,105 @@
       </div>
     `;
   }
+
+  // 📊 Funnel — vues par page + taux de conversion
+  async function renderFunnel() {
+    const container = document.getElementById('funnelContent');
+    const badge = document.getElementById('funnelTotalBadge');
+    if (!container) return;
+    try {
+      const r = await fetch(`${API_URL}/track/funnel`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+
+      const accueil   = d.pages?.accueil      || { uniqueVisitors: 0, views: 0 };
+      const paiement  = d.pages?.paiement     || { uniqueVisitors: 0, views: 0 };
+      const confirm_  = d.pages?.confirmation || { uniqueVisitors: 0, views: 0 };
+
+      const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+      const a2p = pct(paiement.uniqueVisitors, accueil.uniqueVisitors);
+      const p2c = pct(confirm_.uniqueVisitors, paiement.uniqueVisitors);
+      const total = accueil.uniqueVisitors;
+
+      if (badge) badge.textContent = `${total} visiteur${total>1?'s':''} unique${total>1?'s':''}`;
+
+      const step = (label, value, sub, color, dropPct) => `
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">${label}</div>
+            ${dropPct !== null ? `<div style="font-size:11px; color:${dropPct >= 50 ? '#22c55e' : (dropPct >= 25 ? '#c79270' : '#f87171')}; font-weight:800;">${dropPct}% conversion</div>` : ''}
+          </div>
+          <div style="font-size:28px; font-weight:800; color:${color}; margin: 6px 0 2px;">${value}</div>
+          <div style="font-size:12px; color:#d4a574;">${sub}</div>
+        </div>
+      `;
+
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px;">
+          ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} vue${accueil.views>1?'s':''} totales`, '#06b6d4', null)}
+          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} vue${paiement.views>1?'s':''} totales`, '#c79270', a2p)}
+          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} vue${confirm_.views>1?'s':''} totales`, '#22c55e', p2c)}
+        </div>
+        <div style="font-size:12px; color:#8a6648; padding-top:8px; border-top:1px solid #3a2818;">
+          🎯 <strong style="color:#c79270;">Conversion accueil → confirmation : ${pct(confirm_.uniqueVisitors, accueil.uniqueVisitors)}%</strong>
+        </div>
+      `;
+    } catch(e) {
+      console.warn('Funnel fetch error:', e.message);
+      container.innerHTML = `<div style="color:#8a6648; font-size:13px; text-align:center; padding:18px;">📊 Stats indisponibles (${e.message})</div>`;
+    }
+  }
+
+  // 📊 Timeline d'événements pour une résa
+  function openTimelineModal(resa) {
+    const tEl = document.getElementById('timelineModalText');
+    const list = document.getElementById('timelineList');
+    tEl.innerHTML = `<strong style="color:#c79270;">${resa.prenom} ${resa.nom}</strong> · ${resa.bookingId}`;
+
+    // Construit la timeline complète (résa + événements)
+    const evts = [];
+    if (resa.timestamp) evts.push({ at: resa.timestamp, icon: '📝', label: 'Formulaire soumis', desc: 'La résa a été créée' });
+    (Array.isArray(resa.events) ? resa.events : []).forEach(e => {
+      const labelMap = {
+        ref_copied:            { icon: '📋', label: 'Référence copiée', desc: 'A copié le N° de résa' },
+        method_picked:         { icon: '💳', label: `Moyen de paiement choisi`, desc: e.data?.method ? `→ ${e.data.method}` : '' },
+        payment_link_clicked:  { icon: '🔗', label: `Lien de paiement cliqué`, desc: e.data?.method ? `→ ${e.data.method}` : '' },
+        paid_clicked:          { icon: '✅', label: `Cliqué "J'ai payé"`, desc: e.data?.method ? `via ${e.data.method}` : '' }
+      };
+      const m = labelMap[e.type] || { icon: '📌', label: e.type, desc: '' };
+      evts.push({ at: e.at, ...m });
+    });
+    if (resa.paidAt) evts.push({ at: resa.paidAt, icon: '💰', label: 'Paiement déclaré', desc: `Moyen : ${resa.paymentMethod || '?'}` });
+    if (resa.status === 'confirmé') evts.push({ at: resa.paidAt, icon: '✓', label: 'Paiement validé par l\'admin', desc: 'QR code envoyé' });
+    if (resa.archived) evts.push({ at: resa.archivedAt || resa.timestamp, icon: '🚫', label: 'Annulée', desc: resa.cancelReason || '' });
+    (Array.isArray(resa.scanLog) ? resa.scanLog : []).forEach((s, i) => {
+      evts.push({ at: s.at || s, icon: '🚪', label: `Scan ${i + 1} à l'entrée`, desc: '' });
+    });
+    evts.sort((a, b) => new Date(a.at) - new Date(b.at));
+
+    if (evts.length === 0) {
+      list.innerHTML = `<div style="color:#8a6648; text-align:center; padding:30px;">Aucun événement enregistré</div>`;
+    } else {
+      list.innerHTML = evts.map(e => {
+        const d = e.at ? new Date(e.at) : null;
+        const dateStr = d ? d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '—';
+        return `
+          <div style="display:flex; align-items:start; gap:10px; padding:10px 12px; background:#0f0a06; border:1px solid #3a2818; border-radius:10px;">
+            <div style="font-size:18px; flex:0 0 28px; text-align:center;">${e.icon}</div>
+            <div style="flex:1; min-width:0;">
+              <div style="color:#fff; font-weight:700; font-size:13px;">${e.label}</div>
+              ${e.desc ? `<div style="color:#d4a574; font-size:12px; margin-top:2px;">${e.desc}</div>` : ''}
+              <div style="color:#8a6648; font-size:11px; margin-top:3px;">${dateStr}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    document.getElementById('timelineModal').classList.add('show');
+  }
+  document.getElementById('timelineClose').addEventListener('click', () => {
+    document.getElementById('timelineModal').classList.remove('show');
+  });
 
   function renderStats(data) {
     const total = data.length;
@@ -1504,6 +1629,12 @@
           })()}</td>
           <td>
             <a class="action-btn view" href="${ticketLink}" target="_blank" rel="noopener" title="Voir la page de réservation">👁️ Voir</a>
+            ${(() => {
+              const evts = Array.isArray(r.events) ? r.events : [];
+              const score = evts.length;
+              const scoreColor = score >= 3 ? '#22c55e' : (score >= 1 ? '#c79270' : '#8a6648');
+              return `<button class="action-btn activity" data-action="activity" data-id="${r.bookingId}" title="Voir l'historique d'activité (clics, copies, etc.)" style="background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.4); color:${scoreColor};">📊 Activité${score > 0 ? ` (${score})` : ''}</button>`;
+            })()}
             ${(!isArchived && isPaid) ? `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation (avec QR) au client">📧 Renvoyer QR</button>` : ''}
             ${isArchived
               ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>
@@ -1551,6 +1682,9 @@
         } else if (action === 'edit') {
           const resa = CACHE.find(x => x.bookingId === id);
           if (resa) openEditModal(resa);
+        } else if (action === 'activity') {
+          const resa = CACHE.find(x => x.bookingId === id);
+          if (resa) openTimelineModal(resa);
         } else if (action === 'delete') {
           // 🗑️ Suppression DÉFINITIVE — uniquement depuis les archivées
           if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT la réservation de ${b.dataset.name} (${id}) ?\n\nElle sera retirée de la base de données et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
