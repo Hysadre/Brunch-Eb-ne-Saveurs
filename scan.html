@@ -486,10 +486,21 @@
     error:   [400]
   };
 
+  // 📊 Tracker une tentative de scan (peu importe le résultat)
+  function trackScanAttempt(bookingId, result) {
+    if (!bookingId) return;  // pas d'event si pas de bookingId (cas notfound)
+    try {
+      fetch(`${API_URL}/track/event/${encodeURIComponent(bookingId)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'scan_attempted', data: { result } })
+      }).catch(() => {});
+    } catch(e) {}
+  }
+
   async function fetchAndShow(bookingId) {
     try {
       const r = await fetch(`${API_URL}/verify/${encodeURIComponent(bookingId)}`);
-      if (r.status === 404) return showResult('notfound', { bookingId });
+      if (r.status === 404) { trackScanAttempt(bookingId, 'not_found'); return showResult('notfound', { bookingId }); }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
       // Récupère l'info complète (enteredCount, archived) via l'endpoint admin
@@ -508,9 +519,14 @@
           }
         }
       } catch(e) {}
-      showResult(determineState(data), data);
+      const state = determineState(data);
+      // Mapping state → tracking label
+      const resultMap = { ok: 'confirmed', already: 'confirmed_full', cancelled: 'cancelled', unpaid: 'pending' };
+      trackScanAttempt(bookingId, resultMap[state] || state);
+      showResult(state, data);
     } catch(e) {
       console.error(e);
+      trackScanAttempt(bookingId, 'error');
       showResult('error', { bookingId, error: e.message });
     }
   }
