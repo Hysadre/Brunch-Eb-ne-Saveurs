@@ -760,6 +760,34 @@
   }
   // Envoie la vue dès le chargement
   trackPageview('accueil');
+
+  // 👋 Détecte la fermeture/inactivité — envoie un beacon pour confirmer le rebond
+  let leftSignaled = false;
+  function signalLeave() {
+    if (leftSignaled) return;
+    leftSignaled = true;
+    try {
+      const payload = JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() });
+      // sendBeacon est le seul moyen fiable de notifier au moment où la page se ferme
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(API_URL + '/track/pageview', new Blob([payload], { type: 'application/json' }));
+      }
+    } catch(e) {}
+  }
+  // Quand on quitte vers paiement.html via navigation interne, on NE déclenche PAS le signal
+  // (paiement.html ouvert = pas un rebond)
+  window.addEventListener('beforeunload', () => {
+    // Si l'utilisateur a déjà cliqué "Réserver" → ne pas marquer comme rebond
+    // (le passage à paiement.html sera tracé indépendamment)
+    if (window.__navigatingToPaiement) return;
+    signalLeave();
+  });
+  // Trigger aussi sur visibilitychange (mobile : passage en arrière-plan)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && !window.__navigatingToPaiement) {
+      signalLeave();
+    }
+  });
   const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
 
   // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci
@@ -1050,6 +1078,8 @@
       if (!data.bookingId) throw new Error('Pas de N° de résa');
       booking.bookingId = data.bookingId;
       localStorage.setItem('currentBooking', JSON.stringify(booking));
+      // 👍 Marqueur : on va vers paiement.html — pas un rebond
+      window.__navigatingToPaiement = true;
       window.location.href = 'paiement.html';
     } catch(err) {
       console.error('Création résa échouée', err);
