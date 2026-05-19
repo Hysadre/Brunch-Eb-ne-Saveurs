@@ -621,10 +621,21 @@
   </div>
 
   <!-- 📅 Filtre date GLOBAL appliqué à toutes les rubriques -->
-  <div style="background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(199,146,112,0.06)); border: 1px solid #3a2818; border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+  <div style="background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(199,146,112,0.06)); border: 1px solid #3a2818; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
     <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;">🌍 Filtre global</span>
-    <select id="globalDateFilter" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;">
-      <option value="all">📅 Depuis le début</option>
+
+    <!-- 📆 Calendrier — toujours visible -->
+    <div style="display:flex; align-items:center; gap:6px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:10px; padding:4px 8px;">
+      <span style="font-size:11px; color:#8a6648; font-weight:700;">Du</span>
+      <input type="date" id="globalDateFrom" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
+      <span style="font-size:11px; color:#8a6648; font-weight:700;">au</span>
+      <input type="date" id="globalDateTo" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
+      <button type="button" id="globalDateClear" title="Effacer la plage de dates" style="background:#3a2818; border:none; color:#c79270; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; margin-left:4px;">✕</button>
+    </div>
+
+    <!-- 📅 Raccourcis preset -->
+    <select id="globalDateFilter" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Raccourcis prédéfinis">
+      <option value="all">📅 Tout depuis le début</option>
       <option value="today">Aujourd'hui</option>
       <option value="yesterday">Hier</option>
       <option value="7days">7 derniers jours</option>
@@ -633,10 +644,9 @@
       <option value="lastweek">Semaine dernière</option>
       <option value="thismonth">Ce mois-ci</option>
       <option value="lastmonth">Mois dernier</option>
-      <option value="custom">📆 Période perso…</option>
+      <option value="custom">📆 Période perso</option>
     </select>
-    <input type="date" id="globalDateFrom" style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
-    <input type="date" id="globalDateTo"   style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
+
     <span style="margin-left: auto; font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">⚙️ Granularité</span>
     <select id="globalGranularity" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;">
       <option value="day">Jour</option>
@@ -2129,12 +2139,22 @@
   }
 
   // 🌍 Filtre date GLOBAL — utilisé par toutes les rubriques
+  //    Le calendrier (from/to) est TOUJOURS la source de vérité s'il est rempli.
+  //    Sinon, on utilise le preset.
   function getGlobalDateRange() {
+    const fromVal = document.getElementById('globalDateFrom')?.value;
+    const toVal = document.getElementById('globalDateTo')?.value;
+    // Si l'utilisateur a saisi des dates manuellement → priorité au calendrier
+    if (fromVal || toVal) {
+      return [
+        fromVal ? new Date(fromVal + 'T00:00:00') : null,
+        toVal ? new Date(toVal + 'T23:59:59') : null
+      ];
+    }
+    // Sinon, on suit le preset
     const preset = document.getElementById('globalDateFilter')?.value || 'all';
     if (preset === 'all') return [null, null];
-    return getDateRange(preset,
-      document.getElementById('globalDateFrom')?.value,
-      document.getElementById('globalDateTo')?.value);
+    return getDateRange(preset, null, null);
   }
   function inGlobalRange(date) {
     const [start, end] = getGlobalDateRange();
@@ -2435,14 +2455,41 @@
     if (typeof drawFunnelVisual === 'function') drawFunnelVisual(CACHE, 'chartFunnelOverview');
     if (typeof renderAnalyse === 'function') renderAnalyse();
   }
+  // Preset change → remplit le calendrier
   document.getElementById('globalDateFilter')?.addEventListener('change', e => {
-    const isCustom = e.target.value === 'custom';
-    document.getElementById('globalDateFrom').style.display = isCustom ? '' : 'none';
-    document.getElementById('globalDateTo').style.display = isCustom ? '' : 'none';
+    const preset = e.target.value;
+    const fromEl = document.getElementById('globalDateFrom');
+    const toEl   = document.getElementById('globalDateTo');
+    if (preset === 'all' || preset === 'custom') {
+      // 'all' → vide les dates ; 'custom' → garde les dates actuelles
+      if (preset === 'all') { fromEl.value = ''; toEl.value = ''; }
+    } else {
+      // Calcule les dates depuis le preset et les met dans les inputs
+      const [start, end] = getDateRange(preset, null, null);
+      fromEl.value = start ? start.toISOString().slice(0,10) : '';
+      // Pour 'to' on prend la veille de end (puisque end est exclusif)
+      if (end) {
+        const endInclusive = new Date(end.getTime() - 1);
+        toEl.value = endInclusive.toISOString().slice(0,10);
+      } else { toEl.value = ''; }
+    }
     applyGlobalFilterToAll();
   });
-  document.getElementById('globalDateFrom')?.addEventListener('change', applyGlobalFilterToAll);
-  document.getElementById('globalDateTo')?.addEventListener('change', applyGlobalFilterToAll);
+  // Changement manuel calendrier → switch preset à "custom"
+  function onCalendarChange() {
+    const sel = document.getElementById('globalDateFilter');
+    if (sel) sel.value = 'custom';
+    applyGlobalFilterToAll();
+  }
+  document.getElementById('globalDateFrom')?.addEventListener('change', onCalendarChange);
+  document.getElementById('globalDateTo')?.addEventListener('change', onCalendarChange);
+  // Bouton ✕ pour effacer
+  document.getElementById('globalDateClear')?.addEventListener('click', () => {
+    document.getElementById('globalDateFrom').value = '';
+    document.getElementById('globalDateTo').value = '';
+    document.getElementById('globalDateFilter').value = 'all';
+    applyGlobalFilterToAll();
+  });
   document.getElementById('globalGranularity')?.addEventListener('change', () => {
     // Maj du chart par jour avec la nouvelle granularité
     const sel = document.getElementById('chartParJourPeriod');
@@ -3102,7 +3149,27 @@
     // 🌍 Granularité globale en priorité, sinon celle locale du chart
     const period = getGlobalGranularity() || document.getElementById('chartParJourPeriod')?.value || 'day';
     // 🌍 Filtre date globale appliqué
-    data = (data || []).filter(r => inGlobalRange(r.timestamp));
+    const allData = data || [];
+    data = allData.filter(r => inGlobalRange(r.timestamp));
+
+    // 📆 Détermine la plage à afficher (start + end)
+    const [rangeStart, rangeEnd] = getGlobalDateRange();
+    let displayStart, displayEnd;
+    if (rangeStart) displayStart = new Date(rangeStart);
+    if (rangeEnd) displayEnd = new Date(rangeEnd);
+    // Si pas de range, déduit du data ou défault aux 7 derniers jours
+    if (!displayStart || !displayEnd) {
+      if (data.length > 0) {
+        const dates = data.map(r => new Date(r.timestamp)).sort((a, b) => a - b);
+        if (!displayStart) displayStart = dates[0];
+        if (!displayEnd) displayEnd = new Date(); // aujourd'hui
+      } else {
+        // Aucune donnée → on affiche les 7 derniers jours par défaut
+        const now = new Date();
+        if (!displayEnd) displayEnd = now;
+        if (!displayStart) displayStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+    }
 
     // Helper : retourne la clé d'agrégation pour une date
     function bucketKey(date) {
@@ -3135,8 +3202,31 @@
       if (!byBucket[k]) byBucket[k] = 0;
       byBucket[k]++;
     });
-    const keys = Object.keys(byBucket).sort();
-    const values = keys.map(k => byBucket[k]);
+
+    // 📆 Génère TOUS les buckets entre displayStart et displayEnd (incluant les vides)
+    const allKeys = [];
+    if (displayStart && displayEnd && displayStart <= displayEnd) {
+      const cursor = new Date(displayStart);
+      const limit = new Date(displayEnd);
+      // Aligner cursor au début du bucket
+      if (period === 'month') cursor.setDate(1);
+      if (period === 'week') {
+        const d = cursor.getDay() || 7;
+        cursor.setDate(cursor.getDate() - (d - 1));
+      }
+      let safety = 0;
+      while (cursor <= limit && safety < 400) {
+        allKeys.push(bucketKey(cursor.toISOString()));
+        if (period === 'day') cursor.setDate(cursor.getDate() + 1);
+        else if (period === 'week') cursor.setDate(cursor.getDate() + 7);
+        else if (period === 'month') cursor.setMonth(cursor.getMonth() + 1);
+        else cursor.setDate(cursor.getDate() + 1);
+        safety++;
+      }
+    }
+    // Fallback : si pas de range, utilise juste les buckets qui ont des données
+    const keys = allKeys.length > 0 ? allKeys : Object.keys(byBucket).sort();
+    const values = keys.map(k => byBucket[k] || 0);
     // Courbe cumulée par-dessus
     let cum = 0;
     const cumValues = values.map(v => (cum += v));
