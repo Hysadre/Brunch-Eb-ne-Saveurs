@@ -816,16 +816,25 @@ app.post('/api/reservations', async (req, res) => {
 });
 
 // 🆕 Met à jour le moyen de paiement choisi par le client (public, pas d'auth)
-//    Appelé depuis paiement.html quand le client clique "J'ai payé"
-//    👉 C'EST ICI qu'on envoie les emails client + admin
+//    - presumed=true → auto-save (page load ou changement d'option), pas d'email
+//    - presumed=false ou absent → clic explicite "J'ai payé" → emails + statut mis à jour
 app.post('/api/payment-method/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { method } = req.body || {};
+    const { method, presumed } = req.body || {};
     if (!method) return res.status(400).json({ error: 'missing method' });
     const r = await findReservation(id);
     if (!r) return res.status(404).json({ error: 'not found' });
 
+    // Si auto-save (presumed) → on ne change pas le statut, juste paymentMethod
+    if (presumed) {
+      // N'écrase pas un moyen déjà déclaré explicitement par le client
+      if (r.paidAt) return res.json({ ok: true, skipped: 'already declared' });
+      await patchReservation(id, { paymentMethod: method });
+      return res.json({ ok: true, presumed: true });
+    }
+
+    // Clic explicite "J'ai payé"
     const patch = {
       paymentMethod: method,
       paidAt: new Date().toISOString(),
