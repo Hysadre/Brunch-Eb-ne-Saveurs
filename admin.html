@@ -2117,6 +2117,8 @@
   });
 
   function renderStats(data) {
+    // 🌍 Applique les filtres globaux (date + exclusion)
+    data = (data || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
     const total = data.length;
     const paid = data.filter(r => r.status === 'confirmé' && !r.archived);
     const pending = data.filter(r => r.status !== 'confirmé' && !r.archived);
