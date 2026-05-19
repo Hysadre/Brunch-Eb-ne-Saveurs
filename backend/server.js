@@ -767,7 +767,11 @@ app.get('/api/verify/:id', async (req, res) => {
       status: r.status,
       archived: r.archived === true,
       cancelReason: r.cancelReason || null,
-      accompagnants: r.accompagnants || null
+      accompagnants: r.accompagnants || null,
+      paymentMethod: r.paymentMethod || null,  // 🆕 utile pour afficher conditionnellement le bloc "J'ai oublié la ref"
+      email: r.email || null,
+      telephone: r.telephone || null,
+      total: r.total || 0
     });
   } catch (e) {
     console.error('verify error:', e.message);
@@ -1090,10 +1094,23 @@ app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
 
     // Soft delete : flag deleted=true + horodatage
     console.log(`🗑️ Soft delete (corbeille) pour ${req.params.id}`);
-    await patchReservation(req.params.id, {
-      deleted: true,
-      deletedAt: new Date().toISOString()
-    });
+    try {
+      await patchReservation(req.params.id, {
+        deleted: true,
+        deletedAt: new Date().toISOString()
+      });
+    } catch(e) {
+      // 🛟 Si la colonne deleted n'existe pas → message explicite + fallback graceful
+      if (e.message?.includes('deleted') || e.message?.includes('PGRST204')) {
+        console.error(`⚠️  Colonne "deleted" manquante dans Supabase pour ${req.params.id}`);
+        return res.status(400).json({
+          ok: false,
+          error: 'Colonne "deleted" manquante dans Supabase. Ajoute-la (boolean nullable) dans Table Editor → reservations → New Column. Voir aussi "deletedAt" (timestamptz nullable).',
+          missingColumn: 'deleted'
+        });
+      }
+      throw e;
+    }
     syncToSheet('suppression', { ...before, deleted: true });
 
     // Mail d'annulation envoyé seulement si jamais archivée (= jamais informée)
