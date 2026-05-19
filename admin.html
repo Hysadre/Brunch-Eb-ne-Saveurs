@@ -655,6 +655,11 @@
           <button id="funnelRefreshBtn" style="background:#3a2818; border:none; color:#c79270; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;">🔄 Rafraîchir</button>
         </div>
         <div id="funnelContent"></div>
+        <!-- 🎯 Funnel visuel (chart) -->
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding: 14px; margin-top: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">🎯 Funnel visuel</div>
+          <div style="position: relative; height: 280px;"><canvas id="chartFunnelOverview"></canvas></div>
+        </div>
       </div>
     </details>
   </div>
@@ -772,8 +777,26 @@
 
     <div class="charts-grid">
       <div class="chart-card wide">
-        <h3>📈 Évolution des réservations (cumulé)</h3>
+        <h3>🎯 Funnel visuel</h3>
+        <div class="chart-wrap"><canvas id="chartFunnelVisual"></canvas></div>
+      </div>
+      <div class="chart-card wide">
+        <h3>📊 Réservations par période
+          <select id="chartParJourPeriod" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:4px 8px; font-family:inherit; font-size:12px; margin-left:10px;">
+            <option value="day">Jour</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+          </select>
+        </h3>
+        <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
+      </div>
+      <div class="chart-card wide">
+        <h3>📈 Évolution cumulée des réservations</h3>
         <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🥧 Statuts des réservations</h3>
+        <div class="chart-wrap"><canvas id="chartStatutsRatio"></canvas></div>
       </div>
       <div class="chart-card">
         <h3>🎫 Répartition par formule</h3>
@@ -784,12 +807,8 @@
         <div class="chart-wrap"><canvas id="chartPaiements"></canvas></div>
       </div>
       <div class="chart-card">
-        <h3>✅ Taux de paiement</h3>
+        <h3>✅ Taux de paiement (binaire)</h3>
         <div class="chart-wrap"><canvas id="chartStatuts"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>📅 Réservations par jour</h3>
-        <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
       </div>
     </div>
   </div>
@@ -802,12 +821,16 @@
     <div style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; padding:18px; margin-bottom: 14px;">
       <h3 style="margin:0 0 12px; color:#fff; font-size:16px;">👥 Liste des invités</h3>
       <div class="filters" style="margin-bottom: 14px;">
-        <input type="text" id="searchInvites" placeholder="🔍 Chercher un invité (nom, prénom)...">
+        <input type="text" id="searchInvites" placeholder="🔍 Chercher (nom, prénom, accompagnant)...">
         <select id="filterInvitesStatus">
+          <option value="active">📂 Actifs (non annulés)</option>
           <option value="confirmed">✓ Confirmés uniquement</option>
-          <option value="all">Tout voir (en attente compris)</option>
+          <option value="pending">⏳ En attente</option>
+          <option value="archived">🚫 Annulés / Archivés</option>
+          <option value="trash">🗑️ Corbeille</option>
+          <option value="all">📂📦 Tout voir</option>
         </select>
-        <button class="btn btn-secondary" id="printInvitesBtn" style="cursor:pointer;">🖨️ Imprimer la liste</button>
+        <button class="btn btn-secondary" id="printInvitesBtn" style="cursor:pointer;">📥 Télécharger la liste (CSV)</button>
       </div>
       <div id="invitesList" style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; overflow:hidden;"></div>
     </div>
@@ -1055,7 +1078,7 @@
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
       if (t.dataset.tab === 'identification') renderInvites();
-      if (t.dataset.tab === 'overview') renderFunnel();
+      if (t.dataset.tab === 'overview') { renderFunnel(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
       if (t.dataset.tab === 'scan') renderCheckinHistory(CACHE);
     });
   });
@@ -1063,12 +1086,22 @@
   // 👥 Onglet Invités — focus sur les personnes + accompagnants
   function renderInvites() {
     const q = (document.getElementById('searchInvites').value || '').toLowerCase();
-    const statusFilter = document.getElementById('filterInvitesStatus').value;
+    const statusFilter = document.getElementById('filterInvitesStatus').value || 'active';
     const filtered = CACHE.filter(r => {
-      if (r.archived) return false;
-      if (statusFilter === 'confirmed' && r.status !== 'confirmé') return false;
+      // 🗑️ Filtre corbeille selon la vue
+      if (statusFilter === 'trash') {
+        if (!r.deleted) return false;
+      } else {
+        if (r.deleted) return false;  // corbeille cachée par défaut
+      }
+      // 📂 Filtres status (active / confirmed / pending / archived / all)
+      if (statusFilter === 'active'    && r.archived) return false;
+      if (statusFilter === 'confirmed' && (r.status !== 'confirmé' || r.archived)) return false;
+      if (statusFilter === 'pending'   && (r.status === 'confirmé' || r.archived)) return false;
+      if (statusFilter === 'archived'  && !r.archived) return false;
+      // 'all' : on garde tout (sauf corbeille déjà gérée)
       if (q) {
-        const blob = `${r.prenom} ${r.nom} ${r.accompagnants || ''}`.toLowerCase();
+        const blob = `${r.prenom} ${r.nom} ${r.accompagnants || ''} ${r.email || ''} ${r.telephone || ''} ${r.bookingId || ''}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
@@ -1150,11 +1183,42 @@
   // Listeners onglet Invités
   document.getElementById('searchInvites').addEventListener('input', renderInvites);
   document.getElementById('filterInvitesStatus').addEventListener('change', renderInvites);
+  // 📥 Télécharge la liste des invités filtrés au format CSV
   document.getElementById('printInvitesBtn').addEventListener('click', () => {
-    const oldTitle = document.title;
-    document.title = `Liste invites - Brunch Ebene Saveurs`;
-    window.print();
-    setTimeout(() => { document.title = oldTitle; }, 500);
+    const q = (document.getElementById('searchInvites').value || '').toLowerCase();
+    const statusFilter = document.getElementById('filterInvitesStatus').value || 'active';
+    const filtered = CACHE.filter(r => {
+      if (statusFilter === 'trash') { if (!r.deleted) return false; }
+      else { if (r.deleted) return false; }
+      if (statusFilter === 'active'    && r.archived) return false;
+      if (statusFilter === 'confirmed' && (r.status !== 'confirmé' || r.archived)) return false;
+      if (statusFilter === 'pending'   && (r.status === 'confirmé' || r.archived)) return false;
+      if (statusFilter === 'archived'  && !r.archived) return false;
+      if (q) {
+        const blob = `${r.prenom} ${r.nom} ${r.accompagnants || ''} ${r.email || ''} ${r.telephone || ''} ${r.bookingId || ''}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    }).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+    if (!filtered.length) { toast('Aucun invité à exporter', true); return; }
+    const headers = ['N° Résa','Prénom','Nom','Email','Téléphone','Formule','Places','Accompagnants','Total','Statut','Présents','Note admin'];
+    const rows = filtered.map(r => [
+      r.bookingId || '', r.prenom || '', r.nom || '', r.email || '', r.telephone || '',
+      r.ticketName || '', r.qty || 0,
+      (r.accompagnants || '').replace(/[\r\n]+/g, ' '),
+      (r.total || 0).toFixed(2).replace('.', ','),
+      r.archived ? `Annulée (${r.cancelReason || ''})` : (r.status || ''),
+      `${r.enteredCount || 0} / ${r.qty || 0}`,
+      (r.adminNote || '').replace(/[\r\n]+/g, ' ')
+    ]);
+    const esc = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const csv = '﻿' + [headers, ...rows].map(r => r.map(esc).join(';')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `brunch-ebene-invites-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast(`📥 ${filtered.length} invité${filtered.length>1?'s':''} téléchargé${filtered.length>1?'s':''}`);
   });
 
   // --- Data ---
@@ -1408,6 +1472,10 @@
     renderCheckinHistory(CACHE);
     renderCopiers(CACHE);
     renderFunnel();
+    // 🎯 Funnel visuel — uniquement si la canvas est visible (onglet Overview)
+    if (document.getElementById('panel-overview')?.classList.contains('active')) {
+      setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 200);
+    }
 
     if (previousCount > 0 && CACHE.length > previousCount) {
       const diff = CACHE.length - previousCount;
@@ -1492,28 +1560,31 @@
     `;
   }
 
-  // 📋 Copieurs de référence — résa où la référence a été copiée (intention de payer)
+  // 📋 Copieurs de référence — 2 tableaux séparés :
+  //   • Ont copié SANS cliquer "J'ai payé" (en attente d'action)
+  //   • Ont copié ET cliqué "J'ai payé" (paiement déclaré)
   function renderCopiers(data) {
     const container = document.getElementById('copiersList');
     const badge = document.getElementById('copiersCountBadge');
     if (!container) return;
 
-    // Filtre : toutes les résa où on a un événement 'ref_copied'
-    const copiers = (data || [])
-      .filter(r => !r.deleted)  // pas la corbeille
+    // Construit l'enrichissement (avec dates des événements) — INCLUT supprimés/annulés
+    const all = (data || [])
       .map(r => {
         const evts = Array.isArray(r.events) ? r.events : [];
         const copyEvent = evts.find(e => e.type === 'ref_copied');
         if (!copyEvent) return null;
         const paidEvent = evts.find(e => e.type === 'paid_clicked');
-        return { ...r, copyAt: copyEvent.at, paidAt: paidEvent?.at };
+        return { ...r, copyAt: copyEvent.at, paidClickAt: paidEvent?.at };
       })
-      .filter(Boolean)
-      .sort((a, b) => new Date(b.copyAt) - new Date(a.copyAt));
+      .filter(Boolean);
 
-    if (badge) badge.textContent = `${copiers.length}`;
+    const pending = all.filter(c => !c.paidClickAt).sort((a, b) => new Date(b.copyAt) - new Date(a.copyAt));
+    const paid    = all.filter(c => c.paidClickAt).sort((a, b) => new Date(b.paidClickAt) - new Date(a.paidClickAt));
 
-    if (copiers.length === 0) {
+    if (badge) badge.textContent = `${all.length}`;
+
+    if (all.length === 0) {
       container.innerHTML = `
         <div style="text-align:center; padding: 30px 20px; color: #8a6648;">
           <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
@@ -1524,68 +1595,89 @@
       return;
     }
 
-    const paidCount = copiers.filter(c => c.paidAt).length;
-    const pendingCount = copiers.length - paidCount;
+    // Helper pour générer une ligne de tableau
+    const rowHtml = (c, opts = {}) => {
+      const copyDate = new Date(c.copyAt);
+      const copyStr = copyDate.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) + ' · ' + copyDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      const accomps = (c.accompagnants || '').split(',').map(s => s.trim()).filter(Boolean);
+      const isPaid = c.status === 'confirmé';
+      const statusBadge = c.deleted ? '<span style="background:rgba(120,113,108,.15); color:#a8a29e; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">🗑️ Corbeille</span>'
+        : c.archived ? '<span style="background:rgba(185,28,28,.15); color:#f87171; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">🚫 Annulée</span>'
+        : isPaid ? '<span style="background:rgba(34,197,94,.15); color:#22c55e; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">✓ Validée</span>'
+        : '<span style="background:rgba(251,191,36,.15); color:#fbbf24; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">⏳ En attente</span>';
+      const paidColumn = opts.showPaidClickAt ? `
+        <td style="padding:10px 6px; color:#22c55e; font-weight:700; font-size:12px;">
+          ${c.paidClickAt ? '✓ ' + new Date(c.paidClickAt).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) + ' ' + new Date(c.paidClickAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—'}
+        </td>` : '';
+      return `
+        <tr style="border-top:1px solid #2a1810;">
+          <td style="padding:10px 6px; font-family:monospace; color:#c79270; font-weight:700;">${c.bookingId}</td>
+          <td style="padding:10px 6px; color:#fff; font-weight:700;">${c.prenom} ${c.nom}</td>
+          <td style="padding:10px 6px;"><a href="mailto:${c.email}" style="color:#06b6d4; text-decoration:none;">${c.email}</a></td>
+          <td style="padding:10px 6px;"><a href="tel:${c.telephone}" style="color:#22c55e; text-decoration:none;">${c.telephone}</a></td>
+          <td style="padding:10px 6px; color:#d4a574;">${c.ticketName}</td>
+          <td style="padding:10px 6px; color:#d4a574; font-size:12px;">${accomps.length ? accomps.join(', ') : '<em style="color:#8a6648;">—</em>'}</td>
+          <td style="padding:10px 6px; color:#c79270; font-weight:700;">${(c.total||0).toFixed(2).replace('.', ',')} €</td>
+          <td style="padding:10px 6px; color:#d4a574; font-size:12px;">${copyStr}</td>
+          ${paidColumn}
+          <td style="padding:10px 6px;">${statusBadge}</td>
+        </tr>
+      `;
+    };
+
+    const tableHeader = (showPaidClickAt) => `
+      <thead>
+        <tr style="text-align:left; color:#8a6648; font-size:10px; text-transform:uppercase; letter-spacing:1px;">
+          <th style="padding:8px 6px;">N° Résa</th>
+          <th style="padding:8px 6px;">Réservateur</th>
+          <th style="padding:8px 6px;">Email</th>
+          <th style="padding:8px 6px;">Tél</th>
+          <th style="padding:8px 6px;">Formule</th>
+          <th style="padding:8px 6px;">Accompagnants</th>
+          <th style="padding:8px 6px;">Total</th>
+          <th style="padding:8px 6px;">Réf copiée</th>
+          ${showPaidClickAt ? '<th style="padding:8px 6px;">J\'ai payé à</th>' : ''}
+          <th style="padding:8px 6px;">Statut</th>
+        </tr>
+      </thead>
+    `;
 
     container.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 0 12px; border-bottom: 1px solid #3a2818; margin-bottom: 12px; flex-wrap:wrap; gap: 8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 0 12px; border-bottom: 1px solid #3a2818; margin-bottom: 16px; flex-wrap:wrap; gap: 8px;">
         <div style="font-size: 13px; color: #d4a574;">
-          <strong style="color: #22c55e;">${paidCount}</strong> ont cliqué "J'ai payé"
+          <strong style="color: #22c55e;">${paid.length}</strong> ont cliqué "J'ai payé"
           &nbsp;·&nbsp;
-          <strong style="color: #c79270;">${pendingCount}</strong> ont copié sans confirmer
+          <strong style="color: #fbbf24;">${pending.length}</strong> ont copié sans confirmer
         </div>
-        <div style="font-size: 11px; color: #8a6648;">${copiers.length} au total</div>
+        <div style="font-size: 11px; color: #8a6648;">${all.length} au total</div>
       </div>
-      <div style="overflow-x:auto;">
-      <table style="width:100%; border-collapse:collapse; font-size:13px;">
-        <thead>
-          <tr style="text-align:left; color:#8a6648; font-size:10px; text-transform:uppercase; letter-spacing:1px;">
-            <th style="padding:8px 6px;">N° Résa</th>
-            <th style="padding:8px 6px;">Réservateur</th>
-            <th style="padding:8px 6px;">Email</th>
-            <th style="padding:8px 6px;">Tél</th>
-            <th style="padding:8px 6px;">Formule</th>
-            <th style="padding:8px 6px;">Accompagnants</th>
-            <th style="padding:8px 6px;">Total</th>
-            <th style="padding:8px 6px;">Réf copiée</th>
-            <th style="padding:8px 6px;">Payé ?</th>
-            <th style="padding:8px 6px;">Statut</th>
-          </tr>
-        </thead>
-        <tbody>
-        ${copiers.map(c => {
-          const copyDate = new Date(c.copyAt);
-          const copyStr = copyDate.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) + ' · ' + copyDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-          const accomps = (c.accompagnants || '').split(',').map(s => s.trim()).filter(Boolean);
-          const isPaid = c.status === 'confirmé';
-          const isPending = !isPaid && !c.archived;
-          const statusBadge = c.archived ? '<span style="background:rgba(185,28,28,.15); color:#f87171; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">🚫 Annulée</span>'
-            : isPaid ? '<span style="background:rgba(34,197,94,.15); color:#22c55e; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">✓ Validée</span>'
-            : '<span style="background:rgba(251,191,36,.15); color:#fbbf24; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">⏳ En attente</span>';
-          return `
-            <tr style="border-top:1px solid #2a1810;">
-              <td style="padding:10px 6px; font-family:monospace; color:#c79270; font-weight:700;">${c.bookingId}</td>
-              <td style="padding:10px 6px; color:#fff; font-weight:700;">${c.prenom} ${c.nom}</td>
-              <td style="padding:10px 6px;"><a href="mailto:${c.email}" style="color:#06b6d4; text-decoration:none;">${c.email}</a></td>
-              <td style="padding:10px 6px;"><a href="tel:${c.telephone}" style="color:#22c55e; text-decoration:none;">${c.telephone}</a></td>
-              <td style="padding:10px 6px; color:#d4a574;">${c.ticketName}</td>
-              <td style="padding:10px 6px; color:#d4a574; font-size:12px;">
-                ${accomps.length ? accomps.join(', ') : '<em style="color:#8a6648;">—</em>'}
-              </td>
-              <td style="padding:10px 6px; color:#c79270; font-weight:700;">${(c.total||0).toFixed(2).replace('.', ',')} €</td>
-              <td style="padding:10px 6px; color:#d4a574; font-size:12px;">${copyStr}</td>
-              <td style="padding:10px 6px;">
-                ${c.paidAt
-                  ? `<span style="color:#22c55e; font-weight:700;">✓ ${new Date(c.paidAt).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})} ${new Date(c.paidAt).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>`
-                  : '<span style="color:#f87171;">❌ Non confirmé</span>'
-                }
-              </td>
-              <td style="padding:10px 6px;">${statusBadge}</td>
-            </tr>
-          `;
-        }).join('')}
-        </tbody>
-      </table>
+
+      <!-- ⚠️ Tableau 1 : Ont copié SANS cliquer "J'ai payé" -->
+      <div style="background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.25); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <span style="font-size:18px;">⚠️</span>
+          <h4 style="margin:0; color:#fbbf24; font-size:14px;">Ont copié la référence mais n'ont PAS cliqué "J'ai payé"</h4>
+          <span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:2px 10px; border-radius:99px; font-size:12px; font-weight:800;">${pending.length}</span>
+        </div>
+        <p style="margin:0 0 12px; font-size:12px; color:#d4a574;">Ces personnes ont copié la référence mais ne sont jamais revenues confirmer. À relancer ?</p>
+        ${pending.length === 0
+          ? '<div style="text-align:center; padding:18px; color:#8a6648; font-size:13px;">✅ Tout le monde a confirmé son paiement, parfait !</div>'
+          : `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">${tableHeader(false)}<tbody>${pending.map(c => rowHtml(c, { showPaidClickAt: false })).join('')}</tbody></table></div>`
+        }
+      </div>
+
+      <!-- ✅ Tableau 2 : Ont cliqué "J'ai payé" -->
+      <div style="background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.25); border-radius: 12px; padding: 14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+          <span style="font-size:18px;">✅</span>
+          <h4 style="margin:0; color:#22c55e; font-size:14px;">Ont cliqué "J'ai payé"</h4>
+          <span style="background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 10px; border-radius:99px; font-size:12px; font-weight:800;">${paid.length}</span>
+        </div>
+        <p style="margin:0 0 12px; font-size:12px; color:#d4a574;">Ces personnes ont déclaré avoir payé. À vérifier dans l'app bancaire avant validation.</p>
+        ${paid.length === 0
+          ? '<div style="text-align:center; padding:18px; color:#8a6648; font-size:13px;">Personne n\'a encore cliqué "J\'ai payé".</div>'
+          : `<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;">${tableHeader(true)}<tbody>${paid.map(c => rowHtml(c, { showPaidClickAt: true })).join('')}</tbody></table></div>`
+        }
       </div>
     `;
   }
@@ -1707,10 +1799,10 @@
 
       container.innerHTML = `
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 10px;">
-          ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} vue${accueil.views>1?'s':''} totales`, '#06b6d4', null, null)}
-          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} vue${paiement.views>1?'s':''} totales`, '#c79270',
+          ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} visite${accueil.views>1?'s':''} totales`, '#06b6d4', null, null)}
+          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} visite${paiement.views>1?'s':''} totales`, '#c79270',
                   `${a2p}% conversion`, a2p >= 50 ? '#22c55e' : (a2p >= 25 ? '#c79270' : '#f87171'))}
-          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} vue${confirm_.views>1?'s':''} totales`, '#22c55e',
+          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} visite${confirm_.views>1?'s':''} totales`, '#22c55e',
                   `${p2c}% conversion`, p2c >= 50 ? '#22c55e' : (p2c >= 25 ? '#c79270' : '#f87171'))}
           ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin`, bounceColor,
                   `${bounce.rate}% rebond`, bounceColor)}
@@ -2122,6 +2214,8 @@
   });
   document.getElementById('filterDateFrom').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterDateTo').addEventListener('change', () => renderTable(CACHE));
+  // 📊 Filtre période du chart résa par jour
+  document.getElementById('chartParJourPeriod')?.addEventListener('change', () => drawParJour(CACHE));
   // 💰 Filtre montant
   document.getElementById('filterAmount').addEventListener('change', e => {
     const customInput = document.getElementById('filterAmountCustom');
@@ -2633,10 +2727,12 @@
     `;
 
     setTimeout(() => {
+      drawFunnelVisual(data, 'chartFunnelVisual');
       drawEvolution(data);
       drawFormules(paid);
       drawPaiements(paid);
       drawStatuts(data);
+      drawStatutsRatio(data);
       drawParJour(data);
     }, 50);
   }
@@ -2759,19 +2855,150 @@
 
   function drawParJour(data) {
     destroyChart('parJour');
-    const byDay = {};
+    const period = document.getElementById('chartParJourPeriod')?.value || 'day';
+
+    // Helper : retourne la clé d'agrégation pour une date
+    function bucketKey(date) {
+      const d = new Date(date);
+      if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      if (period === 'week') {
+        // Lundi de la semaine
+        const day = d.getDay() || 7;
+        const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
+        return monday.toISOString().slice(0,10);
+      }
+      return d.toISOString().slice(0,10);  // 'day'
+    }
+    function bucketLabel(key) {
+      if (period === 'month') {
+        const [y, m] = key.split('-');
+        return new Date(parseInt(y), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
+      }
+      if (period === 'week') {
+        const d = new Date(key);
+        return 'Sem. ' + d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+      }
+      return new Date(key).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+    }
+
+    const byBucket = {};
     data.forEach(r => {
-      const day = (r.timestamp || '').slice(0,10);
-      if (!byDay[day]) byDay[day] = 0;
-      byDay[day]++;
+      if (!r.timestamp) return;
+      const k = bucketKey(r.timestamp);
+      if (!byBucket[k]) byBucket[k] = 0;
+      byBucket[k]++;
     });
-    const labels = Object.keys(byDay).sort();
-    const values = labels.map(d => byDay[d]);
-    const niceLabels = labels.map(d => new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short'}));
+    const keys = Object.keys(byBucket).sort();
+    const values = keys.map(k => byBucket[k]);
+    // Courbe cumulée par-dessus
+    let cum = 0;
+    const cumValues = values.map(v => (cum += v));
+    const labels = keys.map(bucketLabel);
+
     charts.parJour = new Chart(document.getElementById('chartParJour'), {
       type: 'bar',
-      data: { labels: niceLabels.length ? niceLabels : ['—'], datasets: [{ label: 'Résa', data: values.length ? values : [0], backgroundColor: '#b86a45' }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' } } } }
+      data: {
+        labels: labels.length ? labels : ['—'],
+        datasets: [
+          { label: 'Nouvelles résa', data: values.length ? values : [0], backgroundColor: '#b86a45', borderRadius: 4, yAxisID: 'y' },
+          { label: 'Cumulé', data: cumValues.length ? cumValues : [0], type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.3, fill: true, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#ede5d1' } } },
+        scales: {
+          y:  { position: 'left',  beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' }, title: { display: true, text: 'Nouvelles', color: '#d4a574' } },
+          y1: { position: 'right', beginAtZero: true, ticks: { precision: 0 }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Cumulé', color: '#d4a574' } }
+        }
+      }
+    });
+  }
+
+  // 🥧 Camembert statuts : payé / en attente / annulé / supprimé
+  function drawStatutsRatio(data) {
+    destroyChart('statutsRatio');
+    const el = document.getElementById('chartStatutsRatio');
+    if (!el) return;
+    const paid    = data.filter(r => r.status === 'confirmé' && !r.archived && !r.deleted).length;
+    const pending = data.filter(r => r.status !== 'confirmé' && !r.archived && !r.deleted).length;
+    const cancelled = data.filter(r => r.archived && !r.deleted).length;
+    const trash   = data.filter(r => r.deleted).length;
+    charts.statutsRatio = new Chart(el, {
+      type: 'doughnut',
+      data: {
+        labels: ['✓ Payé', '⏳ En attente', '🚫 Annulé', '🗑️ Supprimé'],
+        datasets: [{
+          data: [paid, pending, cancelled, trash],
+          backgroundColor: ['#22c55e', '#c79270', '#f87171', '#78716c'],
+          borderWidth: 2,
+          borderColor: '#1a1108'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#ede5d1', padding: 10 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label} : ${ctx.parsed} (${data.length ? Math.round(ctx.parsed/data.length*100) : 0}%)` } }
+        }
+      }
+    });
+  }
+
+  // 🎯 Funnel visuel — chart barres horizontales
+  async function drawFunnelVisual(data, canvasId) {
+    const chartKey = canvasId === 'chartFunnelOverview' ? 'funnelOverview' : 'funnelVisual';
+    destroyChart(chartKey);
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+
+    // Fetch the funnel data (same source as the cards)
+    let pages = {}, bounce = {};
+    try {
+      const r = await fetch(`${API_URL}/track/funnel`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      const d = await r.json();
+      pages = d.pages || {};
+      bounce = d.bounce || { count: 0, rate: 0 };
+    } catch(e) { /* fallback empty */ }
+
+    const accueil   = pages.accueil?.uniqueVisitors      || 0;
+    const paiement  = pages.paiement?.uniqueVisitors     || 0;
+    const confirm_  = pages.confirmation?.uniqueVisitors || 0;
+    const paidResa  = (data || []).filter(r => r.status === 'confirmé' && !r.archived && !r.deleted).length;
+
+    charts[chartKey] = new Chart(el, {
+      type: 'bar',
+      data: {
+        labels: ['1️⃣ Visites Accueil', '2️⃣ Atteint Paiement', '3️⃣ A cliqué "J\'ai payé"', '4️⃣ Validé par admin'],
+        datasets: [{
+          label: 'Visiteurs / Résa',
+          data: [accueil, paiement, confirm_, paidResa],
+          backgroundColor: ['#06b6d4', '#c79270', '#22c55e', '#16a34a'],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const v = ctx.parsed.x;
+                const top = accueil || 1;
+                return `${v} (${Math.round(v/top*100)}% du haut du funnel)`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#3a2818' }, ticks: { precision: 0 } },
+          y: { grid: { display: false } }
+        }
+      }
     });
   }
 </script>
