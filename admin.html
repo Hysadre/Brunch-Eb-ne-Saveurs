@@ -647,6 +647,15 @@
       <option value="custom">📆 Période perso</option>
     </select>
 
+    <!-- 🚫 Exclure (annulées / corbeille) -->
+    <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">🚫 Exclure</span>
+    <select id="globalExclude" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Exclure les transactions par statut">
+      <option value="trash_and_archived">🗑️ + 🚫 Corbeille &amp; annulées (défaut)</option>
+      <option value="trash">🗑️ Corbeille uniquement</option>
+      <option value="archived">🚫 Annulées uniquement</option>
+      <option value="none">📂📦🗑️ Tout inclure</option>
+    </select>
+
     <span style="margin-left: auto; font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">⚙️ Granularité</span>
     <select id="globalGranularity" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;">
       <option value="day">Jour</option>
@@ -1143,6 +1152,8 @@
     const filtered = CACHE.filter(r => {
       // 🌍 Filtre date GLOBAL
       if (!inGlobalRange(r.timestamp)) return false;
+      // 🚫 Filtre exclusion globale (sauf si vue trash/archived qui veut explicitement voir)
+      if (statusFilter !== 'trash' && statusFilter !== 'archived' && isGloballyExcluded(r)) return false;
       // 🗑️ Filtre corbeille selon la vue
       if (statusFilter === 'trash') {
         if (!r.deleted) return false;
@@ -1578,6 +1589,7 @@
     // ===== Aggrégats stats par scan attempt (depuis r.events) =====
     let totalScans = 0, scanConfirmed = 0, scanPending = 0, scanCancelled = 0, scanNotFound = 0;
     data.forEach(r => {
+      if (isGloballyExcluded(r)) return;  // 🚫 Filtre exclusion globale
       const evts = Array.isArray(r.events) ? r.events : [];
       evts.forEach(e => {
         if (e.type !== 'scan_attempted' || !inScanRange(e.at)) return;
@@ -1593,6 +1605,7 @@
     // Construit la liste plate des entrées (check-ins réussis) — pour l'historique
     const events = [];
     data.forEach(r => {
+      if (isGloballyExcluded(r)) return;  // 🚫 Filtre exclusion globale
       const count = r.enteredCount || 0;
       if (count === 0) return;
       const scanLog = Array.isArray(r.scanLog) ? r.scanLog : null;
@@ -1752,7 +1765,9 @@
       })
       .filter(Boolean)
       // 🌍 Filtre date GLOBAL — basé sur la date de copie de la réf
-      .filter(c => inGlobalRange(c.copyAt));
+      .filter(c => inGlobalRange(c.copyAt))
+      // 🚫 Filtre exclusion globale (corbeille/annulées)
+      .filter(c => !isGloballyExcluded(c));
 
     const pending = all.filter(c => !c.paidClickAt).sort((a, b) => new Date(b.copyAt) - new Date(a.copyAt));
     const paid    = all.filter(c => c.paidClickAt).sort((a, b) => new Date(b.paidClickAt) - new Date(a.paidClickAt));
@@ -2169,6 +2184,16 @@
     return document.getElementById('globalGranularity')?.value || 'day';
   }
 
+  // 🚫 Filtre d'exclusion GLOBAL (corbeille / annulées)
+  function isGloballyExcluded(r) {
+    const exclude = document.getElementById('globalExclude')?.value || 'trash_and_archived';
+    if (exclude === 'none') return false;  // tout inclure
+    if (exclude === 'trash' && r.deleted) return true;
+    if (exclude === 'archived' && r.archived) return true;
+    if (exclude === 'trash_and_archived' && (r.deleted || r.archived)) return true;
+    return false;
+  }
+
   // 📅 Helper : retourne [start, end] (timestamps) pour un range de date
   function getDateRange(preset, customFrom, customTo) {
     const now = new Date();
@@ -2220,9 +2245,12 @@
     const amountCustom = parseFloat(document.getElementById('filterAmountCustom').value);
     const amountTarget = amountPreset === 'other' ? (isNaN(amountCustom) ? null : amountCustom) : (amountPreset ? parseFloat(amountPreset) : null);
 
-    // 🌍 Filtre date GLOBAL (s'ajoute au filtre local)
+    // 🌍 Filtre date GLOBAL + 🚫 Filtre exclusion globale (s'ajoutent au filtre local)
     const filtered = all.filter(r => {
       if (!inGlobalRange(r.timestamp)) return false;
+      // Si on est sur le filtre "trash", on garde la corbeille même si le globalExclude la cache
+      const archivedFilterLocal = document.getElementById('filterArchived')?.value || 'active';
+      if (archivedFilterLocal !== 'trash' && archivedFilterLocal !== 'archived' && isGloballyExcluded(r)) return false;
       return true;
     }).filter(r => {
       // 🗑️ Corbeille : on filtre selon la sélection
@@ -2496,6 +2524,8 @@
     if (sel) sel.value = getGlobalGranularity();
     drawParJour(CACHE);
   });
+  // 🚫 Filtre d'exclusion → re-render TOUT
+  document.getElementById('globalExclude')?.addEventListener('change', applyGlobalFilterToAll);
   // 📊 Filtre période du chart résa par jour
   document.getElementById('chartParJourPeriod')?.addEventListener('change', () => drawParJour(CACHE));
   // 📅 Filtre date du Scan
@@ -2978,7 +3008,8 @@
   // ============ ANALYSE ============
   let charts = {};
   function renderAnalyse() {
-    const data = CACHE;
+    // 🌍 Applique le filtre global (date + exclusion) à tous les graphes
+    const data = (CACHE || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
     const paid = data.filter(r => r.status === 'confirmé');
     const pending = data.filter(r => r.status !== 'confirmé');
     const placesPaid = paid.reduce((s, r) => s + (r.qty || 0), 0);
@@ -3150,7 +3181,8 @@
     const period = getGlobalGranularity() || document.getElementById('chartParJourPeriod')?.value || 'day';
     // 🌍 Filtre date globale appliqué
     const allData = data || [];
-    data = allData.filter(r => inGlobalRange(r.timestamp));
+    // 🌍 Filtre date GLOBAL + 🚫 Filtre exclusion globale
+    data = allData.filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
 
     // 📆 Détermine la plage à afficher (start + end)
     const [rangeStart, rangeEnd] = getGlobalDateRange();
