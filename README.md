@@ -1,7 +1,7 @@
 # 🌴 Brunch Ébène & Saveurs — Site de réservation complet
 
-Site de billetterie pour le **Brunch du samedi 22 août 2026 à Ronchin (Lille)**.
-Capacité : **200 personnes**. Tarifs : Standard 35€, Duo 70€, Trio 105€.
+Site de billetterie pour le **Brunch du samedi 22 août 2026 dans la métropole lilloise**.
+Capacité limitée. Tarifs : Standard 35€, Duo 70€, Trio 105€.
 
 > ✅ **Prod** : [https://hysadre.github.io/Brunch-Eb-ne-Saveurs/](https://hysadre.github.io/Brunch-Eb-ne-Saveurs/)
 > 💰 **Coût total** : 0€ (tout est hébergé sur des plans gratuits)

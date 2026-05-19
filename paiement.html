@@ -508,11 +508,11 @@
     <div class="pay-details show" data-panel="wero">
       <div class="row">
         <span class="k">Numéro Wero 1</span>
-        <span class="v">+33 6 68 29 50 77 <button class="copy-btn" data-copy="+33668295077">Copier</button></span>
+        <span class="v"><span style="user-select:none; -webkit-user-select:none; pointer-events:none;">+33 6 68 29 50 77</span> <button class="copy-btn wero-copy" data-copy="+33668295077" data-which="1">📋 Copier</button></span>
       </div>
       <div class="row">
         <span class="k">Numéro Wero 2</span>
-        <span class="v">+33 6 59 93 06 78 <button class="copy-btn" data-copy="+33659930678">Copier</button></span>
+        <span class="v"><span style="user-select:none; -webkit-user-select:none; pointer-events:none;">+33 6 59 93 06 78</span> <button class="copy-btn wero-copy" data-copy="+33659930678" data-which="2">📋 Copier</button></span>
       </div>
       <div class="row"><span class="k">Montant</span><span class="v" id="amt-wero"></span></div>
       <div class="info-note">
@@ -563,7 +563,7 @@
     <div id="forgotRefBox" style="display:none; margin-top: 14px; padding: 14px 16px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 12px;">
       <div style="font-size: 13px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé sans mettre la référence ?</div>
       <div style="font-size: 12px; color: #d4a574; margin-bottom: 10px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
-      <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px;">💬 Je nous écris sur WhatsApp</a>
+      <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px;">💬 Je vous écris sur WhatsApp</a>
     </div>
   </div>
 
@@ -614,6 +614,16 @@
     } catch(e) {}
   }
   trackPageview('paiement');
+
+  // 💳 Enregistre immédiatement le moyen par défaut (Wero) côté serveur
+  //    Comme ça même si le client ferme la page sans cliquer "J'ai payé",
+  //    on a au moins son moyen de paiement présumé dans la BDD.
+  if (booking?.bookingId && API_URL) {
+    fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: 'wero', presumed: true })
+    }).catch(() => {});
+  }
 
   // 🆘 Pré-remplit le lien WhatsApp "J'ai oublié la référence"
   function buildForgotRefLink() {
@@ -756,6 +766,13 @@
       document.querySelectorAll('.pay-details').forEach(p => p.classList.toggle('show', p.dataset.panel === method));
       // 📊 TRACKING : choix du moyen de paiement
       trackEvent('method_picked', { method });
+      // 💳 Sauvegarde présumée du nouveau moyen (sans email, juste pour l'admin)
+      if (booking?.bookingId && API_URL) {
+        fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ method, presumed: true })
+        }).catch(() => {});
+      }
       // Scroll vers les détails de paiement
       setTimeout(() => {
         const detail = document.querySelector(`.pay-details[data-panel="${method}"]`);
@@ -773,6 +790,10 @@
         t.textContent = '✓ ' + b.dataset.copy + ' copié !';
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 1800);
+        // 📊 TRACKING — copie du numéro Wero (signe fort d'usage)
+        if (b.classList.contains('wero-copy')) {
+          trackEvent('wero_number_copied', { number: b.dataset.copy, which: b.dataset.which });
+        }
       } catch(err) {}
     });
   });

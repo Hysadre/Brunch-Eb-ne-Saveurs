@@ -347,16 +347,24 @@
       </a>
     </div>
   </div>
+
+  <!-- 🆘 Bloc "J'ai oublié la référence" — visible uniquement si Wero -->
+  <div id="forgotRefBox" style="display:none; margin-top: 18px; padding: 16px 18px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px;">
+    <div style="font-size: 14px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé sans mettre la référence ?</div>
+    <div style="font-size: 13px; color: #d4a574; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+    <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
+  </div>
 </div>
 
 <script>
   const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
   if (!booking) { window.location.href = 'index.html'; }
 
+  const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
+
   // 📊 TRACKING — vue de la page confirmation
   (function() {
     try {
-      const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
       let s = sessionStorage.getItem('ebene_session_id');
       if (!s) { s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); sessionStorage.setItem('ebene_session_id', s); }
       fetch(API_URL + '/track/pageview', {
@@ -365,6 +373,41 @@
       }).catch(()=>{});
     } catch(e) {}
   })();
+  function trackEvent(type, data) {
+    if (!booking?.bookingId) return;
+    try {
+      fetch(API_URL + '/track/event/' + encodeURIComponent(booking.bookingId), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, data: data || null })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+
+  // 🆘 Bloc "J'ai oublié la référence" — UNIQUEMENT si Wero
+  if (booking?.paymentMethod === 'wero') {
+    const box = document.getElementById('forgotRefBox');
+    if (box) {
+      box.style.display = 'block';
+      const btn = document.getElementById('forgotRefBtn');
+      if (btn) {
+        const msg = [
+          `Bonjour, j'ai payé via Wero pour le Brunch Ébène & Saveurs mais j'ai oublié de mettre la référence.`,
+          ``,
+          `Mes infos :`,
+          `• Nom : ${booking.prenom || ''} ${booking.nom || ''}`,
+          `• Email : ${booking.email || ''}`,
+          `• Téléphone : ${booking.telephone || ''}`,
+          `• Montant payé : ${(booking.total || 0).toFixed(2).replace('.', ',')} €`,
+          `• Formule : ${booking.ticketName || ''}`,
+          `• Référence à associer : ${booking.bookingId || ''}`,
+          ``,
+          `Pouvez-vous retrouver mon paiement svp ?`
+        ].join('\n');
+        btn.href = `https://wa.me/33668295077?text=${encodeURIComponent(msg)}`;
+        btn.addEventListener('click', () => trackEvent('forgot_ref_clicked', { from: 'confirmation' }));
+      }
+    }
+  }
 
   document.getElementById('ticketType').textContent = booking.ticketName;
   document.getElementById('ticketQty').textContent = booking.qty;

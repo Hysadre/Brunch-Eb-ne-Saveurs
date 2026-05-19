@@ -350,11 +350,11 @@
         </div>
         <div class="info-row">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span>Salle de Ronchin, 59790 Ronchin (Lille)</span>
+          <span>Métropole lilloise</span>
         </div>
         <div class="info-row" style="padding-top:0;">
           <span style="width:18px;"></span>
-          <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
         </div>
         <div class="info-row">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
@@ -375,7 +375,37 @@
         <div class="booking-ref-label">N° de réservation</div>
         <div class="booking-ref-code">${b.bookingId}</div>
       </div>
+
+      ${(b.paymentMethod === 'wero' && !isCancelled && !isPaid) ? `
+      <!-- 🆘 J'ai oublié de mettre la référence — uniquement pour Wero (et résa non encore validée) -->
+      <div style="margin-top: 14px; padding: 16px 18px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px;">
+        <div style="font-size: 14px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé via Wero sans mettre la référence ?</div>
+        <div style="font-size: 13px; color: #d4a574; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+        <a id="forgotRefBtnTicket" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
+      </div>
+      ` : ''}
     `;
+
+    // 🆘 Construit le lien WhatsApp si Wero
+    setTimeout(() => {
+      const forgotBtn = document.getElementById('forgotRefBtnTicket');
+      if (forgotBtn) {
+        const msg = [
+          `Bonjour, j'ai payé via Wero pour le Brunch Ébène & Saveurs mais j'ai oublié de mettre la référence.`,
+          ``,
+          `Mes infos :`,
+          `• Nom : ${b.prenom || ''} ${b.nom || ''}`,
+          `• Email : ${b.email || ''}`,
+          `• Téléphone : ${b.telephone || ''}`,
+          `• Montant : ${(b.total || 0).toFixed(2).replace('.', ',')} €`,
+          `• Formule : ${b.ticketName || ''}`,
+          `• Référence à associer : ${b.bookingId || ''}`,
+          ``,
+          `Pouvez-vous retrouver mon paiement svp ?`
+        ].join('\n');
+        forgotBtn.href = `https://wa.me/33668295077?text=${encodeURIComponent(msg)}`;
+      }
+    }, 50);
 
     // 📤 Bouton partager
     setTimeout(() => {
@@ -384,7 +414,7 @@
         shareBtn.addEventListener('click', async () => {
           const shareData = {
             title: 'Brunch Ébène & Saveurs',
-            text: `Bonjour, je viens au Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Voulez-vous nous rejoindre ?`,
+            text: `Bonjour, je viens au Brunch Ébène & Saveurs le 22 août 2026 dans la métropole lilloise 🌴 Voulez-vous nous rejoindre ?`,
             url: 'https://hysadre.github.io/Brunch-Eb-ne-Saveurs/'
           };
           try {
