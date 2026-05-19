@@ -35,7 +35,7 @@ const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
   time: '13h00',
-  place: 'Salle de Ronchin, 59790 Ronchin (Lille)'
+  place: 'Métropole lilloise'
 };
 
 const app = express();
@@ -715,9 +715,11 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
 // Stats publiques (compteur de places sur la home + formule la plus populaire)
 app.get('/api/stats', async (req, res) => {
   try {
-    const list = await listReservations();
+    const allList = await listReservations();
+    // Exclut les corbeillées des stats publiques
+    const list = (allList || []).filter(r => !r.deleted);
     const paid = list.filter(r => r.status === 'confirmé');
-    // Compte par formule (toutes résa, pas seulement payées, pour la popularité)
+    // Compte par formule (toutes résa actives, pas seulement payées, pour la popularité)
     const formulas = { standard: 0, duo: 0, trio: 0, groupe: 0 };
     list.forEach(r => {
       const id = (r.ticketId || 'standard').toLowerCase();
@@ -773,7 +775,8 @@ app.get('/api/verify/:id', async (req, res) => {
   }
 });
 
-// Liste complète (admin)
+// Liste complète (admin) — inclut les "deleted" pour que l'admin puisse les voir dans Corbeille
+//   Le filtre côté client décide quoi afficher
 app.get('/api/reservations', requireAdmin, async (req, res) => {
   try {
     const list = await listReservations();
@@ -1054,25 +1057,59 @@ app.post('/api/resend/:id', requireAdmin, async (req, res) => {
 });
 
 // Supprimer une réservation (admin)
+// 🗑️ Suppression "soft" — la résa est marquée deleted: true mais reste en BDD (corbeille)
+//    Permet de tout restaurer plus tard depuis l'admin.
+//    Pour un vrai DELETE physique, utiliser ?force=true (à éviter)
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   try {
     const before = await findReservation(req.params.id);
     if (!before) return res.status(404).json({ error: 'not found' });
 
-    // 🚫 Envoie le mail d'annulation AVANT de supprimer (sauf si déjà archivée avec mail envoyé)
-    // Si on supprime directement (sans archiver d'abord) → on prévient le client
-    if (before.email && !before.archived) {
-      console.log(`📤 Envoi mail annulation (suppression directe) à ${before.email} pour ${req.params.id}`);
-      sendCancellationEmail(before, 'Suppression de la réservation')
-        .then(() => console.log(`✅ Mail annulation (suppression) envoyé à ${before.email}`))
-        .catch(err => console.error(`❌ Mail annulation (suppression) ÉCHEC:`, err.message));
+    const forceHard = req.query.force === 'true';
+
+    if (forceHard) {
+      // Suppression physique définitive (rare, à confirmer côté UI)
+      console.log(`💥 Hard delete forcé pour ${req.params.id}`);
+      await removeReservation(req.params.id);
+      syncToSheet('suppression', before);
+      return res.json({ ok: true, mode: 'hard' });
     }
 
-    await removeReservation(req.params.id);
-    syncToSheet('suppression', before);
-    res.json({ ok: true });
+    // Soft delete : flag deleted=true + horodatage
+    console.log(`🗑️ Soft delete (corbeille) pour ${req.params.id}`);
+    await patchReservation(req.params.id, {
+      deleted: true,
+      deletedAt: new Date().toISOString()
+    });
+    syncToSheet('suppression', { ...before, deleted: true });
+
+    // Mail d'annulation envoyé seulement si jamais archivée (= jamais informée)
+    if (before.email && !before.archived) {
+      console.log(`📤 Envoi mail annulation (corbeille) à ${before.email} pour ${req.params.id}`);
+      sendCancellationEmail(before, 'Suppression de la réservation')
+        .then(() => console.log(`✅ Mail annulation (corbeille) envoyé à ${before.email}`))
+        .catch(err => console.error(`❌ Mail annulation (corbeille) ÉCHEC:`, err.message));
+    }
+
+    res.json({ ok: true, mode: 'soft' });
   } catch (e) {
     console.error('delete error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ♻️ Restauration depuis la corbeille
+app.post('/api/restore/:id', requireAdmin, async (req, res) => {
+  try {
+    const before = await findReservation(req.params.id);
+    if (!before) return res.status(404).json({ error: 'not found' });
+    if (!before.deleted) return res.json({ ok: true, alreadyActive: true });
+    await patchReservation(req.params.id, { deleted: false, deletedAt: null });
+    console.log(`♻️ Restauration ${req.params.id}`);
+    syncToSheet('restauration', { ...before, deleted: false });
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('restore error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
