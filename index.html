@@ -533,17 +533,13 @@
     <div class="hero-meta">
       <div class="row">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span>Samedi 22 août 2026 · dès 12h</span>
+        <span>Samedi 22 août 2026 · dès 13h</span>
       </div>
       <div class="row">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span>Salle de Ronchin · 59790 Ronchin (Lille)
-          <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="display:inline-block; margin-left:8px; background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; vertical-align: middle;">🗺️ Itinéraire</a>
+        <span>Métropole lilloise
+          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="display:inline-block; margin-left:8px; background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; vertical-align: middle;">🗺️ Itinéraire</a>
         </span>
-      </div>
-      <div class="row">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Capacité limitée à 200 personnes</span>
       </div>
     </div>
     <div class="badge-warning">⚠️ Places limitées — réservation conseillée</div>
@@ -579,9 +575,6 @@
           <div class="ticket-price">105 €</div>
         </label>
       </div>
-
-      <div class="capacity-bar"><div class="capacity-fill"></div></div>
-      <div class="capacity-text">64 / 200 places réservées</div>
 
       <div class="label" style="margin-top:18px;">
         Nombre de places
@@ -670,7 +663,7 @@
       <h3>🌴 L'événement</h3>
       <p>
         <strong>Brunch Ébène &amp; Saveurs</strong> — Samedi 22 août 2026 à 13h00<br>
-        Salle de Ronchin, 59790 Ronchin (Lille) · Capacité limitée à 200 personnes.
+        Métropole lilloise (le lieu exact sera communiqué aux personnes inscrites).
       </p>
       <p>
         Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
@@ -738,12 +731,13 @@
   const CAPACITY = 200;
   const UNIT_PRICE = 35;
 
-  // 📊 TRACKING — identifiant unique par visiteur (persistant)
+  // 📊 TRACKING — sessionId par onglet (sessionStorage) → permet de bien mesurer le rebond
+  //    (chaque ouverture de fenêtre/onglet = nouvelle session, comme Google Analytics)
   function getSessionId() {
-    let s = localStorage.getItem('ebene_session_id');
+    let s = sessionStorage.getItem('ebene_session_id');
     if (!s) {
       s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-      localStorage.setItem('ebene_session_id', s);
+      sessionStorage.setItem('ebene_session_id', s);
     }
     return s;
   }
@@ -907,10 +901,8 @@
       const local = JSON.parse(localStorage.getItem('reservations') || '[]');
       bookedPlaces = local.reduce((s, r) => s + (r.qty || 0), 0);
     }
-    const pct = Math.min(100, Math.round((bookedPlaces / CAPACITY) * 100));
-    document.querySelector('.capacity-fill').style.width = pct + '%';
-    document.querySelector('.capacity-text').textContent =
-      `${bookedPlaces} / ${CAPACITY} places réservées · ${CAPACITY - bookedPlaces} restantes`;
+    // 🔒 Compteur de places retiré du public (visible uniquement dans le dashboard admin)
+    // bookedPlaces et formulas restent dispo pour le badge "Le + populaire" ci-dessous
 
     // Badge "Le + populaire" — sur la formule la plus choisie (min 3 résa pour afficher)
     document.querySelectorAll('.ticket-flag').forEach(f => f.remove());

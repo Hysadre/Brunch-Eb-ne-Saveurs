@@ -606,7 +606,7 @@
     <div>
       <div class="countdown-label">⏳ Compte à rebours</div>
       <div class="countdown-event">Brunch <span class="accent">Ébène &amp; Saveurs</span></div>
-      <div class="countdown-event-date">📅 Samedi 22 août 2026 · 13h00 · Ronchin</div>
+      <div class="countdown-event-date">📅 Samedi 22 août 2026 · 13h00 · Métropole lilloise</div>
     </div>
     <div class="countdown-timer" id="countdownTimer"></div>
   </div>
@@ -687,8 +687,9 @@
 
       <select id="filterArchived">
         <option value="active">📂 Actives uniquement</option>
-        <option value="all">📂📦 Tout voir</option>
+        <option value="all">📂📦 Tout voir (sauf corbeille)</option>
         <option value="archived">📦 Archivées uniquement</option>
+        <option value="trash">🗑️ Corbeille</option>
       </select>
       <select id="filterDate">
         <option value="">📅 Toutes dates</option>
@@ -1161,6 +1162,32 @@
     return true;
   }
 
+  // ♻️ Restaurer une résa depuis la corbeille
+  async function restoreReservation(id) {
+    if (!API_URL) return false;
+    try {
+      const r = await fetch(`${API_URL}/restore/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': ADMIN_PWD }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return true;
+    } catch(e) { console.error(e); toast('Erreur restauration : ' + e.message, true); return false; }
+  }
+
+  // 💥 Suppression physique définitive (irréversible)
+  async function hardDeleteReservation(id) {
+    if (!API_URL) return false;
+    try {
+      const r = await fetch(`${API_URL}/reservations/${encodeURIComponent(id)}?force=true`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Token': ADMIN_PWD }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return true;
+    } catch(e) { console.error(e); toast('Erreur suppression définitive : ' + e.message, true); return false; }
+  }
+
   async function deleteReservation(id) {
     if (API_URL) {
       try {
@@ -1245,16 +1272,20 @@
     } else {
       bar.classList.remove('show');
     }
-    // 🗑️ "Supprimer définitivement" visible dans :
-    //   - "Archivées uniquement" (toutes archivées → delete OK)
-    //   - "Tout voir" (mix → delete utile)
+    // 🗑️ Bouton "Mettre à la corbeille" / "Effacer pour de bon" visible dans :
+    //   - "Tout voir" + "Archivées" + "Corbeille"
     //   Caché dans "Actives uniquement" (on force l'archivage avec motif d'abord)
     const archivedFilter = document.getElementById('filterArchived')?.value || 'active';
     const isArchivedView = archivedFilter === 'archived';
     const isAllView = archivedFilter === 'all';
-    document.getElementById('bulkDelete').style.display    = (isArchivedView || isAllView) ? '' : 'none';
-    document.getElementById('bulkValidate').style.display  = isArchivedView ? 'none' : '';
-    document.getElementById('bulkArchive').style.display   = isArchivedView ? 'none' : '';
+    const isTrashView = archivedFilter === 'trash';
+    const bulkDeleteBtn = document.getElementById('bulkDelete');
+    bulkDeleteBtn.style.display = (isArchivedView || isAllView || isTrashView) ? '' : 'none';
+    // Adapte le label selon la vue
+    bulkDeleteBtn.innerHTML = isTrashView ? '💥 Effacer pour de bon' : '🗑️ Mettre à la corbeille';
+    // Valider / Archiver cachés dans archives + corbeille
+    document.getElementById('bulkValidate').style.display = (isArchivedView || isTrashView) ? 'none' : '';
+    document.getElementById('bulkArchive').style.display  = (isArchivedView || isTrashView) ? 'none' : '';
 
     // Met à jour la case "tout sélectionner"
     const selectAll = document.getElementById('selectAll');
@@ -1737,6 +1768,13 @@
     const amountTarget = amountPreset === 'other' ? (isNaN(amountCustom) ? null : amountCustom) : (amountPreset ? parseFloat(amountPreset) : null);
 
     const filtered = all.filter(r => {
+      // 🗑️ Corbeille : on filtre selon la sélection
+      if (archivedFilter === 'trash') {
+        if (!r.deleted) return false;
+      } else {
+        // Dans les autres vues, on cache la corbeille
+        if (r.deleted) return false;
+      }
       // Filtre archives
       if (archivedFilter === 'active' && r.archived) return false;
       if (archivedFilter === 'archived' && !r.archived) return false;
@@ -1827,9 +1865,12 @@
               return `<button class="action-btn activity" data-action="activity" data-id="${r.bookingId}" title="Voir l'historique d'activité (clics, copies, etc.)" style="background: rgba(6,182,212,0.12); border-color: rgba(6,182,212,0.4); color:${scoreColor};">📊 Activité${score > 0 ? ` (${score})` : ''}</button>${noteBtn}`;
             })()}
             ${(!isArchived && isPaid) ? `<button class="action-btn resend" data-action="resend" data-id="${r.bookingId}" data-email="${r.email}" title="Renvoyer le mail de confirmation (avec QR) au client">📧 Renvoyer QR</button>` : ''}
-            ${isArchived
+            ${r.deleted
+              ? `<button class="action-btn unarchive" data-action="restore" data-id="${r.bookingId}" title="Sortir de la corbeille">♻️ Restaurer</button>
+                 <button class="action-btn delete" data-action="hard-delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Supprimer PHYSIQUEMENT de la base (irréversible)" style="background: rgba(185,28,28,0.18); border-color: rgba(248,113,113,0.5); color:#fca5a5;">💥 Effacer pour de bon</button>`
+              : isArchived
               ? `<button class="action-btn unarchive" data-action="unarchive" data-id="${r.bookingId}" title="Restaurer cette réservation">↩ Restaurer</button>
-                 <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Supprimer définitivement de la base (irréversible)" style="background: rgba(185,28,28,0.12); border-color: rgba(248,113,113,0.4); color:#f87171;">🗑️ Supprimer définitivement</button>`
+                 <button class="action-btn delete" data-action="delete" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Mettre à la corbeille (réversible)" style="background: rgba(185,28,28,0.12); border-color: rgba(248,113,113,0.4); color:#f87171;">🗑️ Corbeille</button>`
               : `${isPaid ? '' : `<button class="action-btn validate" data-action="validate" data-id="${r.bookingId}">✓ Valider</button>`}
                  <button class="action-btn edit" data-action="edit" data-id="${r.bookingId}" title="Modifier (ajouter des places)" style="background: rgba(22,163,74,0.12); border-color: rgba(22,163,74,0.4); color:#22c55e;">✏️ Modifier</button>
                  <button class="action-btn archive" data-action="archive" data-id="${r.bookingId}" data-name="${r.prenom} ${r.nom}" title="Retirer une personne ou annuler la réservation (avec motif)">🗃️ Annuler / Retirer</button>`
@@ -1880,10 +1921,25 @@
           const resa = CACHE.find(x => x.bookingId === id);
           if (resa) openNoteModal(resa);
         } else if (action === 'delete') {
-          // 🗑️ Suppression DÉFINITIVE — uniquement depuis les archivées
-          if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT la réservation de ${b.dataset.name} (${id}) ?\n\nElle sera retirée de la base de données et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
+          // 🗑️ Mise en corbeille (soft) — réversible
+          if (!confirm(`Mettre la réservation de ${b.dataset.name} (${id}) à la corbeille ?\n\nElle sera cachée mais conservée. Tu pourras la restaurer depuis le filtre "🗑️ Corbeille".`)) return;
           if (await deleteReservation(id)) {
-            toast('🗑️ Réservation supprimée définitivement');
+            toast('🗑️ Mise à la corbeille — restaurable depuis le filtre "Corbeille"');
+            render();
+          }
+        } else if (action === 'restore') {
+          // ♻️ Restaurer depuis la corbeille
+          if (await restoreReservation(id)) {
+            toast('♻️ Réservation restaurée');
+            render();
+          }
+        } else if (action === 'hard-delete') {
+          // 💥 Suppression PHYSIQUE — uniquement depuis la corbeille
+          if (!confirm(`⚠️ EFFACER POUR DE BON la réservation de ${b.dataset.name} (${id}) ?\n\nElle sera retirée de la base de données et de Google Sheets définitivement. Cette action est TOTALEMENT IRRÉVERSIBLE.\n\nÉcrire SUPPRIMER pour confirmer.`)) return;
+          const confirmText = prompt('Tape "SUPPRIMER" en majuscules pour confirmer la suppression définitive :');
+          if (confirmText !== 'SUPPRIMER') { toast('Suppression annulée', true); return; }
+          if (await hardDeleteReservation(id)) {
+            toast('💥 Réservation effacée définitivement');
             render();
           }
         } else if (action === 'resend') {
@@ -2140,18 +2196,36 @@
     render();
   });
 
-  // 🗑️ Supprimer définitivement (uniquement visible dans "Archivées uniquement")
+  // 🗑️ Mettre à la corbeille en masse (soft) — OU effacer pour de bon si on est dans la corbeille
   document.getElementById('bulkDelete').addEventListener('click', async () => {
     const ids = Array.from(SELECTED);
     if (!ids.length) return;
-    if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT ${ids.length} réservation${ids.length>1?'s':''} archivée${ids.length>1?'s':''} ?\n\nElles seront retirées de la base et de Google Sheets. Cette action est IRRÉVERSIBLE.`)) return;
-    clearSelection();
-    let ok = 0, fail = 0;
-    for (const id of ids) {
-      if (await deleteReservation(id)) ok++; else fail++;
+    const currentFilter = document.getElementById('filterArchived').value;
+    const isTrashView = currentFilter === 'trash';
+
+    if (isTrashView) {
+      // 💥 Hard delete depuis la corbeille
+      if (!confirm(`💥 EFFACER POUR DE BON ${ids.length} réservation${ids.length>1?'s':''} ?\n\nElles seront retirées définitivement de Supabase + Google Sheets. IRRÉVERSIBLE.`)) return;
+      const t = prompt('Tape "SUPPRIMER" en majuscules pour confirmer :');
+      if (t !== 'SUPPRIMER') { toast('Annulé', true); return; }
+      clearSelection();
+      let ok = 0, fail = 0;
+      for (const id of ids) {
+        if (await hardDeleteReservation(id)) ok++; else fail++;
+      }
+      toast(`💥 ${ok} effacée${ok>1?'s':''} définitivement${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
+      render();
+    } else {
+      // 🗑️ Soft delete (mise en corbeille)
+      if (!confirm(`Mettre ${ids.length} réservation${ids.length>1?'s':''} à la corbeille ?\n\nElles seront cachées mais conservées. Restaurables depuis le filtre "🗑️ Corbeille".`)) return;
+      clearSelection();
+      let ok = 0, fail = 0;
+      for (const id of ids) {
+        if (await deleteReservation(id)) ok++; else fail++;
+      }
+      toast(`🗑️ ${ok} mise${ok>1?'s':''} à la corbeille${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
+      render();
     }
-    toast(`🗑️ ${ok} supprimée${ok>1?'s':''}${fail ? ` · ${fail} échec${fail>1?'s':''}` : ''}`);
-    render();
   });
 
   // 🗃️ Archiver toutes les sélectionnées (avec motif)

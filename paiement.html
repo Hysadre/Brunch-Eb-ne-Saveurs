@@ -587,12 +587,12 @@
   const booking = JSON.parse(localStorage.getItem('currentBooking') || 'null');
   if (!booking) { window.location.href = 'index.html'; }
 
-  // 📊 TRACKING — vue de page + événements
+  // 📊 TRACKING — sessionId par onglet (sessionStorage) pour le rebond
   function getSessionId() {
-    let s = localStorage.getItem('ebene_session_id');
+    let s = sessionStorage.getItem('ebene_session_id');
     if (!s) {
       s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-      localStorage.setItem('ebene_session_id', s);
+      sessionStorage.setItem('ebene_session_id', s);
     }
     return s;
   }
@@ -668,7 +668,7 @@
   document.getElementById('recap').innerHTML = `
     <div class="recap-row"><span class="k">Événement</span><span class="v">Brunch Ébène &amp; Saveurs</span></div>
     <div class="recap-row"><span class="k">Date</span><span class="v">Sam. 22 août 2026</span></div>
-    <div class="recap-row"><span class="k">Lieu</span><span class="v">Ronchin, Lille</span></div>
+    <div class="recap-row"><span class="k">Lieu</span><span class="v">Métropole lilloise</span></div>
     <div class="recap-row"><span class="k">Billet</span><span class="v">${booking.ticketName} × ${booking.qty}</span></div>
     <div class="recap-row"><span class="k">Au nom de</span><span class="v">${booking.prenom} ${booking.nom}</span></div>
     ${accompRow}

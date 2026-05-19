@@ -304,11 +304,11 @@
     <h3>📍 Informations pratiques</h3>
     <div class="info-row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      <span class="v">Salle de Ronchin, 59790 Ronchin (Lille)</span>
+      <span class="v">Métropole lilloise</span>
     </div>
     <div class="info-row" style="padding-top:0;">
       <span style="width:18px;"></span>
-      <a href="https://www.google.com/maps/search/?api=1&query=Salle+de+Ronchin+59790+Ronchin" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+      <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
     </div>
     <div class="info-row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -357,8 +357,8 @@
   (function() {
     try {
       const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
-      let s = localStorage.getItem('ebene_session_id');
-      if (!s) { s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); localStorage.setItem('ebene_session_id', s); }
+      let s = sessionStorage.getItem('ebene_session_id');
+      if (!s) { s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); sessionStorage.setItem('ebene_session_id', s); }
       fetch(API_URL + '/track/pageview', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ page: 'confirmation', sessionId: s, bookingId: booking?.bookingId })
@@ -386,7 +386,7 @@
   document.getElementById('shareBtn').addEventListener('click', async () => {
     const shareData = {
       title: 'Brunch Ébène & Saveurs',
-      text: `Bonjour, je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 à Ronchin 🌴 Voulez-vous nous rejoindre ?`,
+      text: `Bonjour, je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 dans la métropole lilloise 🌴 Voulez-vous nous rejoindre ?`,
       url: SITE_URL + '/'
     };
     try {
