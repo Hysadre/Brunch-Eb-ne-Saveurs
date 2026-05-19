@@ -670,6 +670,14 @@
         💡 Les transactions exclues sont masquées dans toutes les rubriques (tableau, graphiques, funnel, score cards)
       </span>
     </div>
+
+    <!-- Ligne 3 : Exclure des références spécifiques (bookingIds) -->
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding-top: 10px; border-top: 1px solid #3a2818; margin-top: 10px;">
+      <span style="font-size:11px; color:#fbbf24; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;">🎯 Exclure des résa précises</span>
+      <input type="text" id="globalExcludeIds" placeholder="EBENE-ASSI-Y001, EBENE-DUPONT-Y005..." style="flex: 1; min-width: 280px; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:monospace; font-size:13px;">
+      <button type="button" id="globalExcludeIdsClear" style="background:#3a2818; border:none; color:#c79270; border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer;">✕ Effacer</button>
+      <span style="font-size:11px; color:#8a6648; font-style: italic;">Sépare par virgule</span>
+    </div>
   </div>
 
   <!-- ===== TAB: Overview ===== -->
@@ -1900,8 +1908,13 @@
     }, 50);
   }
 
-  // 📊 Funnel — vues par page + taux de conversion (avec filtre date indépendant)
+  // 📊 Funnel — vues par page + taux de conversion
+  //    Priorité : filtre global → puis filtre spécifique du funnel
   function getFunnelDateRange() {
+    // 🌍 Si filtre global actif → on l'utilise
+    const [gStart, gEnd] = getGlobalDateRange();
+    if (gStart || gEnd) return [gStart, gEnd];
+    // Sinon, filtre spécifique du funnel
     const preset = document.getElementById('funnelDateRange')?.value || 'all';
     if (preset === 'all') return [null, null];
     const now = new Date();
@@ -2194,13 +2207,20 @@
     return document.getElementById('globalGranularity')?.value || 'day';
   }
 
-  // 🚫 Filtre d'exclusion GLOBAL (corbeille / annulées)
+  // 🚫 Filtre d'exclusion GLOBAL (corbeille / annulées / IDs spécifiques)
   function isGloballyExcluded(r) {
     const exclude = document.getElementById('globalExclude')?.value || 'trash_and_archived';
-    if (exclude === 'none') return false;  // tout inclure
-    if (exclude === 'trash' && r.deleted) return true;
-    if (exclude === 'archived' && r.archived) return true;
-    if (exclude === 'trash_and_archived' && (r.deleted || r.archived)) return true;
+    if (exclude !== 'none') {
+      if (exclude === 'trash' && r.deleted) return true;
+      if (exclude === 'archived' && r.archived) return true;
+      if (exclude === 'trash_and_archived' && (r.deleted || r.archived)) return true;
+    }
+    // 🎯 Exclure des bookingIds spécifiques (saisis dans le champ texte)
+    const idsTxt = (document.getElementById('globalExcludeIds')?.value || '').trim();
+    if (idsTxt && r.bookingId) {
+      const excludedIds = idsTxt.split(/[,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+      if (excludedIds.includes(r.bookingId.toUpperCase())) return true;
+    }
     return false;
   }
 
@@ -2536,6 +2556,16 @@
   });
   // 🚫 Filtre d'exclusion → re-render TOUT
   document.getElementById('globalExclude')?.addEventListener('change', applyGlobalFilterToAll);
+  // 🎯 Exclure des bookingIds spécifiques
+  let excludeIdsDebounce;
+  document.getElementById('globalExcludeIds')?.addEventListener('input', () => {
+    clearTimeout(excludeIdsDebounce);
+    excludeIdsDebounce = setTimeout(applyGlobalFilterToAll, 400);
+  });
+  document.getElementById('globalExcludeIdsClear')?.addEventListener('click', () => {
+    document.getElementById('globalExcludeIds').value = '';
+    applyGlobalFilterToAll();
+  });
   // 📊 Filtre période du chart résa par jour
   document.getElementById('chartParJourPeriod')?.addEventListener('change', () => drawParJour(CACHE));
   // 📅 Filtre date du Scan
