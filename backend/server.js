@@ -713,7 +713,8 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
       bounce: {
         count: bouncedCount,
         rate: bounceRate,
-        totalAccueil: accueilSessions.size
+        totalAccueil: accueilSessions.size,
+        inProgress: inProgressCount  // sessions toujours actives, en attente de décision
       },
       totalViews: data.length,
       lastViews: data.slice(0, 30)
