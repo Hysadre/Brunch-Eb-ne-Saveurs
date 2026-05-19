@@ -686,37 +686,25 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
       result[p] = { views: byPage[p], uniqueVisitors: sessionsByPage[p].size };
     });
 
-    // 🔁 Rebond : sessions qui ont vu l'accueil mais n'ont JAMAIS continué (pas de paiement ni confirmation)
-    //    + on EXCLUT les sessions trop récentes (<5 min) — sinon une personne qui vient juste d'arriver
-    //    est comptée comme rebond avant même d'avoir eu le temps d'agir.
-    const BOUNCE_DELAY_MS = 5 * 60 * 1000;  // 5 min
-    const now = Date.now();
-
-    // Trouve la dernière activité de chaque session
-    const lastActivityBySession = {};
-    data.forEach(v => {
-      const t = new Date(v.timestamp).getTime();
-      if (!lastActivityBySession[v.sessionId] || t > lastActivityBySession[v.sessionId]) {
-        lastActivityBySession[v.sessionId] = t;
-      }
-    });
-
+    // 🔁 Rebond : sessions qui ont vu l'accueil, ont QUITTÉ la page (beacon accueil_left)
+    //    et n'ont jamais progressé vers paiement/confirmation
+    //    Si pas de beacon → session encore active (pas comptée, ni rebond ni pas rebond)
     const accueilSessions = sessionsByPage['accueil'] || new Set();
     const paiementSessions = sessionsByPage['paiement'] || new Set();
     const confirmSessions  = sessionsByPage['confirmation'] || new Set();
+    const leftSessions = sessionsByPage['accueil_left'] || new Set();
 
     let bouncedCount = 0;
-    let inProgressCount = 0;  // sessions trop récentes pour être déjà comptées comme rebond
+    let inProgressCount = 0;
     for (const sid of accueilSessions) {
+      // a progressé → pas un rebond
       if (paiementSessions.has(sid) || confirmSessions.has(sid)) continue;
-      const lastSeen = lastActivityBySession[sid] || 0;
-      if (now - lastSeen < BOUNCE_DELAY_MS) {
-        inProgressCount++;  // session en cours, on attend avant de compter
-      } else {
-        bouncedCount++;
-      }
+      // a quitté sans progresser → REBOND confirmé
+      if (leftSessions.has(sid)) bouncedCount++;
+      // sinon → session encore active (peut-être toujours sur l'accueil)
+      else inProgressCount++;
     }
-    // Le taux se calcule sur les sessions qui ont eu le temps de "boucler" (pas les en cours)
+    // Le taux se calcule sur les sessions qui ont vraiment "bouclé" (parties ou progressées)
     const eligibleSessions = accueilSessions.size - inProgressCount;
     const bounceRate = eligibleSessions > 0 ? Math.round((bouncedCount / eligibleSessions) * 100) : 0;
 
