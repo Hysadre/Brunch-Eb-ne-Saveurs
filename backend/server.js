@@ -877,6 +877,9 @@ app.patch('/api/reservations/:id', requireAdmin, async (req, res) => {
       patch.entered = req.body.entered;
       patch.enteredAt = req.body.entered ? (req.body.enteredAt || new Date().toISOString()) : null;
     }
+    // 🆕 Édition manuelle scan (depuis admin → suppression d'un scan)
+    if (typeof req.body.enteredCount === 'number') patch.enteredCount = req.body.enteredCount;
+    if (Array.isArray(req.body.scanLog)) patch.scanLog = req.body.scanLog;
 
     // 🆕 Archivage avec motif
     if (typeof req.body.archived === 'boolean') {
