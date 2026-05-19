@@ -1973,6 +1973,20 @@
       const params = new URLSearchParams();
       if (from) params.set('from', from.toISOString());
       if (to)   params.set('to',   to.toISOString());
+      // 🚫 Construit la liste des bookingIds exclus à partir des filtres globaux
+      const excludedIds = [];
+      // 1. IDs explicitement saisis dans le champ
+      const manualIdsTxt = (document.getElementById('globalExcludeIds')?.value || '').trim();
+      if (manualIdsTxt) {
+        manualIdsTxt.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean).forEach(id => excludedIds.push(id));
+      }
+      // 2. IDs des résa filtrées par le statut (corbeille/annulées)
+      (CACHE || []).forEach(r => {
+        if (isGloballyExcluded(r) && r.bookingId) excludedIds.push(r.bookingId);
+      });
+      if (excludedIds.length > 0) {
+        params.set('excludeIds', [...new Set(excludedIds)].join(','));
+      }
       const url = `${API_URL}/track/funnel${params.toString() ? '?' + params.toString() : ''}`;
       const r = await fetch(url, { headers: { 'X-Admin-Token': ADMIN_PWD } });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -3425,10 +3439,21 @@
     const el = document.getElementById(canvasId);
     if (!el) return;
 
-    // Fetch the funnel data (same source as the cards)
+    // Fetch the funnel data (avec les mêmes filtres que les cards)
     let pages = {}, bounce = {};
     try {
-      const r = await fetch(`${API_URL}/track/funnel`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      const [from, to] = getFunnelDateRange();
+      const params = new URLSearchParams();
+      if (from) params.set('from', from.toISOString());
+      if (to)   params.set('to',   to.toISOString());
+      // 🚫 Mêmes IDs exclus que pour le funnel
+      const excludedIds = [];
+      const manualIdsTxt = (document.getElementById('globalExcludeIds')?.value || '').trim();
+      if (manualIdsTxt) manualIdsTxt.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean).forEach(id => excludedIds.push(id));
+      (CACHE || []).forEach(r => { if (isGloballyExcluded(r) && r.bookingId) excludedIds.push(r.bookingId); });
+      if (excludedIds.length > 0) params.set('excludeIds', [...new Set(excludedIds)].join(','));
+      const url = `${API_URL}/track/funnel${params.toString() ? '?' + params.toString() : ''}`;
+      const r = await fetch(url, { headers: { 'X-Admin-Token': ADMIN_PWD } });
       const d = await r.json();
       pages = d.pages || {};
       bounce = d.bounce || { count: 0, rate: 0 };
@@ -3437,7 +3462,8 @@
     const accueil   = pages.accueil?.uniqueVisitors      || 0;
     const paiement  = pages.paiement?.uniqueVisitors     || 0;
     const confirm_  = pages.confirmation?.uniqueVisitors || 0;
-    const paidResa  = (data || []).filter(r => r.status === 'confirmé' && !r.archived && !r.deleted).length;
+    // 🚫 Validé par admin filtre aussi avec isGloballyExcluded
+    const paidResa  = (data || []).filter(r => r.status === 'confirmé' && !isGloballyExcluded(r)).length;
 
     charts[chartKey] = new Chart(el, {
       type: 'bar',
