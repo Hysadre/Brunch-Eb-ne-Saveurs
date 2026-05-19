@@ -649,9 +649,10 @@ app.post('/api/track/event/:id', async (req, res) => {
 
 // 📊 FUNNEL (admin) — stats des pages + conversion
 //   ?from=ISO&to=ISO → filtre les pageviews sur cette période
+//   ?excludeIds=ID1,ID2 → exclut les SESSIONS tied à ces bookingIds (visites accueil + paiement + confirm)
 app.get('/api/track/funnel', requireAdmin, async (req, res) => {
   try {
-    const { from, to } = req.query;
+    const { from, to, excludeIds } = req.query;
     let qParts = ['select=page,sessionId,bookingId,timestamp', 'order=timestamp.desc'];
     if (from) qParts.push(`timestamp=gte.${encodeURIComponent(from)}`);
     if (to)   qParts.push(`timestamp=lt.${encodeURIComponent(to)}`);
@@ -674,6 +675,24 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
       }
       throw e;
     }
+    // 🚫 Exclure les sessions tied à des bookingIds spécifiques
+    if (excludeIds) {
+      const excludedSet = new Set(excludeIds.split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+      if (excludedSet.size > 0) {
+        // 1ère passe : trouve les sessionIds dont au moins une pageview a un bookingId exclu
+        const excludedSessions = new Set();
+        data.forEach(v => {
+          if (v.bookingId && excludedSet.has(v.bookingId.toUpperCase())) {
+            excludedSessions.add(v.sessionId);
+          }
+        });
+        // 2ème passe : retire toutes les pageviews de ces sessions
+        if (excludedSessions.size > 0) {
+          data = data.filter(v => !excludedSessions.has(v.sessionId));
+        }
+      }
+    }
+
     const byPage = {};
     const sessionsByPage = {};
     data.forEach(v => {
