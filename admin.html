@@ -613,13 +613,15 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <div class="tab active" data-tab="resa">📋 Réservations</div>
+    <div class="tab active" data-tab="overview">🏠 Overview</div>
+    <div class="tab" data-tab="resa">📋 Réservations</div>
+    <div class="tab" data-tab="identification">🔍 Identification</div>
+    <div class="tab" data-tab="scan">🚪 Scan</div>
     <div class="tab" data-tab="analyse">📊 Analyse</div>
-    <div class="tab" data-tab="invites">👥 Invités</div>
   </div>
 
-  <!-- ===== TAB: Réservations ===== -->
-  <div class="tab-panel active" id="panel-resa">
+  <!-- ===== TAB: Overview ===== -->
+  <div class="tab-panel active" id="panel-overview">
     <div class="stats" id="stats"></div>
 
     <!-- 📊 Funnel : combien de visiteurs par page (avec filtre date indépendant) -->
@@ -655,7 +657,11 @@
         <div id="funnelContent"></div>
       </div>
     </details>
+  </div>
+  <!-- ===== FIN TAB: Overview ===== -->
 
+  <!-- ===== TAB: Réservations (pilotage des résa) ===== -->
+  <div class="tab-panel" id="panel-resa">
     <div class="filters">
       <input type="text" id="search" placeholder="🔍 Nom, email, n° résa...">
       <select id="filterMethod">
@@ -735,21 +741,17 @@
         <p>Les nouvelles réservations s'afficheront ici en temps réel.</p>
       </div>
     </div>
+  </div>
+  <!-- ===== FIN TAB: Réservations ===== -->
 
-    <!-- 2️⃣ 📋 Copieurs de référence — qui a copié la réf -->
-    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-top:18px; margin-bottom:14px;">
-      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
-        <span style="display:flex; align-items:center; gap:8px;">
-          <span style="color:#c79270;">📋</span>
-          <span>Historique copie de la référence</span>
-          <span id="copiersCountBadge" style="background: rgba(199,146,112,.15); color:#c79270; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 800;"></span>
-          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
-        </span>
-      </summary>
-      <div style="padding: 0 18px 18px;" id="copiersList"></div>
-    </details>
+  <!-- ===== TAB: Scan ===== -->
+  <div class="tab-panel" id="panel-scan">
+    <div style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; padding:18px; margin-bottom:14px;">
+      <h3 style="margin:0 0 8px; color:#fff; font-size:16px;">🚪 Scanner les billets</h3>
+      <p style="margin:0 0 12px; color:#d4a574; font-size:13px;">Le jour du brunch, ouvre la page scan sur ton téléphone et scanne les QR codes à l'entrée.</p>
+      <a href="scan.html" target="_blank" style="display:inline-block; background:linear-gradient(135deg, #b86a45, #c79270); color:white; text-decoration:none; padding:10px 18px; border-radius:99px; font-weight:700; font-size:14px;">📱 Ouvrir le scanner</a>
+    </div>
 
-    <!-- 3️⃣ 🚪 Historique des scans (check-ins du jour J) -->
     <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
       <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
         <span style="display:flex; align-items:center; gap:8px;">
@@ -761,8 +763,8 @@
       </summary>
       <div style="padding: 0 18px 18px;" id="checkinHistory"></div>
     </details>
-
   </div>
+  <!-- ===== FIN TAB: Scan ===== -->
 
   <!-- ===== TAB: Analyse ===== -->
   <div class="tab-panel" id="panel-analyse">
@@ -792,21 +794,38 @@
     </div>
   </div>
 
-  <!-- ===== TAB: Invités (focus sur les personnes) ===== -->
-  <div class="tab-panel" id="panel-invites">
+  <!-- ===== TAB: Identification (focus invités + copieurs) ===== -->
+  <div class="tab-panel" id="panel-identification">
     <div class="stats" id="statsInvites"></div>
 
-    <div class="filters">
-      <input type="text" id="searchInvites" placeholder="🔍 Chercher un invité (nom, prénom)...">
-      <select id="filterInvitesStatus">
-        <option value="confirmed">✓ Confirmés uniquement</option>
-        <option value="all">Tout voir (en attente compris)</option>
-      </select>
-      <button class="btn btn-secondary" id="printInvitesBtn" style="cursor:pointer;">🖨️ Imprimer la liste</button>
+    <!-- 👥 Liste des invités (focus personnes) -->
+    <div style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; padding:18px; margin-bottom: 14px;">
+      <h3 style="margin:0 0 12px; color:#fff; font-size:16px;">👥 Liste des invités</h3>
+      <div class="filters" style="margin-bottom: 14px;">
+        <input type="text" id="searchInvites" placeholder="🔍 Chercher un invité (nom, prénom)...">
+        <select id="filterInvitesStatus">
+          <option value="confirmed">✓ Confirmés uniquement</option>
+          <option value="all">Tout voir (en attente compris)</option>
+        </select>
+        <button class="btn btn-secondary" id="printInvitesBtn" style="cursor:pointer;">🖨️ Imprimer la liste</button>
+      </div>
+      <div id="invitesList" style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; overflow:hidden;"></div>
     </div>
 
-    <div id="invitesList" style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; overflow:hidden;"></div>
+    <!-- 📋 Copieurs de référence — qui a copié la réf + qui a payé -->
+    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#c79270;">📋</span>
+          <span>Historique copie de la référence</span>
+          <span id="copiersCountBadge" style="background: rgba(199,146,112,.15); color:#c79270; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 800;"></span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
+        </span>
+      </summary>
+      <div style="padding: 0 18px 18px;" id="copiersList"></div>
+    </details>
   </div>
+  <!-- ===== FIN TAB: Identification ===== -->
 </div>
 
 <!-- (Modal "suppression définitive" retiré — toutes les annulations passent par l'archivage avec motif) -->
@@ -1035,7 +1054,9 @@
       t.classList.add('active');
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
-      if (t.dataset.tab === 'invites') renderInvites();
+      if (t.dataset.tab === 'identification') renderInvites();
+      if (t.dataset.tab === 'overview') renderFunnel();
+      if (t.dataset.tab === 'scan') renderCheckinHistory(CACHE);
     });
   });
 
