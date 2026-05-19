@@ -620,48 +620,56 @@
     <div class="tab" data-tab="analyse">📊 Analyse</div>
   </div>
 
-  <!-- 📅 Filtre date GLOBAL appliqué à toutes les rubriques -->
-  <div style="background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(199,146,112,0.06)); border: 1px solid #3a2818; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-    <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;">🌍 Filtre global</span>
+  <!-- 📅 Filtre GLOBAL appliqué à toutes les rubriques (2 lignes pour bien tout voir) -->
+  <div style="background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(199,146,112,0.06)); border: 1px solid #3a2818; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;">
+    <!-- Ligne 1 : Date + Preset + Granularité -->
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom: 10px;">
+      <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;">🌍 Filtre global · Période</span>
 
-    <!-- 📆 Calendrier — toujours visible -->
-    <div style="display:flex; align-items:center; gap:6px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:10px; padding:4px 8px;">
-      <span style="font-size:11px; color:#8a6648; font-weight:700;">Du</span>
-      <input type="date" id="globalDateFrom" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
-      <span style="font-size:11px; color:#8a6648; font-weight:700;">au</span>
-      <input type="date" id="globalDateTo" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
-      <button type="button" id="globalDateClear" title="Effacer la plage de dates" style="background:#3a2818; border:none; color:#c79270; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; margin-left:4px;">✕</button>
+      <!-- 📆 Calendrier — toujours visible -->
+      <div style="display:flex; align-items:center; gap:6px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:10px; padding:4px 8px;">
+        <span style="font-size:11px; color:#8a6648; font-weight:700;">Du</span>
+        <input type="date" id="globalDateFrom" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
+        <span style="font-size:11px; color:#8a6648; font-weight:700;">au</span>
+        <input type="date" id="globalDateTo" style="background:transparent; border:none; color:#ede5d1; font-family:inherit; font-size:13px; padding:4px 2px; cursor:pointer;">
+        <button type="button" id="globalDateClear" title="Effacer la plage de dates" style="background:#3a2818; border:none; color:#c79270; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; margin-left:4px;">✕</button>
+      </div>
+
+      <!-- 📅 Raccourcis preset -->
+      <select id="globalDateFilter" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Raccourcis prédéfinis">
+        <option value="all">📅 Tout depuis le début</option>
+        <option value="today">Aujourd'hui</option>
+        <option value="yesterday">Hier</option>
+        <option value="7days">7 derniers jours</option>
+        <option value="30days">30 derniers jours</option>
+        <option value="thisweek">Cette semaine</option>
+        <option value="lastweek">Semaine dernière</option>
+        <option value="thismonth">Ce mois-ci</option>
+        <option value="lastmonth">Mois dernier</option>
+        <option value="custom">📆 Période perso</option>
+      </select>
+
+      <span style="margin-left: auto; font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">⚙️ Granularité</span>
+      <select id="globalGranularity" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;">
+        <option value="day">Jour</option>
+        <option value="week">Semaine</option>
+        <option value="month">Mois</option>
+      </select>
     </div>
 
-    <!-- 📅 Raccourcis preset -->
-    <select id="globalDateFilter" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Raccourcis prédéfinis">
-      <option value="all">📅 Tout depuis le début</option>
-      <option value="today">Aujourd'hui</option>
-      <option value="yesterday">Hier</option>
-      <option value="7days">7 derniers jours</option>
-      <option value="30days">30 derniers jours</option>
-      <option value="thisweek">Cette semaine</option>
-      <option value="lastweek">Semaine dernière</option>
-      <option value="thismonth">Ce mois-ci</option>
-      <option value="lastmonth">Mois dernier</option>
-      <option value="custom">📆 Période perso</option>
-    </select>
-
-    <!-- 🚫 Exclure (annulées / corbeille) -->
-    <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">🚫 Exclure</span>
-    <select id="globalExclude" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Exclure les transactions par statut">
-      <option value="trash_and_archived">🗑️ + 🚫 Corbeille &amp; annulées (défaut)</option>
-      <option value="trash">🗑️ Corbeille uniquement</option>
-      <option value="archived">🚫 Annulées uniquement</option>
-      <option value="none">📂📦🗑️ Tout inclure</option>
-    </select>
-
-    <span style="margin-left: auto; font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">⚙️ Granularité</span>
-    <select id="globalGranularity" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;">
-      <option value="day">Jour</option>
-      <option value="week">Semaine</option>
-      <option value="month">Mois</option>
-    </select>
+    <!-- Ligne 2 : Filtre d'exclusion bien visible -->
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding-top: 10px; border-top: 1px solid #3a2818;">
+      <span style="font-size:11px; color:#f87171; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;">🚫 Exclure des statistiques</span>
+      <select id="globalExclude" style="background:#0f0a06; border:1.5px solid rgba(248,113,113,0.4); color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600; min-width: 280px;" title="Exclure les transactions par statut">
+        <option value="trash_and_archived">🗑️ Corbeille + 🚫 Annulées (défaut)</option>
+        <option value="trash">🗑️ Corbeille uniquement</option>
+        <option value="archived">🚫 Annulées uniquement</option>
+        <option value="none">📂📦🗑️ Ne rien exclure (tout afficher)</option>
+      </select>
+      <span style="font-size:11px; color:#8a6648; font-style: italic; margin-left: 8px;">
+        💡 Les transactions exclues sont masquées dans toutes les rubriques (tableau, graphiques, funnel, score cards)
+      </span>
+    </div>
   </div>
 
   <!-- ===== TAB: Overview ===== -->
