@@ -1989,7 +1989,7 @@
                   `${a2p}% conversion`, a2p >= 50 ? '#22c55e' : (a2p >= 25 ? '#c79270' : '#f87171'))}
           ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} visite${confirm_.views>1?'s':''} totales`, '#22c55e',
                   `${p2c}% conversion`, p2c >= 50 ? '#22c55e' : (p2c >= 25 ? '#c79270' : '#f87171'))}
-          ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin`, bounceColor,
+          ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin${bounce.inProgress ? ` · ${bounce.inProgress} en cours` : ''}`, bounceColor,
                   `${bounce.rate}% rebond`, bounceColor)}
           ${step('5️⃣ Annulées',     cancelledCount,          `Résa annulées / archivées`, cancelColor,
                   `${cancelRate}% / ${totalResa} résa`, cancelColor)}
