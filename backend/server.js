@@ -828,8 +828,12 @@ app.post('/api/payment-method/:id', async (req, res) => {
 
     // Si auto-save (presumed) → on ne change pas le statut, juste paymentMethod
     if (presumed) {
-      // N'écrase pas un moyen déjà déclaré explicitement par le client
-      if (r.paidAt) return res.json({ ok: true, skipped: 'already declared' });
+      // N'écrase pas un moyen DÉJÀ déclaré explicitement par le client (paymentMethod défini)
+      // Mais on FORCE l'update si paymentMethod est null/vide même si paidAt existe
+      if (r.paymentMethod && r.paymentMethod === method) {
+        return res.json({ ok: true, skipped: 'same method' });
+      }
+      console.log(`💳 auto-save (presumed) paymentMethod=${method} pour ${id}`);
       await patchReservation(id, { paymentMethod: method });
       return res.json({ ok: true, presumed: true });
     }
