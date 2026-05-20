@@ -2886,15 +2886,17 @@
   function renderPersonList(resa) {
     const accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
     const list = document.getElementById('personList');
-    let html = '';
-    // Réservateur
+    archiveContext.selectedPeople = [];  // multi-select
+    let html = `<div style="font-size:11px; color:#8a6648; margin-bottom:8px; font-style:italic;">💡 Coche une ou plusieurs personnes à retirer (chaque coche = 1 place en moins)</div>`;
+
+    // Réservateur (checkbox multi)
     html += `
       <label class="person-pick" data-role="reservateur" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer;">
-        <input type="radio" name="personPick" value="reservateur" style="accent-color:#b86a45;">
+        <input type="checkbox" name="personPick" value="reservateur" style="accent-color:#b86a45; width:18px; height:18px;">
         <span style="width:32px; height:32px; flex-shrink:0; background:linear-gradient(135deg, #b86a45, #c79270); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#1a1108; font-size:13px;">${(resa.prenom||'?').charAt(0)}${(resa.nom||'?').charAt(0)}</span>
         <div style="flex:1;">
           <div style="color:#fff; font-weight:800;">${resa.prenom} ${resa.nom}</div>
-          <div style="font-size:11px; color:#c79270; margin-top:2px;">⭐ Réservateur — retire 1 place</div>
+          <div style="font-size:11px; color:#c79270; margin-top:2px;">⭐ Réservateur</div>
         </div>
       </label>
     `;
@@ -2902,11 +2904,11 @@
     accomps.forEach((name, idx) => {
       html += `
         <label class="person-pick" data-role="accompagnant" data-index="${idx}" data-name="${name}" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer;">
-          <input type="radio" name="personPick" value="accompagnant-${idx}" style="accent-color:#b86a45;">
+          <input type="checkbox" name="personPick" value="accompagnant-${idx}" style="accent-color:#b86a45; width:18px; height:18px;">
           <span style="width:32px; height:32px; flex-shrink:0; background:rgba(199,146,112,0.2); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:#c79270; font-size:13px;">👤</span>
           <div style="flex:1;">
             <div style="color:#fff; font-weight:700;">${name}</div>
-            <div style="font-size:11px; color:#d4a574; margin-top:2px;">Accompagnant ${idx + 1} — retire 1 place</div>
+            <div style="font-size:11px; color:#d4a574; margin-top:2px;">Accompagnant ${idx + 1}</div>
           </div>
         </label>
       `;
@@ -2916,11 +2918,11 @@
     for (let i = 0; i < missing; i++) {
       html += `
         <label class="person-pick" data-role="placeholder" style="display:flex; align-items:center; gap:10px; padding:12px; background:#0f0a06; border:1.5px solid #3a2818; border-radius:12px; cursor:pointer; opacity:0.75;">
-          <input type="radio" name="personPick" value="placeholder-${i}" style="accent-color:#b86a45;">
+          <input type="checkbox" name="personPick" value="placeholder-${i}" style="accent-color:#b86a45; width:18px; height:18px;">
           <span style="width:32px; height:32px; flex-shrink:0; background:#3a2818; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:#8a6648; font-size:13px;">?</span>
           <div style="flex:1;">
             <div style="color:#d4a574; font-weight:700; font-style:italic;">Accompagnant non renseigné</div>
-            <div style="font-size:11px; color:#8a6648; margin-top:2px;">Retire 1 place</div>
+            <div style="font-size:11px; color:#8a6648; margin-top:2px;">Place sans nom</div>
           </div>
         </label>
       `;
@@ -2933,7 +2935,7 @@
         <div style="height:1px; flex:1; background:#3a2818;"></div>
       </div>
       <label class="person-pick" data-role="fullcancel" style="display:flex; align-items:center; gap:10px; padding:12px; background:rgba(185,28,28,0.10); border:1.5px solid rgba(248,113,113,0.5); border-radius:12px; cursor:pointer;">
-        <input type="radio" name="personPick" value="fullcancel" style="accent-color:#ef4444;">
+        <input type="checkbox" name="personPick" value="fullcancel" style="accent-color:#ef4444; width:18px; height:18px;">
         <span style="width:32px; height:32px; flex-shrink:0; background:rgba(185,28,28,0.25); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:16px;">🚫</span>
         <div style="flex:1;">
           <div style="color:#fca5a5; font-weight:800;">Annuler TOUTE la réservation</div>
@@ -2945,10 +2947,22 @@
 
     list.querySelectorAll('input[name="personPick"]').forEach(input => {
       input.addEventListener('change', () => {
-        archiveContext.selectedPerson = input.value;
-        // Visualise la sélection
+        // Si "fullcancel" coché → décoche tous les autres et inversement
+        if (input.value === 'fullcancel' && input.checked) {
+          list.querySelectorAll('input[name="personPick"]').forEach(i => { if (i !== input) i.checked = false; });
+        } else if (input.checked && input.value !== 'fullcancel') {
+          const full = list.querySelector('input[value="fullcancel"]');
+          if (full) full.checked = false;
+        }
+        // Recalcule la sélection
+        const checked = Array.from(list.querySelectorAll('input[name="personPick"]:checked')).map(i => i.value);
+        archiveContext.selectedPeople = checked;
+        // Visualise
         list.querySelectorAll('.person-pick').forEach(l => l.style.borderColor = '#3a2818');
-        input.closest('.person-pick').style.borderColor = '#b86a45';
+        list.querySelectorAll('input[name="personPick"]:checked').forEach(i => {
+          const lbl = i.closest('.person-pick');
+          if (lbl) lbl.style.borderColor = i.value === 'fullcancel' ? '#f87171' : '#b86a45';
+        });
         updateArchiveConfirmState();
       });
     });
@@ -2957,12 +2971,14 @@
   function updateArchiveConfirmState() {
     const btn = document.getElementById('archiveConfirm');
     const radio = document.querySelector('input[name="cancelReason"]:checked');
-    const hasPerson = !!archiveContext?.selectedPerson;
+    const selected = archiveContext?.selectedPeople || [];
+    const isFullCancel = selected.includes('fullcancel') || archiveContext?.mode === 'bulk' || archiveContext?.selectedPerson === 'fullcancel';
+    const hasPerson = isFullCancel || selected.length > 0 || !!archiveContext?.selectedPerson;
     const hasReason = !!radio;
 
     if (!hasPerson) {
       btn.disabled = true;
-      btn.textContent = 'Choisis qui retirer ↑';
+      btn.textContent = 'Coche qui retirer ↑';
       return;
     }
     if (!hasReason) {
@@ -2971,8 +2987,12 @@
       return;
     }
     btn.disabled = false;
-    const isFullCancel = archiveContext.selectedPerson === 'fullcancel' || archiveContext.mode === 'bulk';
-    btn.textContent = isFullCancel ? '🗃️ Archiver · Mail envoyé' : '✓ Retirer cette personne · Mail envoyé';
+    if (isFullCancel) {
+      btn.textContent = '🗃️ Archiver · Mail envoyé';
+    } else {
+      const n = selected.length;
+      btn.textContent = `✓ Retirer ${n} place${n>1?'s':''} · Mail envoyé`;
+    }
   }
 
   // Champ "autre" actif si radio "Autre" coché + recalcul du bouton
@@ -3103,9 +3123,9 @@
       return;
     }
 
-    // SINGLE : qui retirer ?
-    const sel = ctx.selectedPerson;
-    if (sel === 'fullcancel') {
+    // SINGLE : qui retirer ? (multi-sélection)
+    const selected = ctx.selectedPeople || (ctx.selectedPerson ? [ctx.selectedPerson] : []);
+    if (selected.includes('fullcancel')) {
       // Annulation totale → archive la résa entière (1 mail)
       if (await archiveReservation(ctx.id, true, reason)) {
         toast(`🗃️ Réservation archivée (${reason})`);
@@ -3113,25 +3133,40 @@
       }
       return;
     }
+    if (!selected.length) { toast('Aucune personne sélectionnée', true); return; }
 
-    // Retrait d'1 personne (réservateur ou accompagnant) → PATCH qty/total/accompagnants + mail modif
+    // Retrait de N personnes — on calcule la nouvelle compo
     const resa = ctx.resa;
-    let label, accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+    let accomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
+    const labels = [];
+    const removedAccompIdx = [];
 
-    if (sel === 'reservateur') {
-      label = `${resa.prenom} ${resa.nom} (réservateur)`;
-    } else if (sel.startsWith('accompagnant-')) {
-      const idx = parseInt(sel.split('-')[1], 10);
-      label = accomps[idx] || `Accompagnant ${idx + 1}`;
-      accomps.splice(idx, 1);
-    } else if (sel.startsWith('placeholder-')) {
-      label = 'Accompagnant non renseigné';
-    } else {
-      toast('Sélection invalide', true);
+    selected.forEach(sel => {
+      if (sel === 'reservateur') {
+        labels.push(`${resa.prenom} ${resa.nom} (réservateur)`);
+      } else if (sel.startsWith('accompagnant-')) {
+        const idx = parseInt(sel.split('-')[1], 10);
+        if (!removedAccompIdx.includes(idx)) {
+          labels.push(accomps[idx] || `Accompagnant ${idx + 1}`);
+          removedAccompIdx.push(idx);
+        }
+      } else if (sel.startsWith('placeholder-')) {
+        labels.push('Accompagnant non renseigné');
+      }
+    });
+    // Retire les accompagnants (en partant de la fin pour ne pas décaler les index)
+    removedAccompIdx.sort((a, b) => b - a).forEach(idx => accomps.splice(idx, 1));
+
+    const removedCount = selected.length;
+    const newQty = Math.max(0, resa.qty - removedCount);
+    if (newQty === 0) {
+      // S'il ne reste plus personne → on archive
+      if (await archiveReservation(ctx.id, true, reason)) {
+        toast(`🗃️ ${removedCount} place${removedCount>1?'s':''} retirée${removedCount>1?'s':''} → résa archivée (${reason})`);
+        render();
+      }
       return;
     }
-
-    const newQty = resa.qty - 1;
     const newTotal = (resa.ticketPrice || 35) * newQty;
     let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
     if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
@@ -3145,10 +3180,10 @@
       accompagnants: accomps.join(', ') || null,
       ticketName: newTicketName,
       ticketId: newTicketId,
-      removedName: label,
-      cancelReason: reason  // motif aussi transmis pour traçabilité
+      removedName: labels.join(', '),
+      cancelReason: reason
     })) {
-      toast(`✓ ${label} retiré (${reason}) · résa passée à ${newQty} place${newQty>1?'s':''}`);
+      toast(`✓ ${removedCount} place${removedCount>1?'s':''} retirée${removedCount>1?'s':''} (${reason}) · résa passée à ${newQty}`);
       render();
     }
   });
