@@ -1045,8 +1045,14 @@ app.post('/api/reservations', async (req, res) => {
 
     await insertReservation(b);
 
-    // 📭 PAS d'email ici — uniquement quand le client clique "J'ai payé"
-    // 📊 PAS de sync Sheet ici — on attend la validation du paiement
+    // 📧 Le client vient de cliquer "J'ai payé" → on envoie les emails de confirmation
+    //    (client : "Réservation enregistrée, en attente de vérification" + admin notification)
+    console.log(`📤 Insert OK ${b.bookingId} → envoi emails (client + admin)`);
+    sendConfirmationEmails(b)
+      .then(() => console.log(`✅ Emails envoyés pour ${b.bookingId}`))
+      .catch(err => console.error(`❌ Email ÉCHEC pour ${b.bookingId} :`, err.message));
+
+    // 📊 PAS de sync Sheet ici — on attend la validation du paiement par l'admin
 
     res.json({ ok: true, bookingId: b.bookingId });
   } catch (e) {
