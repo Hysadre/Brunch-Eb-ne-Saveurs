@@ -908,6 +908,19 @@
       <div id="invitesList" style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; overflow:hidden;"></div>
     </div>
 
+    <!-- 🎁 Tracking Code Promo TRIO5 -->
+    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#c79270;">🎁</span>
+          <span>Code promo TRIO5 (-5€)</span>
+          <span id="promoStatsBadge" style="background: rgba(199,146,112,.15); color:#c79270; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 800;"></span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
+        </span>
+      </summary>
+      <div style="padding: 0 18px 18px;" id="promoStatsContent"></div>
+    </details>
+
     <!-- 📋 Copieurs de référence — qui a copié la réf + qui a payé -->
     <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
       <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
@@ -1150,7 +1163,7 @@
       t.classList.add('active');
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
-      if (t.dataset.tab === 'identification') renderInvites();
+      if (t.dataset.tab === 'identification') { renderInvites(); renderPromoStats(); }
       if (t.dataset.tab === 'overview') { renderFunnel(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
       if (t.dataset.tab === 'scan') renderCheckinHistory(CACHE);
     });
@@ -1546,6 +1559,7 @@
     renderTable(CACHE);
     renderCheckinHistory(CACHE);
     renderCopiers(CACHE);
+    renderPromoStats();
     renderFunnel();
     // 🎯 Funnel visuel — uniquement si la canvas est visible (onglet Overview)
     if (document.getElementById('panel-overview')?.classList.contains('active')) {
@@ -1755,6 +1769,114 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return true;
     } catch(e) { console.error(e); toast('Erreur suppression scan : ' + e.message, true); return false; }
+  }
+
+  // 🎁 Stats Code Promo TRIO5
+  async function renderPromoStats() {
+    const container = document.getElementById('promoStatsContent');
+    const badge = document.getElementById('promoStatsBadge');
+    if (!container) return;
+
+    // Récupère les pageviews pour compter copies / applications
+    let copied = 0, applied = 0, invalid = 0;
+    try {
+      const r = await fetch(`${API_URL}/track/funnel`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      if (r.ok) {
+        const d = await r.json();
+        copied  = d.pages?.promo_copied?.uniqueVisitors  || 0;
+        applied = d.pages?.promo_applied?.uniqueVisitors || 0;
+        invalid = d.pages?.promo_invalid?.uniqueVisitors || 0;
+      }
+    } catch(e) {}
+
+    // Résa qui ont effectivement bénéficié du code
+    const usedBookings = (CACHE || []).filter(r => r.promoCode === 'TRIO5' && !r.deleted);
+    const usedActive = usedBookings.filter(r => !r.archived);
+    const totalDiscount = usedActive.reduce((s, r) => s + (r.promoDiscount || 5), 0);
+    const conversionPct = applied > 0 ? Math.round(usedBookings.length / applied * 100) : 0;
+
+    if (badge) badge.textContent = `${usedBookings.length} utilisations`;
+
+    container.innerHTML = `
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px;">
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">📋 Copies du code</div>
+          <div style="font-size:26px; font-weight:800; color:#06b6d4; margin: 6px 0 2px;">${copied}</div>
+          <div style="font-size:12px; color:#d4a574;">Cliqué sur "Copier TRIO5"</div>
+        </div>
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">✅ Codes appliqués</div>
+          <div style="font-size:26px; font-weight:800; color:#22c55e; margin: 6px 0 2px;">${applied}</div>
+          <div style="font-size:12px; color:#d4a574;">Code TRIO5 validé</div>
+        </div>
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">🎫 Résa avec promo</div>
+          <div style="font-size:26px; font-weight:800; color:#c79270; margin: 6px 0 2px;">${usedBookings.length}</div>
+          <div style="font-size:12px; color:#d4a574;">Réservations finales</div>
+        </div>
+        <div style="background:#0f0a06; border:1px solid rgba(248,113,113,0.3); border-radius:12px; padding: 14px;">
+          <div style="font-size:11px; color:#f87171; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">💸 Manque à gagner</div>
+          <div style="font-size:26px; font-weight:800; color:#f87171; margin: 6px 0 2px;">${totalDiscount} €</div>
+          <div style="font-size:12px; color:#d4a574;">${usedActive.length} résa × 5€ remise</div>
+        </div>
+        ${invalid > 0 ? `
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">❌ Codes invalides</div>
+          <div style="font-size:26px; font-weight:800; color:#fbbf24; margin: 6px 0 2px;">${invalid}</div>
+          <div style="font-size:12px; color:#d4a574;">Tentatives erronées</div>
+        </div>
+        ` : ''}
+      </div>
+
+      <div style="font-size: 12px; color: #8a6648; padding: 8px 0; border-top: 1px solid #3a2818; margin-bottom: 12px;">
+        🎯 <strong style="color:#c79270;">${copied > 0 ? Math.round(applied/copied*100) : 0}% des copieurs ont appliqué</strong>
+        &nbsp;·&nbsp;
+        🎫 <strong style="color:#c79270;">${conversionPct}% des appliqueurs ont réservé</strong>
+        ${invalid > 0 ? `&nbsp;·&nbsp; ⚠️ ${invalid} essais invalides` : ''}
+      </div>
+
+      ${usedBookings.length === 0 ? `
+        <div style="text-align:center; padding: 30px 20px; color: #8a6648; font-size:13px;">
+          Aucune réservation n'a encore utilisé le code TRIO5.
+        </div>
+      ` : `
+        <h4 style="margin: 0 0 10px; color:#c79270; font-size:13px;">📋 Liste des résa utilisant le code TRIO5</h4>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="text-align:left; color:#8a6648; font-size:10px; text-transform:uppercase; letter-spacing:1px;">
+                <th style="padding:8px 6px;">N° Résa</th>
+                <th style="padding:8px 6px;">Réservateur</th>
+                <th style="padding:8px 6px;">Email</th>
+                <th style="padding:8px 6px;">Téléphone</th>
+                <th style="padding:8px 6px;">Total payé</th>
+                <th style="padding:8px 6px;">Remise</th>
+                <th style="padding:8px 6px;">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+            ${usedBookings.map(b => {
+              const statusBadge = b.deleted ? '<span style="background:rgba(120,113,108,.15); color:#a8a29e; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">🗑️ Corbeille</span>'
+                : b.archived ? '<span style="background:rgba(185,28,28,.15); color:#f87171; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">🚫 Annulée</span>'
+                : b.status === 'confirmé' ? '<span style="background:rgba(34,197,94,.15); color:#22c55e; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">✓ Validée</span>'
+                : '<span style="background:rgba(251,191,36,.15); color:#fbbf24; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;">⏳ En attente</span>';
+              return `
+                <tr style="border-top:1px solid #2a1810;">
+                  <td style="padding:10px 6px; font-family:monospace; color:#c79270; font-weight:700;">${b.bookingId}</td>
+                  <td style="padding:10px 6px; color:#fff; font-weight:700;">${b.prenom} ${b.nom}</td>
+                  <td style="padding:10px 6px;"><a href="mailto:${b.email}" style="color:#06b6d4; text-decoration:none;">${b.email}</a></td>
+                  <td style="padding:10px 6px;"><a href="tel:${b.telephone}" style="color:#22c55e; text-decoration:none;">${b.telephone}</a></td>
+                  <td style="padding:10px 6px; color:#c79270; font-weight:700;">${(b.total||0).toFixed(2).replace('.', ',')} €</td>
+                  <td style="padding:10px 6px; color:#f87171; font-weight:700;">−${b.promoDiscount || 5} €</td>
+                  <td style="padding:10px 6px;">${statusBadge}</td>
+                </tr>
+              `;
+            }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `}
+    `;
   }
 
   // 📋 Copieurs de référence — 2 tableaux séparés :
@@ -3387,8 +3509,24 @@
       data: {
         labels: labels.length ? labels : ['—'],
         datasets: [
-          { label: 'Nouvelles résa', data: values.length ? values : [0], backgroundColor: '#b86a45', borderRadius: 4, yAxisID: 'y' },
-          { label: 'Cumulé', data: cumValues.length ? cumValues : [0], type: 'line', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.3, fill: true, yAxisID: 'y1' }
+          { label: 'Nouvelles résa', data: values.length ? values : [0], backgroundColor: '#b86a45', borderRadius: 4, yAxisID: 'y', order: 2 },
+          {
+            label: 'Cumulé',
+            data: cumValues.length ? cumValues : [0],
+            type: 'line',
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.15)',
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y1',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#22c55e',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            order: 1
+          }
         ]
       },
       options: {
