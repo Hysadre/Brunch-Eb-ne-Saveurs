@@ -678,6 +678,7 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
     // 🚫 Exclure les sessions tied à des bookingIds spécifiques
     if (excludeIds) {
       const excludedSet = new Set(excludeIds.split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+      console.log(`📊 funnel — excludeIds reçus (${excludedSet.size}) : ${[...excludedSet].slice(0,5).join(', ')}${excludedSet.size > 5 ? '...' : ''}`);
       if (excludedSet.size > 0) {
         // 1ère passe : trouve les sessionIds dont au moins une pageview a un bookingId exclu
         const excludedSessions = new Set();
@@ -686,9 +687,12 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
             excludedSessions.add(v.sessionId);
           }
         });
+        console.log(`📊 funnel — sessions exclues : ${excludedSessions.size} sur ${new Set(data.map(v => v.sessionId)).size} totales`);
         // 2ème passe : retire toutes les pageviews de ces sessions
         if (excludedSessions.size > 0) {
+          const before = data.length;
           data = data.filter(v => !excludedSessions.has(v.sessionId));
+          console.log(`📊 funnel — pageviews avant=${before} après filtre=${data.length}`);
         }
       }
     }
@@ -836,6 +840,25 @@ app.post('/api/reservations', async (req, res) => {
     // 🆕 ID séquentiel généré server-side — ignore tout bookingId envoyé par le client
     b.bookingId = await generateBookingId(b.nom);
     b.serverReceivedAt = new Date().toISOString();
+
+    // 🎁 Vérifie le code promo côté serveur (sécurité)
+    //    Trio + code BRUNCH26 = -5€
+    if (b.promoCode === 'BRUNCH26' && b.ticketId === 'trio') {
+      const expected = (b.ticketPrice || 35) * (b.qty || 0) - 5;
+      // Recalcule pour bloquer la triche
+      if (b.total !== expected) {
+        console.warn(`⚠️ Promo BRUNCH26 — total client=${b.total} attendu=${expected}, on force la valeur correcte`);
+        b.total = expected;
+      }
+      b.promoDiscount = 5;
+    } else {
+      // Pas de promo applicable → on retire toute trace
+      b.promoCode = null;
+      b.promoDiscount = 0;
+      // Recalcule le total à partir du prix unitaire (sécurité)
+      const safeTotal = (b.ticketPrice || 35) * (b.qty || 0);
+      if (b.total !== safeTotal) b.total = safeTotal;
+    }
     // Marqueur : résa créée mais paiement pas encore confirmé par le client
     if (!b.status) b.status = 'paiement non confirmé';
 
