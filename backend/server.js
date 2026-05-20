@@ -177,6 +177,36 @@ function requireAdmin(req, res, next) {
 }
 
 // ====================================================
+// 🌍 GÉOLOCALISATION IP (ip-api.com, gratuit, 45 req/min)
+//    On stocke uniquement country / region / city — pas l'IP elle-même (RGPD friendly)
+// ====================================================
+async function geolocateIp(ip) {
+  if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    return { country: null, region: null, city: null };
+  }
+  try {
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 1500);  // max 1.5s
+    const r = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city`, { signal: ctrl.signal });
+    clearTimeout(timeoutId);
+    if (!r.ok) return { country: null, region: null, city: null };
+    const d = await r.json();
+    if (d.status !== 'success') return { country: null, region: null, city: null };
+    return {
+      country: d.country || null,
+      region: d.regionName || null,
+      city: d.city || null
+    };
+  } catch(e) { return { country: null, region: null, city: null }; }
+}
+function extractClientIp(req) {
+  // X-Forwarded-For (Render/proxies) → premier IP de la liste
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.ip || req.connection?.remoteAddress || null;
+}
+
+// ====================================================
 // 📊 TRACKING — pageviews + événements par résa
 // ====================================================
 async function insertPageview(row) {
@@ -630,21 +660,46 @@ app.post('/api/track/pageview', async (req, res) => {
   try {
     const { page, sessionId, bookingId, referrer } = req.body || {};
     if (!page || !sessionId) return res.status(400).json({ error: 'missing page or sessionId' });
+    // 🌍 Géolocalisation depuis l'IP (timeout 1.5s, fallback si échec)
+    const clientIp = extractClientIp(req);
+    const geo = await geolocateIp(clientIp);
+
     const row = {
       page,
       sessionId,
       bookingId: bookingId || null,
       referrer: referrer || null,
       userAgent: (req.headers['user-agent'] || '').slice(0, 200),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      country: geo.country,
+      region: geo.region,
+      city: geo.city
     };
     try {
-      await supa('pageviews', {
-        method: 'POST',
-        headers: { 'Prefer': 'return=minimal' },
-        body: JSON.stringify(row)
-      });
-      console.log(`📊 pageview OK : ${page} (session=${sessionId.slice(0,14)}…)`);
+      try {
+        await supa('pageviews', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=minimal' },
+          body: JSON.stringify(row)
+        });
+      } catch(e) {
+        // 🛟 Si colonnes country/region/city manquantes en BDD → on retire et on retente
+        const msg = e.message || '';
+        if (msg.includes('country') || msg.includes('region') || msg.includes('city') || msg.includes('PGRST204')) {
+          console.warn('⚠️  Colonnes géo manquantes en BDD → retry sans country/region/city');
+          delete row.country; delete row.region; delete row.city;
+          await supa('pageviews', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify(row)
+          });
+        } else { throw e; }
+      }
+      if (page === 'accueil_left') {
+        console.log(`🚪 BOUNCE détecté : session ${sessionId.slice(0,14)}… a quitté l'accueil sans aller plus loin${geo.country ? ' · '+geo.country : ''}`);
+      } else {
+        console.log(`📊 pageview OK : ${page} (session=${sessionId.slice(0,14)}…)${geo.country ? ' · '+geo.country+(geo.city ? '/'+geo.city : '') : ''}`);
+      }
       return res.json({ ok: true });
     } catch(e) {
       console.error(`❌ pageview INSERT FAIL pour "${page}" : ${e.message}`);
@@ -667,6 +722,78 @@ app.post('/api/track/event/:id', async (req, res) => {
     appendEvent(id, { type, data: data || null });
     res.json({ ok: true });
   } catch(e) { res.json({ ok: false }); }
+});
+
+// 🌍 GEO (admin) — stats de visiteurs par pays / région / ville
+app.get('/api/track/geo', requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    let qParts = ['select=sessionId,country,region,city,page,timestamp', 'order=timestamp.desc'];
+    if (from) qParts.push(`timestamp=gte.${encodeURIComponent(from)}`);
+    if (to)   qParts.push(`timestamp=lt.${encodeURIComponent(to)}`);
+    let data = [];
+    try { data = await supa(`pageviews?${qParts.join('&')}`) || []; }
+    catch(e) { return res.json({ countries: {}, regions: {}, cities: {}, totalSessions: 0, warning: 'GEO_DATA_MAYBE_MISSING', message: e.message }); }
+
+    // Dédup par sessionId — on prend la première géo connue de chaque session
+    const sessionGeo = {};
+    data.forEach(v => {
+      if (!sessionGeo[v.sessionId] && (v.country || v.region || v.city)) {
+        sessionGeo[v.sessionId] = { country: v.country, region: v.region, city: v.city };
+      }
+    });
+
+    const countries = {}, regions = {}, cities = {};
+    let unknown = 0;
+    Object.values(sessionGeo).forEach(g => {
+      if (g.country) countries[g.country] = (countries[g.country] || 0) + 1;
+      if (g.region)  regions[g.region]   = (regions[g.region] || 0) + 1;
+      if (g.city)    cities[g.city]      = (cities[g.city] || 0) + 1;
+    });
+    // Sessions sans géo (IP locale ou échec lookup)
+    const allSessions = new Set(data.map(v => v.sessionId));
+    unknown = allSessions.size - Object.keys(sessionGeo).length;
+
+    res.json({
+      countries,
+      regions,
+      cities,
+      totalSessions: allSessions.size,
+      withGeo: Object.keys(sessionGeo).length,
+      unknown
+    });
+  } catch(e) {
+    console.error('track/geo error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🧹 RESET (admin) — supprime toutes les pageviews (réinitialise le funnel)
+//    Les réservations ne sont PAS affectées.
+app.delete('/api/track/reset', requireAdmin, async (req, res) => {
+  try {
+    // Compte avant
+    let beforeCount = 0;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/pageviews?select=id`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'count=exact' }
+      });
+      const range = r.headers.get('content-range') || '';
+      const m = range.match(/\/(\d+)$/);
+      if (m) beforeCount = parseInt(m[1], 10);
+    } catch(e) {}
+
+    // DELETE tout
+    await supa('pageviews?id=gt.0', {
+      method: 'DELETE',
+      headers: { 'Prefer': 'return=minimal' }
+    });
+    console.log(`🧹 Reset pageviews — ${beforeCount} lignes supprimées`);
+    res.json({ ok: true, deleted: beforeCount });
+  } catch(e) {
+    console.error('track/reset error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 📊 FUNNEL (admin) — stats des pages + conversion
