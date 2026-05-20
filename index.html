@@ -588,18 +588,8 @@
         </label>
       </div>
 
-      <!-- 🎁 Champ code promo — visible UNIQUEMENT si Trio sélectionné -->
-      <details id="promoSection" style="display:none; margin-top: 14px; background:#1a1108; border:1px solid #3a2818; border-radius:12px;">
-        <summary style="cursor:pointer; padding: 10px 14px; color:#c79270; font-size:13px; font-weight:700; user-select:none; list-style:none;">
-          🎁 J'ai un code promo
-        </summary>
-        <div style="padding: 0 14px 14px; display:flex; gap:8px;">
-          <input type="text" id="promoCodeInput" placeholder="Entrer votre code (ex: TRIO5)" style="flex:1; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:10px; padding:10px 12px; font-family:monospace; font-size:14px; text-transform:uppercase;">
-          <button type="button" id="promoApplyBtn" style="background:linear-gradient(135deg, #b86a45, #c79270); color:white; border:none; padding:0 20px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap;">Appliquer</button>
-          <button type="button" id="promoRemoveBtn" style="display:none; background:#dc2626; color:white; border:none; padding:0 20px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; white-space:nowrap;">✕ Retirer</button>
-        </div>
-        <div id="promoFeedback" style="display:none; padding: 0 14px 14px; font-size:12px;"></div>
-      </details>
+      <!-- 🎁 Section code promo retirée — la réduction -5€ s'applique automatiquement sur Trio -->
+
 
       <div class="label" style="margin-top:18px;">
         Nombre de places
@@ -786,48 +776,27 @@
   // Envoie la vue dès le chargement
   trackPageview('accueil');
 
-  // 🎁 ===== CODE PROMO TRIO =====
+  // 🎁 ===== PROMO TRIO AUTO =====
+  //    La réduction -5€ s'applique AUTOMATIQUEMENT à toute résa Trio (qty=3)
+  //    Le code TRIO5 dans la bannière est purement marketing/communication
   const PROMO_CODE = 'TRIO5';
-  const PROMO_DISCOUNT = 5;  // -5€
-  // Lit le statut depuis sessionStorage (persiste sur ce navigateur)
-  let promoApplied = sessionStorage.getItem('ebene_promo_applied') === '1';
+  const PROMO_DISCOUNT = 5;
+  // Toujours appliqué dès que Trio est sélectionné (cf. updateTotal/updatePromoUI ci-dessous)
+  let promoApplied = true;
 
+  // 🎁 Met à jour l'affichage du Trio (badge -5€ + prix barré) — UNIQUEMENT quand Trio sélectionné
   function updatePromoUI() {
-    const banner = document.getElementById('promoBanner');
     const badge = document.getElementById('trioDiscountBadge');
     const priceEl = document.getElementById('trioPrice');
-    const promoSection = document.getElementById('promoSection');
-    const applyBtn = document.getElementById('promoApplyBtn');
-    const removeBtn = document.getElementById('promoRemoveBtn');
-    const feedback = document.getElementById('promoFeedback');
-    const input = document.getElementById('promoCodeInput');
-
-    // 🎯 La section "J'ai un code promo" n'apparaît QUE si Trio sélectionné
-    //    Safe-check : state peut ne pas être défini au tout premier appel
+    // 🎯 Badge / prix barré visibles SEULEMENT si Trio sélectionné (qty=3)
     let isTrio = false;
     try { isTrio = (typeof getCurrentFormulaId === 'function' && getCurrentFormulaId() === 'trio'); } catch(e) {}
-    if (promoSection) promoSection.style.display = isTrio ? '' : 'none';
-
-    if (promoApplied) {
-      if (banner) banner.style.display = 'none';
+    if (isTrio) {
       if (badge) badge.style.display = 'inline-block';
       if (priceEl) priceEl.innerHTML = '<span style="text-decoration:line-through; color:#8a6648; font-size:13px; margin-right:6px;">105 €</span>100 €';
-      const trioLabel = document.querySelector('.ticket[data-id="trio"]');
-      if (trioLabel) trioLabel.setAttribute('data-price', String(105 - PROMO_DISCOUNT));
-      // Switch Appliquer ↔ Retirer
-      if (applyBtn) applyBtn.style.display = 'none';
-      if (removeBtn) removeBtn.style.display = '';
-      if (input) { input.value = 'TRIO5'; input.disabled = true; }
     } else {
-      if (banner && sessionStorage.getItem('ebene_promo_closed') !== '1') banner.style.display = '';
       if (badge) badge.style.display = 'none';
       if (priceEl) priceEl.textContent = '105 €';
-      const trioLabel = document.querySelector('.ticket[data-id="trio"]');
-      if (trioLabel) trioLabel.setAttribute('data-price', '105');
-      if (applyBtn) applyBtn.style.display = '';
-      if (removeBtn) removeBtn.style.display = 'none';
-      if (input) { input.disabled = false; }
-      if (feedback) { feedback.style.display = 'none'; feedback.innerHTML = ''; }
     }
   }
 
@@ -835,7 +804,7 @@
   document.getElementById('promoCopyBtn')?.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(PROMO_CODE);
-      trackPageview('promo_copied');  // 📊 tracking
+      trackPageview('promo_copied');
       const btn = document.getElementById('promoCopyBtn');
       const original = btn.innerHTML;
       btn.innerHTML = '<span style="letter-spacing:1px;">✓ Copié !</span>';
@@ -849,42 +818,10 @@
     document.getElementById('promoBanner').style.display = 'none';
   });
 
-  // ✅ Application du code
-  document.getElementById('promoApplyBtn')?.addEventListener('click', () => {
-    const input = document.getElementById('promoCodeInput');
-    const feedback = document.getElementById('promoFeedback');
-    const code = (input.value || '').trim().toUpperCase();
-    if (!code) {
-      feedback.style.display = 'block';
-      feedback.style.color = '#f87171';
-      feedback.textContent = '⚠️ Entrez d\'abord un code';
-      return;
-    }
-    if (code !== PROMO_CODE) {
-      feedback.style.display = 'block';
-      feedback.style.color = '#f87171';
-      feedback.textContent = '❌ Code invalide';
-      trackPageview('promo_invalid');
-      return;
-    }
-    promoApplied = true;
-    sessionStorage.setItem('ebene_promo_applied', '1');
-    trackPageview('promo_applied');  // 📊 tracking
-    feedback.style.display = 'block';
-    feedback.style.color = '#22c55e';
-    feedback.innerHTML = '✓ Code <strong>TRIO5</strong> appliqué — -5€ sur l\'offre Trio';
-    updatePromoUI();
-    // Sélectionne automatiquement Trio
-    document.querySelector('.ticket[data-id="trio"]')?.click();
-  });
-
-  // ❌ Retirer le code
-  document.getElementById('promoRemoveBtn')?.addEventListener('click', () => {
-    promoApplied = false;
-    sessionStorage.removeItem('ebene_promo_applied');
-    sessionStorage.removeItem('ebene_promo_closed');
-    updatePromoUI();
-  });
+  // Si bannière déjà fermée par l'utilisateur précédemment, la cacher
+  if (sessionStorage.getItem('ebene_promo_closed') === '1') {
+    const b = document.getElementById('promoBanner'); if (b) b.style.display = 'none';
+  }
 
   updatePromoUI();
 
@@ -1029,8 +966,16 @@
   }
 
   function updateTotal() {
-    const total = UNIT_PRICE * state.qty;
-    document.getElementById('totalAmount').textContent = total.toFixed(2).replace('.', ',') + ' €';
+    let total = UNIT_PRICE * state.qty;
+    // 🎁 Applique la promo TRIO5 si active ET formule Trio (qty === 3)
+    const discountActive = (typeof promoApplied !== 'undefined' && promoApplied) && state.qty === 3;
+    if (discountActive) total -= (typeof PROMO_DISCOUNT !== 'undefined' ? PROMO_DISCOUNT : 5);
+    const el = document.getElementById('totalAmount');
+    if (discountActive) {
+      el.innerHTML = `<span style="text-decoration:line-through; color:#8a6648; font-size:0.65em; margin-right:8px; font-weight:500;">${(UNIT_PRICE * state.qty).toFixed(2).replace('.', ',')} €</span>${total.toFixed(2).replace('.', ',')} €`;
+    } else {
+      el.textContent = total.toFixed(2).replace('.', ',') + ' €';
+    }
   }
 
   function getCurrentFormulaName() {
