@@ -979,6 +979,66 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
   }
 });
 
+// 🆕 PROSPECTS : enregistre les personnes qui ont copié la référence
+//    sans encore cliquer "J'ai payé". Permet à l'admin de relancer ces leads.
+//    Une fois la résa créée (clic "J'ai payé"), le prospect est marqué 'converted'.
+app.post('/api/prospects', async (req, res) => {
+  try {
+    const p = req.body || {};
+    if (!p.bookingId) return res.status(400).json({ error: 'missing bookingId' });
+    const row = {
+      bookingId: p.bookingId,
+      prenom: p.prenom || null,
+      nom: p.nom || null,
+      email: p.email || null,
+      telephone: p.telephone || null,
+      accompagnants: p.accompagnants || null,
+      ticketName: p.ticketName || null,
+      qty: p.qty || 1,
+      total: p.total || 0,
+      message: p.message || null,
+      sessionId: p.sessionId || null,
+      copiedAt: new Date().toISOString()
+    };
+    try {
+      // Upsert (insère ou met à jour si bookingId existe déjà)
+      await supa('prospects', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal,resolution=merge-duplicates' },
+        body: JSON.stringify(row)
+      });
+      console.log(`📋 Prospect enregistré : ${p.bookingId} (${p.prenom} ${p.nom})`);
+    } catch(e) {
+      // Si la table n'existe pas → log warning mais ne bloque pas le client
+      const msg = e.message || '';
+      if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
+        console.warn('⚠️  Table "prospects" inexistante — exécute le SQL dans Supabase');
+        return res.json({ ok: true, warning: 'TABLE_MISSING' });
+      }
+      console.warn('prospects upsert failed:', msg);
+    }
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('prospects error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 🆕 GET prospects (admin) — liste des personnes qui ont copié la réf
+app.get('/api/prospects', requireAdmin, async (req, res) => {
+  try {
+    const list = await supa('prospects?select=*&order=copiedAt.desc') || [];
+    res.json(list);
+  } catch(e) {
+    const msg = e.message || '';
+    if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
+      return res.json({ list: [], warning: 'TABLE_MISSING', message: 'Table "prospects" inexistante. Crée-la dans Supabase.' });
+    }
+    console.error('GET prospects error:', msg);
+    res.status(500).json({ error: msg });
+  }
+});
+
 // 🎯 RESERVE-ID : génère juste un bookingId sans créer de ligne en BDD
 //    Utilisé au clic "Continuer vers le paiement" → le N° est réservé pour affichage
 //    sur paiement.html, mais aucune résa n'est créée tant que l'utilisateur ne clique pas "J'ai payé"
@@ -1042,6 +1102,19 @@ app.post('/api/reservations', async (req, res) => {
     if (!b.status) b.status = 'paiement non confirmé';
 
     await insertReservation(b);
+
+    // 🆕 Marque le prospect comme "converti" (s'il existait)
+    //    → il disparaîtra du tableau "Ont copié sans payer" côté admin
+    supa(`prospects?"bookingId"=eq.${encodeURIComponent(b.bookingId)}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ converted: true, convertedAt: new Date().toISOString() })
+    }).catch(e => {
+      // Table peut-être inexistante — on log mais on ne bloque pas
+      if (!(e.message || '').match(/does not exist|PGRST205|42P01/)) {
+        console.warn(`⚠️ prospect convert ${b.bookingId} failed: ${e.message}`);
+      }
+    });
 
     // 📧 Le client vient de cliquer "J'ai payé" → on envoie les emails de confirmation
     //    (client : "Réservation enregistrée, en attente de vérification" + admin notification)
