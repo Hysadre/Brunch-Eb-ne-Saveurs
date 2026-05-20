@@ -803,7 +803,9 @@
     const input = document.getElementById('promoCodeInput');
 
     // 🎯 La section "J'ai un code promo" n'apparaît QUE si Trio sélectionné
-    const isTrio = getCurrentFormulaId() === 'trio';
+    //    Safe-check : state peut ne pas être défini au tout premier appel
+    let isTrio = false;
+    try { isTrio = (typeof getCurrentFormulaId === 'function' && getCurrentFormulaId() === 'trio'); } catch(e) {}
     if (promoSection) promoSection.style.display = isTrio ? '' : 'none';
 
     if (promoApplied) {
