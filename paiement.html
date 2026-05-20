@@ -765,15 +765,8 @@
       opt.classList.add('selected');
       method = opt.dataset.method;
       document.querySelectorAll('.pay-details').forEach(p => p.classList.toggle('show', p.dataset.panel === method));
-      // 📊 TRACKING : choix du moyen de paiement
+      // 📊 TRACKING : choix du moyen de paiement (stocké localement, la résa n'existe pas encore)
       trackEvent('method_picked', { method });
-      // 💳 Sauvegarde présumée du nouveau moyen (sans email, juste pour l'admin)
-      if (booking?.bookingId && API_URL) {
-        fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ method, presumed: true })
-        }).catch(() => {});
-      }
       // Scroll vers les détails de paiement
       setTimeout(() => {
         const detail = document.querySelector(`.pay-details[data-panel="${method}"]`);
