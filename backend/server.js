@@ -867,20 +867,21 @@ app.post('/api/reservations', async (req, res) => {
     //    Trio + code TRIO5 = -5€
     if (b.promoCode === 'TRIO5' && b.ticketId === 'trio') {
       const expected = (b.ticketPrice || 35) * (b.qty || 0) - 5;
-      // Recalcule pour bloquer la triche
       if (b.total !== expected) {
         console.warn(`⚠️ Promo TRIO5 — total client=${b.total} attendu=${expected}, on force la valeur correcte`);
         b.total = expected;
       }
-      b.promoDiscount = 5;
+      console.log(`🎁 Code TRIO5 appliqué sur ${b.bookingId} — -5€`);
     } else {
-      // Pas de promo applicable → on retire toute trace
-      b.promoCode = null;
-      b.promoDiscount = 0;
       // Recalcule le total à partir du prix unitaire (sécurité)
       const safeTotal = (b.ticketPrice || 35) * (b.qty || 0);
       if (b.total !== safeTotal) b.total = safeTotal;
     }
+    // 🛟 On STRIP les champs promo avant l'insert — pas besoin de schéma BDD spécial
+    //    L'info reste dispo dans le total réduit (105 → 100) et on la verra côté admin
+    //    via : "total = 100 € pour un Trio" (= forcément un code promo appliqué)
+    delete b.promoCode;
+    delete b.promoDiscount;
     // Marqueur : résa créée mais paiement pas encore confirmé par le client
     if (!b.status) b.status = 'paiement non confirmé';
 
