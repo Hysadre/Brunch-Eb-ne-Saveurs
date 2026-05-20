@@ -965,11 +965,16 @@ app.get('/api/verify/:id', async (req, res) => {
 });
 
 // Liste complète (admin) — inclut les "deleted" pour que l'admin puisse les voir dans Corbeille
-//   Le filtre côté client décide quoi afficher
+//   Filtre les paniers abandonnés par défaut (status="paiement non confirmé")
+//   ?includeDrafts=1 → inclut aussi les drafts (pour la vue "🛒 Paniers abandonnés")
 app.get('/api/reservations', requireAdmin, async (req, res) => {
   try {
     const list = await listReservations();
-    res.json(list || []);
+    const includeDrafts = req.query.includeDrafts === '1';
+    const filtered = includeDrafts
+      ? (list || [])
+      : (list || []).filter(r => r.status !== 'paiement non confirmé');
+    res.json(filtered);
   } catch (e) {
     console.error('list error:', e.message);
     res.status(500).json({ error: e.message });
