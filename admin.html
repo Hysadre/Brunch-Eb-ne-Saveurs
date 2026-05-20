@@ -721,6 +721,12 @@
           <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">🎯 Funnel visuel</div>
           <div style="position: relative; height: 280px;"><canvas id="chartFunnelOverview"></canvas></div>
         </div>
+
+        <!-- 🌍 Géographie des visiteurs -->
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding: 14px; margin-top: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:10px;">🌍 Géographie des visiteurs</div>
+          <div id="geoStatsContent" style="font-size:13px; color:#d4a574;">Chargement…</div>
+        </div>
       </div>
     </details>
   </div>
@@ -1165,7 +1171,7 @@
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
       if (t.dataset.tab === 'identification') { renderInvites(); renderPromoStats(); }
-      if (t.dataset.tab === 'overview') { renderFunnel(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
+      if (t.dataset.tab === 'overview') { renderFunnel(); renderGeoStats(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
       if (t.dataset.tab === 'scan') renderCheckinHistory(CACHE);
     });
   });
@@ -1591,6 +1597,7 @@
     renderCopiers(CACHE);
     renderPromoStats();
     renderFunnel();
+    renderGeoStats();
     // 🎯 Funnel visuel — uniquement si la canvas est visible (onglet Overview)
     if (document.getElementById('panel-overview')?.classList.contains('active')) {
       setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 200);
@@ -2065,6 +2072,75 @@
         }
       });
     }, 50);
+  }
+
+  // 🌍 Géographie des visiteurs (pays / région / ville)
+  async function renderGeoStats() {
+    const container = document.getElementById('geoStatsContent');
+    if (!container) return;
+    try {
+      const [from, to] = getFunnelDateRange();
+      const params = new URLSearchParams();
+      if (from) params.set('from', from.toISOString());
+      if (to)   params.set('to',   to.toISOString());
+      const r = await fetch(`${API_URL}/track/geo${params.toString() ? '?' + params.toString() : ''}`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+
+      if (d.warning === 'GEO_DATA_MAYBE_MISSING') {
+        container.innerHTML = `
+          <div style="background:rgba(251,191,36,.08); border:1px dashed rgba(251,191,36,.4); border-radius:10px; padding:12px; color:#fbbf24; font-size:12px; line-height:1.6;">
+            ⚙️ Pour activer la géolocalisation, ajoute ces 3 colonnes dans Supabase → Table Editor → <code style="background:#0f0a06; padding:2px 6px; border-radius:4px; color:#c79270;">pageviews</code> :<br>
+            • <code>country</code> (text, nullable)<br>
+            • <code>region</code> (text, nullable)<br>
+            • <code>city</code> (text, nullable)
+          </div>`;
+        return;
+      }
+
+      const topList = (obj, max = 5) => Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, max);
+      const topCountries = topList(d.countries);
+      const topRegions   = topList(d.regions);
+      const topCities    = topList(d.cities);
+
+      const total = d.withGeo || 0;
+      const renderRow = (label, count) => {
+        const pct = total > 0 ? Math.round(count / total * 100) : 0;
+        return `
+          <div style="display:flex; align-items:center; gap:8px; padding: 5px 0; font-size:12px;">
+            <span style="flex:0 0 130px; color:#ede5d1; font-weight:600;">${label}</span>
+            <div style="flex:1; height:6px; background:#3a2818; border-radius:3px; overflow:hidden;">
+              <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #b86a45, #c79270);"></div>
+            </div>
+            <span style="flex:0 0 50px; text-align:right; color:#c79270; font-weight:700;">${count}</span>
+            <span style="flex:0 0 40px; text-align:right; color:#8a6648; font-size:11px;">${pct}%</span>
+          </div>
+        `;
+      };
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid #3a2818;">
+          <div><strong style="color:#06b6d4; font-size:18px;">${d.totalSessions}</strong> <span style="color:#8a6648;">sessions totales</span></div>
+          <div style="font-size:11px; color:#8a6648;">${d.withGeo} géolocalisées · ${d.unknown} inconnues</div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+          <div>
+            <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">🌍 Top pays</div>
+            ${topCountries.length ? topCountries.map(([k, v]) => renderRow(k, v)).join('') : '<em style="color:#8a6648;">Aucune donnée</em>'}
+          </div>
+          <div>
+            <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">🗺️ Top régions</div>
+            ${topRegions.length ? topRegions.map(([k, v]) => renderRow(k, v)).join('') : '<em style="color:#8a6648;">Aucune donnée</em>'}
+          </div>
+          <div>
+            <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">📍 Top villes</div>
+            ${topCities.length ? topCities.map(([k, v]) => renderRow(k, v)).join('') : '<em style="color:#8a6648;">Aucune donnée</em>'}
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      container.innerHTML = `<div style="color:#8a6648; font-size:13px;">📊 Stats géo indisponibles (${e.message})</div>`;
+    }
   }
 
   // 📊 Funnel — vues par page + taux de conversion
