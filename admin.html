@@ -337,7 +337,19 @@
 
   /* Checkbox de sélection */
   .row-check { width: 18px; height: 18px; cursor: pointer; accent-color: #b86a45; }
-  th.col-check, td.col-check { width: 40px; text-align: center; padding-left: 14px; padding-right: 6px; }
+  /* ✅ Colonne checkbox sticky à gauche (toujours visible même quand on scroll horizontalement) */
+  th.col-check, td.col-check {
+    width: 40px; text-align: center; padding-left: 14px; padding-right: 6px;
+    position: sticky; left: 0;
+    background: #1a1108;
+    z-index: 5;
+    border-right: 1px solid #3a2818;
+  }
+  thead th.col-check { background: #241408; z-index: 6; }
+  tr.selected td.col-check { background: #2a1810; }
+  tr.archived-row td.col-check { background: #1a1108; opacity: 0.9; }
+  /* Style des checkboxes plus visible */
+  .row-check { width: 18px; height: 18px; cursor: pointer; accent-color: #b86a45; }
   tr.selected td { background: rgba(249, 115, 22, 0.10) !important; }
   tr.selected:hover td { background: rgba(249, 115, 22, 0.16) !important; }
 
@@ -767,6 +779,7 @@
         <option value="active">📂 Actives uniquement</option>
         <option value="all">📂📦 Tout voir (sauf corbeille)</option>
         <option value="archived">📦 Archivées uniquement</option>
+        <option value="draft">🛒 Paniers abandonnés (n'ont pas cliqué "J'ai payé")</option>
         <option value="trash">🗑️ Corbeille</option>
       </select>
       <select id="filterDate">
