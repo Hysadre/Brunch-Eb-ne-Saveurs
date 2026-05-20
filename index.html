@@ -826,13 +826,24 @@
   function signalLeave() {
     if (leftSignaled) return;
     leftSignaled = true;
+    const payload = JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() });
+    console.log('[📊 bounce] envoi accueil_left', payload);
+    // 1️⃣ Essai avec fetch + keepalive (plus fiable que sendBeacon, supporte CORS + JSON correctement)
     try {
-      const payload = JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() });
-      // sendBeacon est le seul moyen fiable de notifier au moment où la page se ferme
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(API_URL + '/track/pageview', new Blob([payload], { type: 'application/json' }));
-      }
-    } catch(e) {}
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(e => console.warn('[📊 bounce] fetch keepalive échoué', e.message));
+    } catch(e) {
+      // 2️⃣ Fallback : sendBeacon
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(API_URL + '/track/pageview', new Blob([payload], { type: 'application/json' }));
+        }
+      } catch(e2) {}
+    }
   }
   // Quand on quitte vers paiement.html via navigation interne, on NE déclenche PAS le signal
   // (paiement.html ouvert = pas un rebond)
@@ -1131,7 +1142,7 @@
       promoCode: discountApplied ? PROMO_CODE : null,
       promoDiscount: discountApplied ? PROMO_DISCOUNT : 0,
       timestamp: new Date().toISOString(),
-      status: 'en attente vérification'
+      status: 'paiement non confirmé'  // draft : passera à "en attente vérification" au clic "J'ai payé"
       // ⚠️ Pas de bookingId ici — il est généré côté serveur (séquentiel EBENE-NOM-Y{NNN})
     };
 

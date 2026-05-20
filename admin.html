@@ -1368,7 +1368,10 @@
       try {
         const ctrl = new AbortController();
         const timeoutId = setTimeout(() => ctrl.abort(), 15000);
-        const r = await fetch(API_URL + '/reservations', {
+        // 🛒 Inclut les paniers abandonnés UNIQUEMENT si on est sur le filtre "draft"
+        const showDrafts = document.getElementById('filterArchived')?.value === 'draft';
+        const url = API_URL + '/reservations' + (showDrafts ? '?includeDrafts=1' : '');
+        const r = await fetch(url, {
           headers: { 'X-Admin-Token': ADMIN_PWD },
           signal: ctrl.signal
         });
@@ -2762,8 +2765,8 @@
   document.getElementById('filterStatus').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterTicket').addEventListener('change', () => renderTable(CACHE));
   document.getElementById('filterArchived').addEventListener('change', () => {
-    renderTable(CACHE);
-    updateBulkBar();  // pour montrer/cacher "Supprimer définitivement"
+    // 🔄 Si on bascule vers/depuis "draft" → recharge les données (l'API filtre selon includeDrafts)
+    render().then(() => updateBulkBar());
   });
   // 📅 Filtre date — montre/cache les inputs date si "custom"
   document.getElementById('filterDate').addEventListener('change', e => {
