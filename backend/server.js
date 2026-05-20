@@ -842,12 +842,12 @@ app.post('/api/reservations', async (req, res) => {
     b.serverReceivedAt = new Date().toISOString();
 
     // 🎁 Vérifie le code promo côté serveur (sécurité)
-    //    Trio + code BRUNCH26 = -5€
-    if (b.promoCode === 'BRUNCH26' && b.ticketId === 'trio') {
+    //    Trio + code TRIO5 = -5€
+    if (b.promoCode === 'TRIO5' && b.ticketId === 'trio') {
       const expected = (b.ticketPrice || 35) * (b.qty || 0) - 5;
       // Recalcule pour bloquer la triche
       if (b.total !== expected) {
-        console.warn(`⚠️ Promo BRUNCH26 — total client=${b.total} attendu=${expected}, on force la valeur correcte`);
+        console.warn(`⚠️ Promo TRIO5 — total client=${b.total} attendu=${expected}, on force la valeur correcte`);
         b.total = expected;
       }
       b.promoDiscount = 5;
