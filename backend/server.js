@@ -866,19 +866,17 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
     const confirmSessions  = sessionsByPage['confirmation'] || new Set();
     const leftSessions = sessionsByPage['accueil_left'] || new Set();
 
+    // 🔁 Rebond = session qui n'a rien fait pendant 5s (signal accueil_left)
+    //    ET qui n'a pas progressé vers paiement
     let bouncedCount = 0;
     let inProgressCount = 0;
     for (const sid of accueilSessions) {
-      // a progressé → pas un rebond
-      if (paiementSessions.has(sid) || confirmSessions.has(sid)) continue;
-      // a quitté sans progresser → REBOND confirmé
-      if (leftSessions.has(sid)) bouncedCount++;
-      // sinon → session encore active (peut-être toujours sur l'accueil)
-      else inProgressCount++;
+      if (paiementSessions.has(sid) || confirmSessions.has(sid)) continue;  // a progressé
+      if (leftSessions.has(sid)) bouncedCount++;  // rebond
+      else inProgressCount++;  // a interagi mais n'a pas (encore) avancé
     }
-    // Le taux se calcule sur les sessions qui ont vraiment "bouclé" (parties ou progressées)
-    const eligibleSessions = accueilSessions.size - inProgressCount;
-    const bounceRate = eligibleSessions > 0 ? Math.round((bouncedCount / eligibleSessions) * 100) : 0;
+    // Taux de rebond simple : rebonds / total des visiteurs accueil
+    const bounceRate = accueilSessions.size > 0 ? Math.round((bouncedCount / accueilSessions.size) * 100) : 0;
 
     res.json({
       pages: result,
