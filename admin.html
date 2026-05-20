@@ -1198,6 +1198,8 @@
       if (!inGlobalRange(r.timestamp)) return false;
       // 🚫 Filtre exclusion globale (sauf si vue trash/archived qui veut explicitement voir)
       if (statusFilter !== 'trash' && statusFilter !== 'archived' && isGloballyExcluded(r)) return false;
+      // 🛒 Cache toujours les paniers abandonnés (drafts) — pas pertinent pour la liste invités
+      if (r.status === 'paiement non confirmé') return false;
       // 🗑️ Filtre corbeille selon la vue
       if (statusFilter === 'trash') {
         if (!r.deleted) return false;
@@ -2392,8 +2394,8 @@
   });
 
   function renderStats(data) {
-    // 🌍 Applique les filtres globaux (date + exclusion)
-    data = (data || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
+    // 🌍 Applique les filtres globaux (date + exclusion) + cache les paniers abandonnés (drafts)
+    data = (data || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r) && r.status !== 'paiement non confirmé');
     const total = data.length;
     const paid = data.filter(r => r.status === 'confirmé' && !r.archived);
     const pending = data.filter(r => r.status !== 'confirmé' && !r.archived);
@@ -2545,12 +2547,20 @@
       if (archivedFilterLocal !== 'trash' && archivedFilterLocal !== 'archived' && isGloballyExcluded(r)) return false;
       return true;
     }).filter(r => {
+      const isDraft = r.status === 'paiement non confirmé';
       // 🗑️ Corbeille : on filtre selon la sélection
       if (archivedFilter === 'trash') {
         if (!r.deleted) return false;
       } else {
         // Dans les autres vues, on cache la corbeille
         if (r.deleted) return false;
+      }
+      // 🛒 Paniers abandonnés (drafts) — visibles UNIQUEMENT dans cette vue
+      if (archivedFilter === 'draft') {
+        if (!isDraft) return false;
+      } else {
+        // Toutes les autres vues cachent les drafts par défaut
+        if (isDraft) return false;
       }
       // Filtre archives
       if (archivedFilter === 'active' && r.archived) return false;
@@ -3404,8 +3414,8 @@
   // ============ ANALYSE ============
   let charts = {};
   function renderAnalyse() {
-    // 🌍 Applique le filtre global (date + exclusion) à tous les graphes
-    const data = (CACHE || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
+    // 🌍 Applique le filtre global (date + exclusion) à tous les graphes + cache les drafts
+    const data = (CACHE || []).filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r) && r.status !== 'paiement non confirmé');
     const paid = data.filter(r => r.status === 'confirmé');
     const pending = data.filter(r => r.status !== 'confirmé');
     const placesPaid = paid.reduce((s, r) => s + (r.qty || 0), 0);
