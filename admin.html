@@ -713,6 +713,7 @@
           <input type="date" id="funnelDateFrom" style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
           <input type="date" id="funnelDateTo"   style="display:none; background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 10px; font-family:inherit; font-size:13px;">
           <button id="funnelRefreshBtn" style="background:#3a2818; border:none; color:#c79270; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;">🔄 Rafraîchir</button>
+          <button id="funnelResetBtn" title="Vider TOUTES les pageviews (réinitialise les stats de visite)" style="background:rgba(185,28,28,0.12); border:1px solid rgba(248,113,113,0.4); color:#f87171; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer;">🧹 Vider les stats</button>
         </div>
         <div id="funnelContent"></div>
         <!-- 🎯 Funnel visuel (chart) -->
@@ -1834,41 +1835,17 @@
     if (badge) badge.textContent = `${usedBookings.length} utilisations`;
 
     container.innerHTML = `
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px;">
-        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
-          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">📋 Copies du code</div>
-          <div style="font-size:26px; font-weight:800; color:#06b6d4; margin: 6px 0 2px;">${copied}</div>
-          <div style="font-size:12px; color:#d4a574;">Cliqué sur "Copier TRIO5"</div>
-        </div>
-        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
-          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">✅ Codes appliqués</div>
-          <div style="font-size:26px; font-weight:800; color:#22c55e; margin: 6px 0 2px;">${applied}</div>
-          <div style="font-size:12px; color:#d4a574;">Code TRIO5 validé</div>
-        </div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px;">
         <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
           <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">🎫 Résa avec promo</div>
           <div style="font-size:26px; font-weight:800; color:#c79270; margin: 6px 0 2px;">${usedBookings.length}</div>
-          <div style="font-size:12px; color:#d4a574;">Réservations finales</div>
+          <div style="font-size:12px; color:#d4a574;">Trio à 100€ (au lieu de 105€)</div>
         </div>
         <div style="background:#0f0a06; border:1px solid rgba(248,113,113,0.3); border-radius:12px; padding: 14px;">
           <div style="font-size:11px; color:#f87171; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">💸 Manque à gagner</div>
           <div style="font-size:26px; font-weight:800; color:#f87171; margin: 6px 0 2px;">${totalDiscount} €</div>
           <div style="font-size:12px; color:#d4a574;">${usedActive.length} résa × 5€ remise</div>
         </div>
-        ${invalid > 0 ? `
-        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:12px; padding: 14px;">
-          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">❌ Codes invalides</div>
-          <div style="font-size:26px; font-weight:800; color:#fbbf24; margin: 6px 0 2px;">${invalid}</div>
-          <div style="font-size:12px; color:#d4a574;">Tentatives erronées</div>
-        </div>
-        ` : ''}
-      </div>
-
-      <div style="font-size: 12px; color: #8a6648; padding: 8px 0; border-top: 1px solid #3a2818; margin-bottom: 12px;">
-        🎯 <strong style="color:#c79270;">${copied > 0 ? Math.round(applied/copied*100) : 0}% des copieurs ont appliqué</strong>
-        &nbsp;·&nbsp;
-        🎫 <strong style="color:#c79270;">${conversionPct}% des appliqueurs ont réservé</strong>
-        ${invalid > 0 ? `&nbsp;·&nbsp; ⚠️ ${invalid} essais invalides` : ''}
       </div>
 
       ${usedBookings.length === 0 ? `
@@ -2749,6 +2726,25 @@
   });
   // 🚫 Filtre d'exclusion → re-render TOUT
   document.getElementById('globalExclude')?.addEventListener('change', applyGlobalFilterToAll);
+
+  // 🧹 Vide les pageviews + le localStorage cache + restaure tout à zéro
+  document.getElementById('funnelResetBtn')?.addEventListener('click', async () => {
+    if (!confirm('⚠️ Supprimer DÉFINITIVEMENT toutes les statistiques de visite (pageviews) ?\n\nCela réinitialisera :\n• Funnel de conversion (Accueil/Paiement/Confirmation/Rebond)\n• Tracking copie code promo\n• Événements\n\nLes RÉSERVATIONS ne sont PAS affectées.\nCette action est IRRÉVERSIBLE.')) return;
+    const t = prompt('Tape "RESET" en majuscules pour confirmer :');
+    if (t !== 'RESET') { toast('Annulé', true); return; }
+    try {
+      const r = await fetch(`${API_URL}/track/reset`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Token': ADMIN_PWD }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json().catch(() => ({}));
+      toast(`🧹 ${data.deleted || 'Toutes les'} pageviews supprimées`);
+      // Vide aussi le cache local
+      try { localStorage.removeItem('cachedReservations'); } catch(e) {}
+      setTimeout(() => location.reload(), 800);
+    } catch(e) { toast('Erreur : ' + e.message, true); }
+  });
   // 🎯 Exclure des bookingIds spécifiques
   let excludeIdsDebounce;
   document.getElementById('globalExcludeIds')?.addEventListener('input', () => {
