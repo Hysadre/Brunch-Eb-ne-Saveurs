@@ -821,44 +821,36 @@
 
   updatePromoUI();
 
-  // 👋 Détecte la fermeture/inactivité — envoie un beacon pour confirmer le rebond
-  let leftSignaled = false;
-  function signalLeave() {
-    if (leftSignaled) return;
-    leftSignaled = true;
-    const payload = JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() });
-    console.log('[📊 bounce] envoi accueil_left', payload);
-    // 1️⃣ Essai avec fetch + keepalive (plus fiable que sendBeacon, supporte CORS + JSON correctement)
-    try {
-      fetch(API_URL + '/track/pageview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload,
-        keepalive: true
-      }).catch(e => console.warn('[📊 bounce] fetch keepalive échoué', e.message));
-    } catch(e) {
-      // 2️⃣ Fallback : sendBeacon
-      try {
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(API_URL + '/track/pageview', new Blob([payload], { type: 'application/json' }));
-        }
-      } catch(e2) {}
-    }
+  // 🔁 REBOND par engagement : si la personne ne fait RIEN pendant 5s
+  //    (pas de scroll, pas de clic, pas de touche) → c'est un rebond.
+  //    Toute interaction avant 5s = engagé (pas un rebond).
+  let engaged = false;
+  let bounceTimer = null;
+  function markEngaged() {
+    if (engaged) return;
+    engaged = true;
+    if (bounceTimer) { clearTimeout(bounceTimer); bounceTimer = null; }
+    // Retire les listeners (plus besoin)
+    ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
+      window.removeEventListener(ev, markEngaged)
+    );
   }
-  // Quand on quitte vers paiement.html via navigation interne, on NE déclenche PAS le signal
-  // (paiement.html ouvert = pas un rebond)
-  window.addEventListener('beforeunload', () => {
-    // Si l'utilisateur a déjà cliqué "Réserver" → ne pas marquer comme rebond
-    // (le passage à paiement.html sera tracé indépendamment)
-    if (window.__navigatingToPaiement) return;
-    signalLeave();
-  });
-  // Trigger aussi sur visibilitychange (mobile : passage en arrière-plan)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && !window.__navigatingToPaiement) {
-      signalLeave();
+  ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
+    window.addEventListener(ev, markEngaged, { passive: true })
+  );
+  // Au bout de 5s sans interaction → on enregistre le rebond
+  bounceTimer = setTimeout(() => {
+    if (!engaged) {
+      try {
+        fetch(API_URL + '/track/pageview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() }),
+          keepalive: true
+        }).then(() => console.log('[📊 bounce] rebond enregistré (aucune interaction en 5s)')).catch(()=>{});
+      } catch(e) {}
     }
-  });
+  }, 5000);
   const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
 
   // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci
