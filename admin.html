@@ -1790,7 +1790,14 @@
     } catch(e) {}
 
     // Résa qui ont effectivement bénéficié du code
-    const usedBookings = (CACHE || []).filter(r => r.promoCode === 'TRIO5' && !r.deleted);
+    //    On détecte via : promoCode='TRIO5' OU (Trio + total réduit = 100€ au lieu de 105€)
+    const usedBookings = (CACHE || []).filter(r => {
+      if (r.deleted) return false;
+      if (r.promoCode === 'TRIO5') return true;
+      // Détection par total réduit : Trio = 3 places, prix unitaire 35€ → 105€ normal, 100€ si promo
+      if (r.ticketId === 'trio' && r.qty === 3 && (r.total === 100 || r.total === 100.00)) return true;
+      return false;
+    });
     const usedActive = usedBookings.filter(r => !r.archived);
     const totalDiscount = usedActive.reduce((s, r) => s + (r.promoDiscount || 5), 0);
     const conversionPct = applied > 0 ? Math.round(usedBookings.length / applied * 100) : 0;
