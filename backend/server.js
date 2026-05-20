@@ -981,6 +981,22 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
   }
 });
 
+// 🎯 RESERVE-ID : génère juste un bookingId sans créer de ligne en BDD
+//    Utilisé au clic "Continuer vers le paiement" → le N° est réservé pour affichage
+//    sur paiement.html, mais aucune résa n'est créée tant que l'utilisateur ne clique pas "J'ai payé"
+app.post('/api/reservations/reserve-id', async (req, res) => {
+  try {
+    const { nom } = req.body || {};
+    if (!nom) return res.status(400).json({ error: 'missing nom' });
+    const bookingId = await generateBookingId(nom);
+    console.log(`🎯 ID réservé (pas d'insert) : ${bookingId}`);
+    res.json({ ok: true, bookingId });
+  } catch (e) {
+    console.error('reserve-id error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Créer une réservation — l'ID est TOUJOURS généré côté serveur (séquentiel)
 // ⚠️ AUCUN email envoyé à ce stade — le client n'a pas encore cliqué "J'ai payé"
 //    Les emails partent dans POST /api/payment-method/:id (étape suivante)
@@ -991,9 +1007,19 @@ app.post('/api/reservations', async (req, res) => {
       return res.status(400).json({ error: 'missing fields (nom, email, qty)' });
     }
 
-    // 🆕 ID séquentiel généré server-side — ignore tout bookingId envoyé par le client
-    b.bookingId = await generateBookingId(b.nom);
+    // 🆕 ID séquentiel : si le client a déjà réservé un ID via /reserve-id, on le réutilise
+    if (b.bookingId) {
+      const existing = await findReservation(b.bookingId);
+      if (existing) {
+        console.warn(`⚠️ bookingId ${b.bookingId} déjà utilisé, on régénère`);
+        b.bookingId = await generateBookingId(b.nom);
+      }
+    } else {
+      b.bookingId = await generateBookingId(b.nom);
+    }
     b.serverReceivedAt = new Date().toISOString();
+    // Statut par défaut au moment de l'insert : "en attente vérification" (le client a cliqué "J'ai payé")
+    if (!b.status) b.status = 'en attente vérification';
 
     // 🎁 Vérifie le code promo côté serveur (sécurité)
     //    Trio + code TRIO5 = -5€
