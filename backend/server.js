@@ -74,11 +74,33 @@ async function findReservation(bookingId) {
   return (list && list[0]) || null;
 }
 async function insertReservation(b) {
-  await supa('reservations', {
-    method: 'POST',
-    headers: { 'Prefer': 'return=minimal' },
-    body: JSON.stringify(b)
-  });
+  try {
+    await supa('reservations', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(b)
+    });
+  } catch(e) {
+    // 🛟 Si Supabase rejette à cause d'une colonne inexistante (promoCode, promoDiscount, etc.)
+    //    → on retire ces champs et on réessaie
+    const msg = e.message || '';
+    const colMatch = msg.match(/(?:Could not find the |column ['"])(\w+)['"]?/);
+    const missing = colMatch ? colMatch[1] : null;
+    const knownOptional = ['promoCode', 'promoDiscount', 'events', 'scanLog', 'adminNote', 'deleted', 'deletedAt'];
+    if (missing && (knownOptional.includes(missing) || msg.includes('PGRST204'))) {
+      console.warn(`⚠️  Colonne "${missing}" manquante en BDD — fallback sans ce champ`);
+      const safe = { ...b };
+      // Retire toutes les colonnes optionnelles potentiellement manquantes
+      knownOptional.forEach(k => delete safe[k]);
+      await supa('reservations', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal' },
+        body: JSON.stringify(safe)
+      });
+      return;
+    }
+    throw e;
+  }
 }
 async function patchReservation(bookingId, patch) {
   await supa(`reservations?"bookingId"=eq.${encodeURIComponent(bookingId)}`, {
