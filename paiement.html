@@ -750,6 +750,29 @@
       // 📊 TRACKING : référence copiée
       trackEvent('ref_copied');
 
+      // 🆕 PROSPECT : envoie les infos perso au backend pour que l'admin
+      //    puisse voir cette personne dans le tableau "Ont copié sans payer"
+      //    (même si elle ne clique jamais "J'ai payé")
+      try {
+        fetch(API_URL + '/prospects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingId: booking.bookingId,
+            prenom: booking.prenom,
+            nom: booking.nom,
+            email: booking.email,
+            telephone: booking.telephone,
+            accompagnants: booking.accompagnants,
+            ticketName: booking.ticketName,
+            qty: booking.qty,
+            total: booking.total,
+            message: booking.message,
+            sessionId: getSessionId()
+          })
+        }).catch(()=>{});
+      } catch(e) {}
+
       setTimeout(() => {
         bigRefCopy.textContent = '📋 Copier la référence';
         bigRefCopy.classList.remove('copied');
