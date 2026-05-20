@@ -362,7 +362,9 @@
 
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
 
-  // 📊 TRACKING — vue de la page confirmation
+  // 📊 TRACKING — vue de la page confirmation (gardée pour visibilité temps-réel).
+  //    ⚠️ Le funnel "Validé admin" côté admin n'utilise PAS cette pageview —
+  //    il compte les résa avec status='confirmé' (vraie validation par toi).
   (function() {
     try {
       let s = sessionStorage.getItem('ebene_session_id');

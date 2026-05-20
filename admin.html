@@ -2241,9 +2241,36 @@
       }
 
       const accueil   = d.pages?.accueil      || { uniqueVisitors: 0, views: 0 };
-      const paiement  = d.pages?.paiement     || { uniqueVisitors: 0, views: 0 };
-      const confirm_  = d.pages?.confirmation || { uniqueVisitors: 0, views: 0 };
       const bounce    = d.bounce              || { count: 0, rate: 0 };
+
+      // 🎯 "Paiement déclaré" = nombre de résa réellement CRÉÉES en BDD
+      //    (= clic "J'ai payé" effectif). Les pageviews 'paiement' servent juste
+      //    au monitoring temps-réel, pas au funnel business.
+      //
+      // 🎯 "Validé admin" = nombre de résa avec status='confirmé'
+      //    (= validation manuelle par l'admin, pas un simple chargement de confirmation.html).
+      const [fStart, fEnd] = getFunnelDateRange();
+      const inFunnelRange = (r, tsField = 'timestamp') => {
+        if (!fStart && !fEnd) return true;
+        const t = r[tsField] || r.timestamp;
+        if (!t) return false;
+        const d2 = new Date(t);
+        if (fStart && d2 < fStart) return false;
+        if (fEnd && d2 >= fEnd) return false;
+        return true;
+      };
+      const declaredList = (CACHE || []).filter(r => {
+        if (isGloballyExcluded(r)) return false;
+        return inFunnelRange(r, 'timestamp');
+      });
+      const confirmedList = (CACHE || []).filter(r => {
+        if (r.status !== 'confirmé') return false;
+        if (r.archived) return false;
+        if (isGloballyExcluded(r)) return false;
+        return inFunnelRange(r, 'paidAt');
+      });
+      const paiement = { uniqueVisitors: declaredList.length, views: declaredList.length };
+      const confirm_ = { uniqueVisitors: confirmedList.length, views: confirmedList.length };
 
       // 🚫 Résa annulées (archivées) — calculé depuis CACHE
       //    Optionnellement filtré sur la même période que le funnel
@@ -2298,9 +2325,9 @@
       container.innerHTML = `
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 10px;">
           ${step('1️⃣ Accueil',      accueil.uniqueVisitors,  `${accueil.views} visite${accueil.views>1?'s':''} totales`, '#06b6d4', null, null)}
-          ${step('2️⃣ Paiement',     paiement.uniqueVisitors, `${paiement.views} visite${paiement.views>1?'s':''} totales`, '#c79270',
+          ${step('2️⃣ Paiement déclaré', paiement.uniqueVisitors, `Ont cliqué "J'ai payé"`, '#c79270',
                   `${a2p}% conversion`, a2p >= 50 ? '#22c55e' : (a2p >= 25 ? '#c79270' : '#f87171'))}
-          ${step('3️⃣ Confirmation', confirm_.uniqueVisitors, `${confirm_.views} visite${confirm_.views>1?'s':''} totales`, '#22c55e',
+          ${step('3️⃣ Validé admin', confirm_.uniqueVisitors, `Résa confirmées par l'admin`, '#22c55e',
                   `${p2c}% conversion`, p2c >= 50 ? '#22c55e' : (p2c >= 25 ? '#c79270' : '#f87171'))}
           ${step('4️⃣ Rebond',       bounce.count,            `Sont partis sans aller plus loin${bounce.inProgress ? ` · ${bounce.inProgress} en cours` : ''}`, bounceColor,
                   `${bounce.rate}% rebond`, bounceColor)}
@@ -3766,20 +3793,20 @@
       bounce = d.bounce || { count: 0, rate: 0 };
     } catch(e) { /* fallback empty */ }
 
-    const accueil   = pages.accueil?.uniqueVisitors      || 0;
-    const paiement  = pages.paiement?.uniqueVisitors     || 0;
-    const confirm_  = pages.confirmation?.uniqueVisitors || 0;
-    // 🚫 Validé par admin filtre aussi avec isGloballyExcluded
+    const accueil   = pages.accueil?.uniqueVisitors  || 0;
+    // 🆕 "Paiement déclaré" = résa créées en BDD (clic "J'ai payé" effectif), pas pageview
+    const paiement  = (data || []).filter(r => !isGloballyExcluded(r)).length;
+    // 🚫 "Validé par admin" = résa avec status='confirmé'
     const paidResa  = (data || []).filter(r => r.status === 'confirmé' && !isGloballyExcluded(r)).length;
 
     charts[chartKey] = new Chart(el, {
       type: 'bar',
       data: {
-        labels: ['1️⃣ Visites Accueil', '2️⃣ Atteint Paiement', '3️⃣ A cliqué "J\'ai payé"', '4️⃣ Validé par admin'],
+        labels: ['1️⃣ Visites Accueil', '2️⃣ Paiement déclaré', '3️⃣ Validé par admin'],
         datasets: [{
           label: 'Visiteurs / Résa',
-          data: [accueil, paiement, confirm_, paidResa],
-          backgroundColor: ['#06b6d4', '#c79270', '#22c55e', '#16a34a'],
+          data: [accueil, paiement, paidResa],
+          backgroundColor: ['#06b6d4', '#c79270', '#16a34a'],
           borderRadius: 6,
           borderSkipped: false
         }]

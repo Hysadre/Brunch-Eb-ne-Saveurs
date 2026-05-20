@@ -621,6 +621,9 @@
       }).catch(()=>{});
     } catch(e) {}
   }
+  // 📊 Pageview gardée pour la visibilité temps-réel (voir qui est sur la page paiement).
+  //    ⚠️ Le funnel "Paiement déclaré" côté admin n'utilise PAS cette pageview —
+  //    il compte les vraies résa créées (clic "J'ai payé" effectif).
   trackPageview('paiement');
 
   // 💳 (Auto-save du moyen de paiement désactivé — la résa n'est créée qu'au clic "J'ai payé")
