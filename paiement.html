@@ -606,6 +606,14 @@
   }
   function trackEvent(type, data) {
     if (!booking?.bookingId) return;
+    // Accumule en localStorage (la résa n'existe pas encore en BDD)
+    try {
+      const key = 'ebene_pending_events_' + booking.bookingId;
+      const evts = JSON.parse(localStorage.getItem(key) || '[]');
+      evts.push({ type, data: data || null, at: new Date().toISOString() });
+      localStorage.setItem(key, JSON.stringify(evts));
+    } catch(e) {}
+    // En parallèle, on tente quand même d'envoyer côté serveur (au cas où la résa existe déjà)
     try {
       fetch(API_URL + '/track/event/' + encodeURIComponent(booking.bookingId), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -615,15 +623,8 @@
   }
   trackPageview('paiement');
 
-  // 💳 Enregistre immédiatement le moyen par défaut (Wero) côté serveur
-  //    Comme ça même si le client ferme la page sans cliquer "J'ai payé",
-  //    on a au moins son moyen de paiement présumé dans la BDD.
-  if (booking?.bookingId && API_URL) {
-    fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: 'wero', presumed: true })
-    }).catch(() => {});
-  }
+  // 💳 (Auto-save du moyen de paiement désactivé — la résa n'est créée qu'au clic "J'ai payé")
+  //    Le moyen de paiement est inclus dans le booking.paymentMethod et envoyé à la création
 
   // 🆘 Pré-remplit le lien WhatsApp "J'ai oublié la référence"
   function buildForgotRefLink() {
@@ -812,22 +813,40 @@
     booking.status = 'en attente vérification';
     booking.paidAt = new Date().toISOString();
 
+    // 📊 Récupère les events accumulés en localStorage pour les inclure dans la résa
+    try {
+      const key = 'ebene_pending_events_' + booking.bookingId;
+      const pendingEvents = JSON.parse(localStorage.getItem(key) || '[]');
+      if (pendingEvents.length > 0) booking.events = pendingEvents;
+      localStorage.removeItem(key);
+    } catch(e) {}
+
     // Sauvegarde localStorage
     const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
     reservations.push(booking);
     localStorage.setItem('reservations', JSON.stringify(reservations));
     localStorage.setItem('currentBooking', JSON.stringify(booking));
 
-    // 📤 Met à jour le moyen de paiement côté serveur
-    // (la résa a déjà été créée dans index.html, donc on n'envoie QUE le method)
-    if (API_URL && booking.bookingId) {
+    // 🎯 C'EST ICI qu'on CRÉE vraiment la résa en BDD (insert avec données complètes)
+    //    Le bookingId a été pré-réservé sur index.html (mais aucune ligne n'avait été insérée)
+    if (API_URL) {
       try {
-        await fetch(API_URL + '/payment-method/' + encodeURIComponent(booking.bookingId), {
+        const r = await fetch(API_URL + '/reservations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ method })
+          body: JSON.stringify(booking)
         });
-      } catch(e) { console.warn('API payment-method update failed', e); }
+        if (r.ok) {
+          const data = await r.json();
+          // Si le backend a généré un nouveau ID (collision), on met à jour localStorage
+          if (data.bookingId && data.bookingId !== booking.bookingId) {
+            booking.bookingId = data.bookingId;
+            localStorage.setItem('currentBooking', JSON.stringify(booking));
+          }
+        } else {
+          console.warn('API create reservation failed', r.status);
+        }
+      } catch(e) { console.warn('API insert failed', e); }
     }
 
     setTimeout(() => { window.location.href = 'confirmation.html'; }, 1500);

@@ -1146,21 +1146,21 @@
       // ⚠️ Pas de bookingId ici — il est généré côté serveur (séquentiel EBENE-NOM-Y{NNN})
     };
 
-    // 📤 Envoi à l'API pour obtenir le N° de résa séquentiel
+    // 🎯 Récupère JUSTE un N° de résa (PAS d'insert en BDD)
+    //    L'insert n'aura lieu que quand l'utilisateur cliquera "J'ai payé"
     if (!API_URL) {
       alert('Service indisponible — veuillez réessayer.');
       return;
     }
-    // Disable le bouton pendant l'envoi
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const oldBtnText = submitBtn ? submitBtn.innerHTML : '';
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '⏳ Création de votre réservation...'; }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '⏳ Préparation de votre paiement...'; }
 
     try {
-      const r = await fetch(API_URL + '/reservations', {
+      const r = await fetch(API_URL + '/reservations/reserve-id', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(booking)
+        body: JSON.stringify({ nom })
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
@@ -1171,8 +1171,8 @@
       window.__navigatingToPaiement = true;
       window.location.href = 'paiement.html';
     } catch(err) {
-      console.error('Création résa échouée', err);
-      alert('Impossible de créer votre réservation. Vérifiez votre connexion et réessayez.\n\n(' + (err.message || 'erreur réseau') + ')');
+      console.error('Reserve ID échoué', err);
+      alert('Impossible de préparer votre paiement. Vérifiez votre connexion et réessayez.\n\n(' + (err.message || 'erreur réseau') + ')');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = oldBtnText; }
     }
   });
