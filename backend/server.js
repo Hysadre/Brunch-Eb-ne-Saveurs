@@ -984,6 +984,10 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
 app.get('/api/track/timeseries', requireAdmin, async (req, res) => {
   try {
     const { from, to, page, granularity = 'day' } = req.query;
+    // 🌍 tzOffset = `Date.getTimezoneOffset()` envoyé par le client (minutes WEST de UTC).
+    //    Pour Paris en été = -120. On l'applique aux timestamps avant de bucketiser
+    //    pour que les buckets reflètent le jour LOCAL du client.
+    const tzOffsetMin = parseInt(req.query.tzOffset, 10) || 0;
     let qParts = ['select=timestamp', 'order=timestamp.asc'];
     if (page) qParts.push(`page=eq.${encodeURIComponent(page)}`);
     if (from) qParts.push(`timestamp=gte.${encodeURIComponent(from)}`);
@@ -1001,16 +1005,25 @@ app.get('/api/track/timeseries', requireAdmin, async (req, res) => {
     const buckets = {};
     rows.forEach(v => {
       if (!v.timestamp) return;
-      const d = new Date(v.timestamp);
+      // Décale le timestamp UTC vers le fuseau du client en jouant sur le tzOffset.
+      // local_time = utc_time - tzOffset*60000  (getTimezoneOffset = WEST positif)
+      const d = new Date(new Date(v.timestamp).getTime() - tzOffsetMin * 60000);
+      // Maintenant on lit les composants UTC du décalé = équivalent du local
+      const yyyy = d.getUTCFullYear();
+      const mm   = String(d.getUTCMonth()+1).padStart(2,'0');
+      const dd   = String(d.getUTCDate()).padStart(2,'0');
       let key;
       if (granularity === 'month') {
-        key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        key = `${yyyy}-${mm}`;
       } else if (granularity === 'week') {
-        const day = d.getDay() || 7;
-        const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
-        key = monday.toISOString().slice(0,10);
+        const day = d.getUTCDay() || 7;
+        const monday = new Date(d.getTime() - (day - 1) * 86400000);
+        const my = monday.getUTCFullYear();
+        const mm2 = String(monday.getUTCMonth()+1).padStart(2,'0');
+        const md = String(monday.getUTCDate()).padStart(2,'0');
+        key = `${my}-${mm2}-${md}`;
       } else {
-        key = d.toISOString().slice(0,10);
+        key = `${yyyy}-${mm}-${dd}`;
       }
       buckets[key] = (buckets[key] || 0) + 1;
     });
