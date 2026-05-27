@@ -895,6 +895,10 @@
         <div class="chart-wrap"><canvas id="chartVisitesParJour"></canvas></div>
       </div>
       <div class="chart-card wide">
+        <h3>💰 Recettes par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(revenu confirmé chaque jour — granularité + comparaison ↑)</span></h3>
+        <div class="chart-wrap"><canvas id="chartRecettesParJour"></canvas></div>
+      </div>
+      <div class="chart-card wide">
         <h3>📈 Évolution cumulée des réservations</h3>
         <div class="chart-wrap"><canvas id="chartEvolution"></canvas></div>
       </div>
@@ -2967,11 +2971,13 @@
   });
   document.getElementById('globalGranularity')?.addEventListener('change', () => {
     drawParJour(CACHE);
+    drawRecettesParJour(CACHE);
     drawVisitesParJour();
   });
   // 🆚 Comparaison → re-render les charts temporels concernés
   document.getElementById('globalCompare')?.addEventListener('change', () => {
     drawParJour(CACHE);
+    drawRecettesParJour(CACHE);
     drawVisitesParJour();
   });
   // 🚫 Filtre d'exclusion → re-render TOUT
@@ -3608,11 +3614,14 @@
     setTimeout(() => {
       drawFunnelVisual(data, 'chartFunnelVisual');
       drawEvolution(data);
-      drawFormules(paid);
-      drawPaiements(paid);
+      // 🆕 Formules et moyens de paiement sur TOUTES les résa actives (pas que confirmées)
+      //    → les donuts ne sont plus vides tant que rien n'est validé.
+      drawFormules(data);
+      drawPaiements(data);
       drawStatuts(data);
       drawStatutsRatio(data);
       drawParJour(data);
+      drawRecettesParJour(data);
       drawVisitesParJour();
     }, 50);
   }
@@ -3750,28 +3759,35 @@
   }
 
   // 🪣 Helper : bucket key + label pour une période donnée
+  //    ⚠️ Utilise les composants de date LOCAUX (pas toISOString qui décale d'1 jour
+  //    pour les fuseaux Est de UTC comme Paris en été).
+  function fmtLocalDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
   function bucketKeyFor(date, period) {
-    const d = new Date(date);
+    const d = (date instanceof Date) ? date : new Date(date);
     if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
     if (period === 'week') {
       const day = d.getDay() || 7;
       const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
-      return monday.toISOString().slice(0,10);
+      return fmtLocalDate(monday);
     }
-    return d.toISOString().slice(0,10);
+    return fmtLocalDate(d);
   }
   function bucketLabelFor(key, period) {
     if (period === 'month') {
       const [y, m] = key.split('-');
       return new Date(parseInt(y), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
     }
-    if (period === 'week') {
-      const d = new Date(key);
-      return 'Sem. ' + d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-    }
-    return new Date(key).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+    // 'day' et 'week' : YYYY-MM-DD → parse en LOCAL (pas UTC)
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, m-1, d);
+    if (period === 'week') return 'Sem. ' + date.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+    return date.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
   }
   // Génère les clés (buckets) entre start et end pour une granularité donnée
+  //    ⚠️ Passe directement l'objet Date à bucketKeyFor (pas toISOString) pour
+  //    rester en heure LOCALE.
   function generateBucketKeys(start, end, period) {
     const keys = [];
     if (!start || !end || start > end) return keys;
@@ -3784,7 +3800,7 @@
     }
     let safety = 0;
     while (cursor <= limit && safety < 400) {
-      keys.push(bucketKeyFor(cursor.toISOString(), period));
+      keys.push(bucketKeyFor(cursor, period));
       if (period === 'day') cursor.setDate(cursor.getDate() + 1);
       else if (period === 'week') cursor.setDate(cursor.getDate() + 7);
       else if (period === 'month') cursor.setMonth(cursor.getMonth() + 1);
@@ -3905,6 +3921,121 @@
     });
   }
 
+  // 💰 Recettes par période — bucket les résa CONFIRMÉES par jour, somme du total
+  function drawRecettesParJour(data) {
+    destroyChart('recettesParJour');
+    const el = document.getElementById('chartRecettesParJour');
+    if (!el) return;
+    const period = getGlobalGranularity() || 'day';
+    const allData = data || [];
+
+    // Plage courante
+    const [rangeStart, rangeEnd] = getGlobalDateRange();
+    let displayStart = rangeStart ? new Date(rangeStart) : null;
+    let displayEnd   = rangeEnd   ? new Date(rangeEnd)   : null;
+    if (!displayStart || !displayEnd) {
+      const validResa = allData.filter(r => !isGloballyExcluded(r) && r.timestamp);
+      if (validResa.length > 0) {
+        const dates = validResa.map(r => new Date(r.timestamp)).sort((a, b) => a - b);
+        if (!displayStart) displayStart = dates[0];
+        if (!displayEnd) displayEnd = new Date();
+      } else {
+        const now = new Date();
+        if (!displayEnd) displayEnd = now;
+        if (!displayStart) displayStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      }
+    }
+    const [compStart, compEnd, compMode] = getComparisonRange(displayStart, displayEnd);
+
+    // Bucket les recettes (status='confirmé') pour la période courante + comparaison
+    //    On utilise paidAt si dispo (date de validation par admin), sinon timestamp.
+    const currentByBucket = {};
+    const compareByBucket = {};
+    allData.forEach(r => {
+      if (isGloballyExcluded(r)) return;
+      if (r.status !== 'confirmé') return;
+      const ts = r.paidAt || r.timestamp;
+      if (!ts) return;
+      const t = new Date(ts);
+      const amount = (r.total || 0);
+      if (t >= displayStart && t < displayEnd) {
+        const k = bucketKeyFor(t, period);
+        currentByBucket[k] = (currentByBucket[k] || 0) + amount;
+      }
+      if (compStart && compEnd && t >= compStart && t < compEnd) {
+        const k = bucketKeyFor(t, period);
+        compareByBucket[k] = (compareByBucket[k] || 0) + amount;
+      }
+    });
+
+    const currentKeys = generateBucketKeys(displayStart, displayEnd, period);
+    const compareKeys = compStart ? generateBucketKeys(compStart, compEnd, period) : [];
+    const currentValues = currentKeys.map(k => +(currentByBucket[k] || 0).toFixed(2));
+    const compareValues = currentKeys.map((_, i) => {
+      const ck = compareKeys[i];
+      return ck ? +(compareByBucket[ck] || 0).toFixed(2) : 0;
+    });
+    const labels = currentKeys.map(k => bucketLabelFor(k, period));
+    const compareLabels = compareKeys.map(k => bucketLabelFor(k, period));
+
+    const datasets = [{
+      label: 'Période actuelle (€)',
+      data: currentValues.length ? currentValues : [0],
+      borderColor: '#fbbf24',
+      backgroundColor: 'rgba(251,191,36,0.15)',
+      tension: 0.3,
+      fill: true,
+      borderWidth: 3,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointBackgroundColor: '#fbbf24',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }];
+    if (compMode !== 'none' && compStart) {
+      datasets.push({
+        label: (compMode === 'lastyear' ? 'Année précédente' : 'Période précédente') + ' (€)',
+        data: compareValues,
+        borderColor: 'rgba(199,146,112,0.45)',
+        backgroundColor: 'rgba(199,146,112,0.08)',
+        borderDash: [6, 4],
+        tension: 0.3,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: 'rgba(199,146,112,0.45)',
+        pointBorderColor: 'rgba(255,255,255,0.4)',
+        pointBorderWidth: 1
+      });
+    }
+
+    charts.recettesParJour = new Chart(el, {
+      type: 'line',
+      data: { labels: labels.length ? labels : ['—'], datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { color: '#ede5d1' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${(ctx.parsed.y || 0).toFixed(2).replace('.', ',')} €`,
+              afterLabel: (ctx) => {
+                if (ctx.datasetIndex === 1 && compareLabels[ctx.dataIndex]) {
+                  return `(${compareLabels[ctx.dataIndex]})`;
+                }
+                return '';
+              }
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#3a2818' }, title: { display: true, text: 'Recettes (€)', color: '#d4a574' }, ticks: { callback: v => v + ' €' } }
+        }
+      }
+    });
+  }
+
   // 👀 Visites par période (pageviews 'accueil') — même structure que drawParJour
   async function drawVisitesParJour() {
     destroyChart('visitesParJour');
@@ -3931,6 +4062,8 @@
       params.set('from', start.toISOString());
       params.set('to', end.toISOString());
       params.set('granularity', period);
+      // 🌍 Passe l'offset du fuseau du client pour que le backend bucketise dans la TZ locale
+      params.set('tzOffset', String(new Date().getTimezoneOffset()));
       try {
         const r = await fetch(`${API_URL}/track/timeseries?${params}`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
         if (!r.ok) return {};
