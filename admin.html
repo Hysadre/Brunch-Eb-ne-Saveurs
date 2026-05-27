@@ -667,6 +667,13 @@
         <option value="week">Semaine</option>
         <option value="month">Mois</option>
       </select>
+
+      <span style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;">🆚 Comparer</span>
+      <select id="globalCompare" style="background:#0f0a06; border:1.5px solid #3a2818; color:#ede5d1; border-radius:8px; padding:6px 12px; font-family:inherit; font-size:13px; font-weight:600;" title="Affiche une ligne de comparaison opacité faible dans les graphiques temporels">
+        <option value="none">Aucune comparaison</option>
+        <option value="previous">vs Période précédente</option>
+        <option value="lastyear">vs Année précédente</option>
+      </select>
     </div>
 
     <!-- Ligne 2 : Filtre d'exclusion bien visible -->
@@ -880,8 +887,12 @@
         <div class="chart-wrap"><canvas id="chartFunnelVisual"></canvas></div>
       </div>
       <div class="chart-card wide">
-        <h3>📊 Réservations par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(granularité depuis le filtre global ↑)</span></h3>
+        <h3>📊 Réservations par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(granularité + comparaison depuis le filtre global ↑)</span></h3>
         <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
+      </div>
+      <div class="chart-card wide">
+        <h3>👀 Visites par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(pageviews de l'accueil — granularité + comparaison depuis le filtre global ↑)</span></h3>
+        <div class="chart-wrap"><canvas id="chartVisitesParJour"></canvas></div>
       </div>
       <div class="chart-card wide">
         <h3>📈 Évolution cumulée des réservations</h3>
@@ -2956,6 +2967,12 @@
   });
   document.getElementById('globalGranularity')?.addEventListener('change', () => {
     drawParJour(CACHE);
+    drawVisitesParJour();
+  });
+  // 🆚 Comparaison → re-render les charts temporels concernés
+  document.getElementById('globalCompare')?.addEventListener('change', () => {
+    drawParJour(CACHE);
+    drawVisitesParJour();
   });
   // 🚫 Filtre d'exclusion → re-render TOUT
   document.getElementById('globalExclude')?.addEventListener('change', applyGlobalFilterToAll);
@@ -3596,6 +3613,7 @@
       drawStatuts(data);
       drawStatutsRatio(data);
       drawParJour(data);
+      drawVisitesParJour();
     }, 50);
   }
 
@@ -3715,126 +3733,279 @@
     });
   }
 
+  // 🆚 Helper : calcule la plage de comparaison selon la sélection
+  function getComparisonRange(currentStart, currentEnd) {
+    const mode = document.getElementById('globalCompare')?.value || 'none';
+    if (mode === 'none' || !currentStart || !currentEnd) return [null, null, mode];
+    const duration = currentEnd - currentStart;
+    if (mode === 'previous') {
+      return [new Date(currentStart.getTime() - duration), new Date(currentStart.getTime()), mode];
+    }
+    if (mode === 'lastyear') {
+      const s = new Date(currentStart); s.setFullYear(s.getFullYear() - 1);
+      const e = new Date(currentEnd);   e.setFullYear(e.getFullYear() - 1);
+      return [s, e, mode];
+    }
+    return [null, null, mode];
+  }
+
+  // 🪣 Helper : bucket key + label pour une période donnée
+  function bucketKeyFor(date, period) {
+    const d = new Date(date);
+    if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (period === 'week') {
+      const day = d.getDay() || 7;
+      const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
+      return monday.toISOString().slice(0,10);
+    }
+    return d.toISOString().slice(0,10);
+  }
+  function bucketLabelFor(key, period) {
+    if (period === 'month') {
+      const [y, m] = key.split('-');
+      return new Date(parseInt(y), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
+    }
+    if (period === 'week') {
+      const d = new Date(key);
+      return 'Sem. ' + d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+    }
+    return new Date(key).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+  }
+  // Génère les clés (buckets) entre start et end pour une granularité donnée
+  function generateBucketKeys(start, end, period) {
+    const keys = [];
+    if (!start || !end || start > end) return keys;
+    const cursor = new Date(start);
+    const limit = new Date(end);
+    if (period === 'month') cursor.setDate(1);
+    if (period === 'week') {
+      const d = cursor.getDay() || 7;
+      cursor.setDate(cursor.getDate() - (d - 1));
+    }
+    let safety = 0;
+    while (cursor <= limit && safety < 400) {
+      keys.push(bucketKeyFor(cursor.toISOString(), period));
+      if (period === 'day') cursor.setDate(cursor.getDate() + 1);
+      else if (period === 'week') cursor.setDate(cursor.getDate() + 7);
+      else if (period === 'month') cursor.setMonth(cursor.getMonth() + 1);
+      else cursor.setDate(cursor.getDate() + 1);
+      safety++;
+    }
+    return keys;
+  }
+
   function drawParJour(data) {
     destroyChart('parJour');
-    // 🌍 Granularité globale en priorité, sinon celle locale du chart
     const period = getGlobalGranularity() || 'day';
-    // 🌍 Filtre date globale appliqué
     const allData = data || [];
-    // 🌍 Filtre date GLOBAL + 🚫 Filtre exclusion globale
-    data = allData.filter(r => inGlobalRange(r.timestamp) && !isGloballyExcluded(r));
 
-    // 📆 Détermine la plage à afficher (start + end)
+    // 📆 Détermine la plage courante (start + end)
     const [rangeStart, rangeEnd] = getGlobalDateRange();
-    let displayStart, displayEnd;
-    if (rangeStart) displayStart = new Date(rangeStart);
-    if (rangeEnd) displayEnd = new Date(rangeEnd);
-    // Si pas de range, déduit du data ou défault aux 7 derniers jours
+    let displayStart = rangeStart ? new Date(rangeStart) : null;
+    let displayEnd   = rangeEnd   ? new Date(rangeEnd)   : null;
     if (!displayStart || !displayEnd) {
-      if (data.length > 0) {
-        const dates = data.map(r => new Date(r.timestamp)).sort((a, b) => a - b);
+      const validResa = allData.filter(r => !isGloballyExcluded(r) && r.timestamp);
+      if (validResa.length > 0) {
+        const dates = validResa.map(r => new Date(r.timestamp)).sort((a, b) => a - b);
         if (!displayStart) displayStart = dates[0];
-        if (!displayEnd) displayEnd = new Date(); // aujourd'hui
+        if (!displayEnd) displayEnd = new Date();
       } else {
-        // Aucune donnée → on affiche les 7 derniers jours par défaut
         const now = new Date();
         if (!displayEnd) displayEnd = now;
         if (!displayStart) displayStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       }
     }
 
-    // Helper : retourne la clé d'agrégation pour une date
-    function bucketKey(date) {
-      const d = new Date(date);
-      if (period === 'month') return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-      if (period === 'week') {
-        // Lundi de la semaine
-        const day = d.getDay() || 7;
-        const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
-        return monday.toISOString().slice(0,10);
-      }
-      return d.toISOString().slice(0,10);  // 'day'
-    }
-    function bucketLabel(key) {
-      if (period === 'month') {
-        const [y, m] = key.split('-');
-        return new Date(parseInt(y), parseInt(m)-1, 1).toLocaleDateString('fr-FR', { month:'short', year:'numeric' });
-      }
-      if (period === 'week') {
-        const d = new Date(key);
-        return 'Sem. ' + d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-      }
-      return new Date(key).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-    }
+    // 🆚 Plage de comparaison
+    const [compStart, compEnd, compMode] = getComparisonRange(displayStart, displayEnd);
 
-    const byBucket = {};
-    data.forEach(r => {
-      if (!r.timestamp) return;
-      const k = bucketKey(r.timestamp);
-      if (!byBucket[k]) byBucket[k] = 0;
-      byBucket[k]++;
+    // Bucket les résa pour la période courante
+    const currentByBucket = {};
+    const compareByBucket = {};
+    allData.forEach(r => {
+      if (isGloballyExcluded(r) || !r.timestamp) return;
+      const t = new Date(r.timestamp);
+      if (t >= displayStart && t < displayEnd) {
+        const k = bucketKeyFor(r.timestamp, period);
+        currentByBucket[k] = (currentByBucket[k] || 0) + 1;
+      }
+      if (compStart && compEnd && t >= compStart && t < compEnd) {
+        const k = bucketKeyFor(r.timestamp, period);
+        compareByBucket[k] = (compareByBucket[k] || 0) + 1;
+      }
     });
 
-    // 📆 Génère TOUS les buckets entre displayStart et displayEnd (incluant les vides)
-    const allKeys = [];
-    if (displayStart && displayEnd && displayStart <= displayEnd) {
-      const cursor = new Date(displayStart);
-      const limit = new Date(displayEnd);
-      // Aligner cursor au début du bucket
-      if (period === 'month') cursor.setDate(1);
-      if (period === 'week') {
-        const d = cursor.getDay() || 7;
-        cursor.setDate(cursor.getDate() - (d - 1));
-      }
-      let safety = 0;
-      while (cursor <= limit && safety < 400) {
-        allKeys.push(bucketKey(cursor.toISOString()));
-        if (period === 'day') cursor.setDate(cursor.getDate() + 1);
-        else if (period === 'week') cursor.setDate(cursor.getDate() + 7);
-        else if (period === 'month') cursor.setMonth(cursor.getMonth() + 1);
-        else cursor.setDate(cursor.getDate() + 1);
-        safety++;
-      }
+    // X-axis : buckets de la période courante
+    const currentKeys = generateBucketKeys(displayStart, displayEnd, period);
+    const compareKeys = compStart ? generateBucketKeys(compStart, compEnd, period) : [];
+    // On aligne la comparaison sur la longueur de la période courante (index par index)
+    const currentValues = currentKeys.map(k => currentByBucket[k] || 0);
+    const compareValues = currentKeys.map((_, i) => {
+      const ck = compareKeys[i];
+      return ck ? (compareByBucket[ck] || 0) : 0;
+    });
+    const labels = currentKeys.map(k => bucketLabelFor(k, period));
+    // Labels secondaires (dates réelles de comparaison) pour le tooltip
+    const compareLabels = compareKeys.map(k => bucketLabelFor(k, period));
+
+    const datasets = [{
+      label: 'Période actuelle',
+      data: currentValues.length ? currentValues : [0],
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.15)',
+      tension: 0.3,
+      fill: true,
+      borderWidth: 3,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointBackgroundColor: '#22c55e',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }];
+    if (compMode !== 'none' && compStart) {
+      datasets.push({
+        label: compMode === 'lastyear' ? 'Année précédente' : 'Période précédente',
+        data: compareValues,
+        borderColor: 'rgba(199,146,112,0.45)',
+        backgroundColor: 'rgba(199,146,112,0.08)',
+        borderDash: [6, 4],
+        tension: 0.3,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: 'rgba(199,146,112,0.45)',
+        pointBorderColor: 'rgba(255,255,255,0.4)',
+        pointBorderWidth: 1
+      });
     }
-    // Fallback : si pas de range, utilise juste les buckets qui ont des données
-    const keys = allKeys.length > 0 ? allKeys : Object.keys(byBucket).sort();
-    const values = keys.map(k => byBucket[k] || 0);
-    // Courbe cumulée par-dessus
-    let cum = 0;
-    const cumValues = values.map(v => (cum += v));
-    const labels = keys.map(bucketLabel);
 
     charts.parJour = new Chart(document.getElementById('chartParJour'), {
-      type: 'bar',
-      data: {
-        labels: labels.length ? labels : ['—'],
-        datasets: [
-          { label: 'Nouvelles résa', data: values.length ? values : [0], backgroundColor: '#b86a45', borderRadius: 4, yAxisID: 'y', order: 2 },
-          {
-            label: 'Cumulé',
-            data: cumValues.length ? cumValues : [0],
-            type: 'line',
-            borderColor: '#22c55e',
-            backgroundColor: 'rgba(34,197,94,0.15)',
-            tension: 0.3,
-            fill: true,
-            yAxisID: 'y1',
-            borderWidth: 3,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            pointBackgroundColor: '#22c55e',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            order: 1
-          }
-        ]
-      },
+      type: 'line',
+      data: { labels: labels.length ? labels : ['—'], datasets },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { color: '#ede5d1' } } },
+        plugins: {
+          legend: { position: 'top', labels: { color: '#ede5d1' } },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                if (ctx.datasetIndex === 1 && compareLabels[ctx.dataIndex]) {
+                  return `(${compareLabels[ctx.dataIndex]})`;
+                }
+                return '';
+              }
+            }
+          }
+        },
         scales: {
-          y:  { position: 'left',  beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' }, title: { display: true, text: 'Nouvelles', color: '#d4a574' } },
-          y1: { position: 'right', beginAtZero: true, ticks: { precision: 0 }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Cumulé', color: '#d4a574' } }
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' }, title: { display: true, text: 'Nouvelles résa', color: '#d4a574' } }
+        }
+      }
+    });
+  }
+
+  // 👀 Visites par période (pageviews 'accueil') — même structure que drawParJour
+  async function drawVisitesParJour() {
+    destroyChart('visitesParJour');
+    const el = document.getElementById('chartVisitesParJour');
+    if (!el) return;
+    const period = getGlobalGranularity() || 'day';
+
+    // Plage courante
+    const [rangeStart, rangeEnd] = getGlobalDateRange();
+    let displayStart = rangeStart ? new Date(rangeStart) : null;
+    let displayEnd   = rangeEnd   ? new Date(rangeEnd)   : null;
+    if (!displayStart || !displayEnd) {
+      const now = new Date();
+      if (!displayEnd) displayEnd = now;
+      if (!displayStart) displayStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+    const [compStart, compEnd, compMode] = getComparisonRange(displayStart, displayEnd);
+
+    // Helper : fetch des buckets de visites pour une plage
+    async function fetchBuckets(start, end) {
+      if (!start || !end) return {};
+      const params = new URLSearchParams();
+      params.set('page', 'accueil');
+      params.set('from', start.toISOString());
+      params.set('to', end.toISOString());
+      params.set('granularity', period);
+      try {
+        const r = await fetch(`${API_URL}/track/timeseries?${params}`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+        if (!r.ok) return {};
+        const d = await r.json();
+        return d.buckets || {};
+      } catch(e) { return {}; }
+    }
+
+    const [currentByBucket, compareByBucket] = await Promise.all([
+      fetchBuckets(displayStart, displayEnd),
+      (compMode !== 'none' && compStart) ? fetchBuckets(compStart, compEnd) : Promise.resolve({})
+    ]);
+
+    const currentKeys = generateBucketKeys(displayStart, displayEnd, period);
+    const compareKeys = compStart ? generateBucketKeys(compStart, compEnd, period) : [];
+    const currentValues = currentKeys.map(k => currentByBucket[k] || 0);
+    const compareValues = currentKeys.map((_, i) => {
+      const ck = compareKeys[i];
+      return ck ? (compareByBucket[ck] || 0) : 0;
+    });
+    const labels = currentKeys.map(k => bucketLabelFor(k, period));
+    const compareLabels = compareKeys.map(k => bucketLabelFor(k, period));
+
+    const datasets = [{
+      label: 'Période actuelle',
+      data: currentValues.length ? currentValues : [0],
+      borderColor: '#06b6d4',
+      backgroundColor: 'rgba(6,182,212,0.15)',
+      tension: 0.3,
+      fill: true,
+      borderWidth: 3,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointBackgroundColor: '#06b6d4',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2
+    }];
+    if (compMode !== 'none' && compStart) {
+      datasets.push({
+        label: compMode === 'lastyear' ? 'Année précédente' : 'Période précédente',
+        data: compareValues,
+        borderColor: 'rgba(199,146,112,0.45)',
+        backgroundColor: 'rgba(199,146,112,0.08)',
+        borderDash: [6, 4],
+        tension: 0.3,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: 'rgba(199,146,112,0.45)',
+        pointBorderColor: 'rgba(255,255,255,0.4)',
+        pointBorderWidth: 1
+      });
+    }
+
+    charts.visitesParJour = new Chart(el, {
+      type: 'line',
+      data: { labels: labels.length ? labels : ['—'], datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { color: '#ede5d1' } },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                if (ctx.datasetIndex === 1 && compareLabels[ctx.dataIndex]) {
+                  return `(${compareLabels[ctx.dataIndex]})`;
+                }
+                return '';
+              }
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' }, title: { display: true, text: 'Visites', color: '#d4a574' } }
         }
       }
     });
