@@ -979,6 +979,48 @@ app.get('/api/reservations', requireAdmin, async (req, res) => {
   }
 });
 
+// 📈 TIMESERIES (admin) — pageviews bucketés par jour/semaine/mois
+//    Utilisé par les graphiques "Visites par période" (avec comparaison période/année précédente).
+app.get('/api/track/timeseries', requireAdmin, async (req, res) => {
+  try {
+    const { from, to, page, granularity = 'day' } = req.query;
+    let qParts = ['select=timestamp', 'order=timestamp.asc'];
+    if (page) qParts.push(`page=eq.${encodeURIComponent(page)}`);
+    if (from) qParts.push(`timestamp=gte.${encodeURIComponent(from)}`);
+    if (to)   qParts.push(`timestamp=lt.${encodeURIComponent(to)}`);
+    let rows = [];
+    try {
+      rows = await supa(`pageviews?${qParts.join('&')}&limit=10000`) || [];
+    } catch(e) {
+      const msg = e.message || '';
+      if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
+        return res.json({ buckets: {}, total: 0, warning: 'TABLE_MISSING' });
+      }
+      throw e;
+    }
+    const buckets = {};
+    rows.forEach(v => {
+      if (!v.timestamp) return;
+      const d = new Date(v.timestamp);
+      let key;
+      if (granularity === 'month') {
+        key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      } else if (granularity === 'week') {
+        const day = d.getDay() || 7;
+        const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (day - 1));
+        key = monday.toISOString().slice(0,10);
+      } else {
+        key = d.toISOString().slice(0,10);
+      }
+      buckets[key] = (buckets[key] || 0) + 1;
+    });
+    res.json({ buckets, total: rows.length });
+  } catch(e) {
+    console.error('timeseries error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 🆕 PROSPECTS : enregistre les personnes qui ont copié la référence
 //    sans encore cliquer "J'ai payé". Permet à l'admin de relancer ces leads.
 //    Une fois la résa créée (clic "J'ai payé"), le prospect est marqué 'converted'.
