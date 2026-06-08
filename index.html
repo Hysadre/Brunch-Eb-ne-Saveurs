@@ -2,15 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0f0a06">
+<title>Brunch Ébène & Saveurs · 22 août 2026</title>
+<meta name="description" content="Brunch africain à volonté · Métropole lilloise · Samedi 22 août 2026 · 35€">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="shortcut icon" href="favicon.ico">
-<title>Brunch Ébène & Saveurs · Réservation</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -19,731 +19,572 @@
     background: #0f0a06;
     color: #ede5d1;
     min-height: 100vh;
-    line-height: 1.5;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  .app { max-width: 560px; margin: 0 auto; padding: 0 20px 40px; }
+  a { color: inherit; }
 
-  .hero {
-    margin: 0 -20px;
-    padding: 36px 24px 28px;
-    background:
-      radial-gradient(circle at 80% 10%, rgba(251, 191, 36, 0.18), transparent 50%),
-      radial-gradient(circle at 10% 90%, rgba(22, 163, 74, 0.20), transparent 55%),
-      linear-gradient(160deg, #1a1108 0%, #2a1810 50%, #1a1108 100%);
-    color: #ede5d1;
-    border-radius: 0 0 28px 28px;
-    position: relative;
-    overflow: hidden;
+  /* ============== NAVIGATION ONGLETS (sticky top) ============== */
+  .topnav {
+    background: #0f0a06;
     border-bottom: 1px solid #3a2818;
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 101;
+  }
+  .topnav a {
+    flex: 1;
+    text-align: center;
+    padding: 11px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14px;
+    color: #d4a574;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .topnav a.active {
+    color: #1a1108;
+    font-weight: 800;
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    box-shadow: 0 2px 8px rgba(184,106,69,0.3);
+  }
+  .topnav a:not(.active):hover {
+    background: rgba(255,255,255,0.04);
+    color: #ede5d1;
+  }
+
+  /* ============== BANNIÈRE RÉSERVER (tout en haut) ============== */
+  .cta-banner {
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    color: #1a1108;
+    padding: 11px 16px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+    transition: filter 0.2s ease;
+  }
+  .cta-banner:hover { filter: brightness(1.08); }
+  .cta-banner-arrow { font-size: 16px; }
+
+  /* ============== STRUCTURE PAGE ============== */
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 18px 60px;
+  }
+
+  /* ============== HERO LOGO + TITRE ============== */
+  .hero {
+    text-align: center;
+    padding: 28px 14px 18px;
   }
   .hero-eyebrow {
     font-size: 11px;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     text-transform: uppercase;
     color: #c79270;
     font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .logo-wrap img {
+    max-width: 240px;
+    width: 60%;
+    height: auto;
+    filter: drop-shadow(0 6px 20px rgba(199,146,112,0.15));
+  }
+  .logo-fallback {
+    /* affiché si l'image n'a pas pu charger */
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px;
+    color: #c79270;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .logo-fallback .em { color: #b86a45; font-style: italic; }
+
+  /* ============== INFOS PRATIQUES (carte top) ============== */
+  .infos-pratiques {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 18px;
+    padding: 20px 18px;
+    margin-bottom: 18px;
+  }
+  .info-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 15px;
+  }
+  .info-line + .info-line { border-top: 1px solid #2a1810; }
+  .info-line .icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(199,146,112,0.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .info-line .info-text {
+    flex: 1;
+    color: #ede5d1;
+    font-weight: 600;
+  }
+  .info-line .info-sub {
+    color: #8a6648;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .price-pill {
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    color: #1a1108;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  /* ============== BOUTON RÉSERVER PRINCIPAL ============== */
+  .reserve-btn {
+    display: block;
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    color: #1a1108;
+    text-decoration: none;
+    padding: 17px 24px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    margin: 16px 0;
+    box-shadow: 0 6px 20px rgba(184,106,69,0.25);
+    transition: all 0.2s ease;
+  }
+  .reserve-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(184,106,69,0.4); }
+  .reserve-btn:active { transform: translateY(0); }
+
+  /* ============== SECTION BUFFET ============== */
+  .buffet-banner {
+    background: #1a1108;
+    border: 2px dashed #b86a45;
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .buffet-banner h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #c79270;
+    letter-spacing: 1px;
+  }
+  .buffet-banner .sub {
+    margin-top: 4px;
+    color: #d4a574;
+    font-size: 13px;
+  }
+
+  /* ============== GRILLE DE PLATS ============== */
+  .dishes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .dish {
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .dish:hover { transform: translateY(-2px); border-color: #b86a45; }
+  .dish .emoji {
+    font-size: 32px;
     margin-bottom: 6px;
   }
-  .hero-title {
-    font-size: 34px;
-    line-height: 1;
-    margin: 4px 0 6px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: #fff;
-  }
-  .hero-title .accent {
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-style: italic;
-  }
-  .hero-tagline {
-    font-size: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: #d4a574;
-    margin: 10px 0 18px;
-    font-weight: 600;
-  }
-  .hero-meta {
-    display: flex; flex-direction: column; gap: 8px;
-    font-size: 15px;
-  }
-  .hero-meta .row { display: flex; align-items: center; gap: 10px; }
-  .hero-meta .ico { width: 18px; height: 18px; flex: 0 0 18px; color: #c79270; }
-
-  .badge-warning {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(249, 115, 22, 0.15);
-    color: #fb923c;
-    padding: 6px 12px;
-    border-radius: 99px;
-    font-size: 12px;
+  .dish .name {
+    color: #c79270;
     font-weight: 700;
-    margin-top: 14px;
-    border: 1px solid rgba(249, 115, 22, 0.3);
+    font-size: 14px;
+  }
+  @media (min-width: 480px) {
+    .dishes { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .dish .emoji { font-size: 38px; }
   }
 
-  .card {
+  /* ============== AU MENU ============== */
+  .menu-section {
     background: #1a1108;
     border: 1px solid #3a2818;
-    border-radius: 20px;
-    padding: 20px;
-    margin-top: 16px;
-  }
-  .card h2 {
-    margin: 0 0 14px;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-    color: #fff;
-  }
-  .label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #d4a574;
-    margin: 14px 0 8px;
-    letter-spacing: 0.2px;
-  }
-  .label:first-child { margin-top: 0; }
-  input, select, textarea {
-    width: 100%;
-    background: #0f0a06;
-    border: 1.5px solid #3a2818;
-    color: #ede5d1;
-    border-radius: 14px;
-    padding: 14px 14px;
-    font-size: 16px;
-    font-family: inherit;
-    transition: border-color .15s, background .15s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #b86a45;
-    background: #14100a;
-  }
-  textarea { resize: vertical; min-height: 80px; }
-
-  .ticket-options { display: flex; flex-direction: column; gap: 10px; }
-  .ticket {
-    display: flex; align-items: center; gap: 14px;
-    padding: 14px;
-    border: 1.5px solid #3a2818;
     border-radius: 16px;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-    position: relative;
+    padding: 20px 18px;
+    margin-bottom: 18px;
   }
-  .ticket.selected { border-color: #b86a45; background: #241408; }
-  .ticket.disabled {
-    opacity: .45;
-    cursor: not-allowed;
-  }
-  .ticket-radio {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    border: 2px solid #5a4028;
-    flex: 0 0 22px;
-    position: relative;
-    transition: border-color .15s;
-  }
-  .ticket.selected .ticket-radio { border-color: #b86a45; }
-  .ticket.selected .ticket-radio::after {
-    content: "";
-    position: absolute; inset: 3px;
-    background: #b86a45;
-    border-radius: 50%;
-  }
-  .ticket-info { flex: 1; }
-  .ticket-name { font-weight: 700; font-size: 15px; color: #fff; }
-  .ticket-desc { font-size: 12px; color: #d4a574; margin-top: 2px; }
-  .ticket-price { font-weight: 800; font-size: 19px; color: #c79270; }
-  .ticket-flag {
-    position: absolute;
-    top: -8px; right: 12px;
-    background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: white;
-    font-size: 10px;
-    font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .qty {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #0f0a06;
-    border: 1.5px solid #3a2818;
-    border-radius: 14px;
-    padding: 8px;
-  }
-  .qty button {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    border: none;
-    background: #3a2818;
-    color: #c79270;
-    font-size: 22px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background .15s, transform .1s;
-  }
-  .qty button:active { transform: scale(.92); }
-  .qty button:disabled { opacity: .4; cursor: not-allowed; }
-  input.qty-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: #fff;
-    background: transparent;
-    border: none;
+  .menu-title {
     text-align: center;
-    width: 70px;
-    padding: 6px 0;
-    font-family: inherit;
-    -webkit-appearance: none;
-    appearance: none;
-    -moz-appearance: textfield;
-  }
-  input.qty-value::-webkit-outer-spin-button,
-  input.qty-value::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input.qty-value:focus {
-    outline: none;
-    color: #c79270;
-  }
-
-  .menu-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-  .menu-col h4 {
-    margin: 0 0 6px;
-    font-size: 13px;
-    color: #c79270;
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
     text-transform: uppercase;
+  }
+  .menu-cols {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (min-width: 600px) {
+    .menu-cols { grid-template-columns: repeat(3, 1fr); }
+  }
+  .menu-col h3 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #b86a45;
+    font-weight: 800;
     letter-spacing: 1px;
-    font-weight: 700;
+    text-transform: uppercase;
     border-bottom: 1px solid #3a2818;
-    padding-bottom: 4px;
+    padding-bottom: 6px;
   }
   .menu-col ul {
-    margin: 0; padding: 0; list-style: none;
-    font-size: 13px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
     color: #d4a574;
-    line-height: 1.7;
+    font-size: 13.5px;
+  }
+  .menu-col li {
+    padding: 3px 0;
+    padding-left: 12px;
+    position: relative;
   }
   .menu-col li::before {
-    content: "•";
-    color: #16a34a;
-    margin-right: 6px;
+    content: '•';
+    color: #c79270;
+    position: absolute;
+    left: 0;
     font-weight: 800;
   }
 
-  .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  .feature {
-    text-align: center;
-    padding: 14px 6px;
-    background: #0f0a06;
-    border-radius: 14px;
+  /* ============== ANIMATIONS CULTURELLES ============== */
+  .animations {
+    background: linear-gradient(135deg, #1a1108, #14100a);
     border: 1px solid #3a2818;
-  }
-  .feature-emoji { font-size: 24px; margin-bottom: 4px; }
-  .feature-label { font-size: 11px; color: #d4a574; font-weight: 600; line-height: 1.3; }
-
-  .total-bar {
-    position: sticky;
-    bottom: 0;
-    margin: 20px -20px 0;
-    padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
-    background: rgba(15, 10, 6, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid #3a2818;
-    z-index: 10;
-  }
-  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-  .total-label { font-size: 13px; color: #d4a574; }
-  .total-amount { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #c79270; }
-  .btn-primary {
-    width: 100%;
-    background: linear-gradient(135deg, #b86a45, #8a4a2e);
-    color: white;
-    border: none;
     border-radius: 16px;
-    padding: 17px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform .1s, box-shadow .15s;
-    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
-    font-family: inherit;
+    padding: 20px 18px;
+    margin-bottom: 18px;
   }
-  .btn-primary:active { transform: scale(.98); }
-  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-
-  /* Checkbox custom — visuel clair, square + ✓ */
-  .checkbox-row {
-    display: flex; align-items: center; gap: 14px;
-    font-size: 14px; color: #d4a574;
-    margin-top: 14px;
-    cursor: pointer;
-    padding: 14px;
-    border-radius: 14px;
-    border: 1.5px solid #3a2818;
-    background: #0f0a06;
-    transition: all .2s ease;
-    user-select: none;
-  }
-  .checkbox-row:hover {
-    border-color: #b86a45;
-    background: #1a1108;
-    color: #ede5d1;
-  }
-  .checkbox-row input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .checkbox-row .custom-check {
-    width: 26px; height: 26px;
-    flex: 0 0 26px;
-    border: 2.5px solid #5a4028;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .15s ease;
-    background: #14100a;
-  }
-  .checkbox-row:hover .custom-check { border-color: #b86a45; }
-  .checkbox-row .custom-check svg {
-    width: 18px; height: 18px;
-    color: white;
-    opacity: 0;
-    transform: scale(0.5);
-    transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
-  }
-  .checkbox-row.checked {
-    border-color: #16a34a;
-    background: rgba(22, 163, 74, 0.10);
-    color: #ede5d1;
-  }
-  .checkbox-row.checked .custom-check {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
-    border-color: #22c55e;
-  }
-  .checkbox-row.checked .custom-check svg {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .checkbox-row .check-text { flex: 1; line-height: 1.5; }
-  .checkbox-row a { color: #c79270; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
-  .checkbox-row a:hover { color: #b86a45; }
-
-  /* CGU Modal */
-  .cgu-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: none; align-items: flex-end; justify-content: center;
-    z-index: 200;
-  }
-  .cgu-overlay.show { display: flex; animation: fadeIn .2s; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .cgu-modal {
-    background: #1a1108;
-    width: 100%; max-width: 560px;
-    max-height: 90vh;
-    border-radius: 20px 20px 0 0;
-    display: flex; flex-direction: column;
-    animation: slideUp .3s cubic-bezier(.34, 1.2, .64, 1);
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  @media (min-width: 600px) {
-    .cgu-overlay { align-items: center; padding: 20px; }
-    .cgu-modal { border-radius: 20px; max-height: 80vh; }
-  }
-  .cgu-header {
-    padding: 20px 22px;
-    border-bottom: 1px solid #3a2818;
-    display: flex; justify-content: space-between; align-items: center;
-    position: sticky; top: 0; background: #1a1108; border-radius: 20px 20px 0 0;
-  }
-  .cgu-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: #fff; }
-  .cgu-close {
-    width: 36px; height: 36px;
-    background: #3a2818; border: none; color: #ede5d1;
-    border-radius: 10px; cursor: pointer;
-    font-size: 18px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .cgu-close:active { background: #5a4028; }
-  .cgu-body {
-    padding: 22px;
-    overflow-y: auto;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #d4a574;
-  }
-  .cgu-body h3 {
+  .animations .title {
+    text-align: center;
     color: #c79270;
-    font-size: 15px;
-    margin: 20px 0 8px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
   }
-  .cgu-body h3:first-child { margin-top: 0; }
-  .cgu-body p { margin: 0 0 12px; }
-  .cgu-body strong { color: #ede5d1; }
-  .cgu-body .highlight-box {
-    background: rgba(22, 163, 74, 0.10);
-    border: 1px solid rgba(22, 163, 74, 0.3);
+  .animations-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (min-width: 520px) {
+    .animations-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .anim-item {
+    background: rgba(199,146,112,0.06);
+    border: 1px solid #3a2818;
     border-radius: 12px;
-    padding: 14px;
-    margin: 10px 0;
-    color: #ede5d1;
+    padding: 12px 8px;
+    text-align: center;
+    transition: background 0.2s ease;
   }
-  .cgu-body .highlight-box strong { color: #22c55e; }
-  .cgu-body .warning-box {
-    background: rgba(249, 115, 22, 0.10);
-    border: 1px solid rgba(249, 115, 22, 0.3);
-    border-radius: 12px;
-    padding: 14px;
-    margin: 10px 0;
-    color: #ede5d1;
-  }
-  .cgu-body .warning-box strong { color: #c79270; }
-  .cgu-footer {
-    padding: 16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid #3a2818;
-    background: #1a1108;
-  }
-  .cgu-footer button {
-    width: 100%;
-    background: linear-gradient(135deg, #b86a45, #8a4a2e);
-    color: white;
-    border: none;
-    padding: 14px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  .error { color: #f87171; font-size: 13px; margin-top: 6px; display: none; }
-  .error.show { display: block; }
-  input.invalid, select.invalid { border-color: #f87171; }
-
-  .capacity-bar {
-    margin-top: 10px;
-    height: 6px;
-    background: #3a2818;
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .capacity-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #16a34a, #c79270, #b86a45);
-    width: 32%;
-    border-radius: 99px;
-  }
-  .capacity-text {
+  .anim-item:hover { background: rgba(199,146,112,0.12); }
+  .anim-item .emoji { font-size: 26px; margin-bottom: 4px; }
+  .anim-item .label {
     font-size: 11px;
     color: #d4a574;
-    margin-top: 6px;
-    text-align: center;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
   }
 
-  /* Contact footer */
-  .contact-footer {
-    margin-top: 32px;
-    padding: 18px 0 24px;
-    border-top: 1px solid #3a2818;
+  /* ============== BONUS ============== */
+  .bonus-card {
+    background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(199,146,112,0.06));
+    border: 1px dashed rgba(251,191,36,0.4);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 18px;
     text-align: center;
   }
-  .contact-footer-title {
+  .bonus-pill {
+    display: inline-block;
+    background: #fbbf24;
+    color: #1a1108;
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+  }
+  .bonus-card .desc {
+    color: #d4a574;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  /* ============== FOOTER CONTACT ============== */
+  .contact {
+    text-align: center;
+    padding: 24px 16px 8px;
+  }
+  .contact .eyebrow {
     font-size: 11px;
     color: #8a6648;
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 10px;
     font-weight: 700;
+    margin-bottom: 12px;
   }
-  .contact-footer-row {
-    display: flex; justify-content: center; gap: 8px;
+  .contact-pills {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
     flex-wrap: wrap;
   }
   .contact-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #1a1108;
-    border: 1px solid #3a2818;
-    color: #c79270;
-    padding: 8px 14px;
-    border-radius: 99px;
     text-decoration: none;
-    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 99px;
     font-weight: 700;
-    transition: background .15s;
+    font-size: 13px;
   }
-  .contact-pill:active { background: #2a1810; }
-  .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+  .contact-pill.wa { background: #16a34a; color: white; }
+  .contact-pill.tel { background: #1a1108; border: 1px solid #3a2818; color: #c79270; }
 
-  @media (max-width: 380px) {
-    .hero-title { font-size: 28px; }
-    .menu-grid { grid-template-columns: 1fr; }
-    .features { grid-template-columns: repeat(2, 1fr); }
+  /* Couleur tagline tout en haut */
+  .tagline {
+    font-size: 11px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #8a6648;
+    font-weight: 700;
+    text-align: center;
+    margin: 22px 0 14px;
   }
 </style>
 </head>
 <body>
 
-<!-- 🎁 Bannière promo Trio (visible en haut, sticky) — réduction automatique -->
-<div id="promoBanner" style="background: linear-gradient(135deg, #b86a45, #c79270); color: #1a1108; padding: 12px 16px; text-align: center; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-  <span style="font-size: 16px;">🎁</span>
-  <span><strong>-5€ exclusivement pour l'offre Trio</strong> · Profitez-en !</span>
-  <button id="promoCloseBtn" type="button" title="Fermer" style="background:transparent; border:none; color:#1a1108; cursor:pointer; font-size:16px; font-weight:800; padding: 4px 8px;">✕</button>
-</div>
+<!-- 🎟️ Bannière "Réserver" tout en haut, au-dessus des onglets -->
+<a href="reservation.html" class="cta-banner" id="topReserveBanner">
+  <span>🎟️ Réserver ma place pour le brunch</span>
+  <span class="cta-banner-arrow">→</span>
+</a>
+
+<!-- 🧭 Onglets Accueil / Réservations -->
+<nav class="topnav">
+  <a href="index.html" class="active">🏠 Accueil</a>
+  <a href="reservation.html">🎟️ Réservations</a>
+</nav>
 
 <div class="app">
 
-  <!-- 🎉 Mode événement passé (visible si date > 22 août 2026 23:59) -->
+  <!-- 🎉 Mode "événement passé" -->
   <div id="pastEventBanner" style="display:none; margin: 60px auto 40px; max-width: 480px; text-align: center; padding: 40px 24px;">
     <div style="font-size: 72px; margin-bottom: 16px;">🌴</div>
     <h1 style="font-size: 28px; color: #c79270; margin: 0 0 16px;">Merci à tous !</h1>
     <p style="color: #d4a574; font-size: 16px; line-height: 1.6;">
       Le Brunch Ébène &amp; Saveurs du 22 août 2026 est passé.<br>
-      Merci d'avoir été là 🎉<br><br>
-      <span style="font-size: 14px; color: #8a6648;">À très vite pour la prochaine édition !</span>
+      Merci d'avoir été là 🎉
     </p>
-    <a href="https://wa.me/33668295077" style="display: inline-block; margin-top: 24px; background: #16a34a; color: white; text-decoration: none; padding: 12px 22px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Nous contacter</a>
   </div>
 
-  <div class="hero" id="hero">
-    <div class="hero-eyebrow">🌴 Édition 2026</div>
-    <h1 class="hero-title">Brunch<br><span class="accent">Ébène &amp; Saveurs</span></h1>
-    <div class="hero-tagline">Buffet africain · Culture · Partage · Découverte</div>
-    <div class="hero-meta">
-      <div class="row">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span>Samedi 22 août 2026 · dès 13h</span>
-      </div>
-      <div class="row">
-        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <span>Métropole lilloise
-          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="display:inline-block; margin-left:8px; background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; vertical-align: middle;">🗺️ Itinéraire</a>
-        </span>
-      </div>
-    </div>
-    <div class="badge-warning">⚠️ Places limitées — réservation conseillée</div>
-  </div>
+  <div id="mainContent">
 
-  <form id="bookingForm" novalidate>
-
-    <div class="card">
-      <h2>🎫 Choisissez votre formule</h2>
-      <div class="ticket-options" id="tickets">
-        <label class="ticket selected" data-id="standard" data-places="1" data-price="35">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Standard</div>
-            <div class="ticket-desc">1 place</div>
-          </div>
-          <div class="ticket-price">35 €</div>
-        </label>
-        <label class="ticket" data-id="duo" data-places="2" data-price="70">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Duo</div>
-            <div class="ticket-desc">2 places</div>
-          </div>
-          <div class="ticket-price">70 €</div>
-        </label>
-        <label class="ticket" data-id="trio" data-places="3" data-price="105">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Trio <span id="trioDiscountBadge" style="display:none; background:#dc2626; color:white; font-size:11px; font-weight:800; padding:2px 8px; border-radius:99px; margin-left:6px;">−5€</span></div>
-            <div class="ticket-desc">3 places</div>
-          </div>
-          <div class="ticket-price" id="trioPrice">105 €</div>
-        </label>
+    <!-- HERO : Logo + tagline -->
+    <div class="hero">
+      <div class="tagline">SAVEURS · CULTURE · PARTAGE</div>
+      <div class="logo-wrap">
+        <img src="logo-accueil.png" alt="Brunch Ébène & Saveurs"
+             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
       </div>
-
-      <!-- 🎁 Section code promo retirée — la réduction -5€ s'applique automatiquement sur Trio -->
-
-
-      <div class="label" style="margin-top:18px;">
-        Nombre de places
-        <span style="font-weight: 500; color: #8a6648; font-size: 11px; margin-left: 4px;">(modifiable jusqu'à 10)</span>
+      <div id="logoFallback" class="logo-fallback" style="display:none;">
+        <div>Brunch</div>
+        <div><span class="em">Ébène</span> & Saveurs</div>
       </div>
-      <div class="qty">
-        <button type="button" id="qtyMinus" aria-label="Diminuer">−</button>
-        <input type="number" id="qtyValue" class="qty-value" value="1" min="1" max="10" inputmode="numeric" pattern="[0-9]*" aria-label="Nombre de places">
-        <button type="button" id="qtyPlus" aria-label="Augmenter">+</button>
-      </div>
-
-      <!-- 👥 Accompagnants (visible si qty >= 2) -->
-      <div id="accompagnantsSection" style="display:none; margin-top: 18px; padding: 16px; background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 14px;">
-        <div style="font-size: 13px; font-weight: 700; color: #c79270; margin-bottom: 4px;">👥 Tes accompagnants</div>
-        <div style="font-size: 12px; color: #d4a574; margin-bottom: 12px;">Pour la liste d'entrée, donne-nous les noms des personnes qui viennent avec toi.</div>
-        <div id="accompagnantsList"></div>
-      </div>
+      <div class="hero-eyebrow" style="margin-top: 18px;">🌴 Édition 2026</div>
     </div>
 
-    <div class="card">
-      <p style="margin:0; font-size:14px; line-height:1.6; color:#d4a574;">
-        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#c79270;">DJ afro, percussions, danses, photobooth &amp; tombola</strong> 🌴
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>📝 Vos informations</h2>
-
-      <label class="label" for="prenom">Prénom</label>
-      <input type="text" id="prenom" name="prenom" autocomplete="given-name" required>
-      <div class="error" data-for="prenom">Votre prénom est requis</div>
-
-      <label class="label" for="nom">Nom</label>
-      <input type="text" id="nom" name="nom" autocomplete="family-name" required>
-      <div class="error" data-for="nom">Votre nom est requis</div>
-
-      <label class="label" for="email">Email</label>
-      <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
-      <div class="error" data-for="email">Email invalide</div>
-
-      <label class="label" for="telephone">Téléphone</label>
-      <input type="tel" id="telephone" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
-      <div class="error" data-for="telephone">Téléphone requis</div>
-
-      <label class="label" for="message">Allergies / régime alimentaire (optionnel)</label>
-      <textarea id="message" name="message" placeholder="Sans porc, sans alcool, allergies..."></textarea>
-
-      <label class="checkbox-row" id="cguRow">
-        <input type="checkbox" id="cgu" required>
-        <span class="custom-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </span>
-        <span class="check-text">J'accepte les <a href="#" id="cguLink">conditions générales</a> et que mes informations soient utilisées uniquement pour la gestion du brunch</span>
-      </label>
-      <div class="error" data-for="cgu">Vous devez accepter les CGU</div>
-    </div>
-
-    <div class="total-bar">
-      <div class="total-row">
-        <div>
-          <div class="total-label">Total à payer</div>
+    <!-- INFOS PRATIQUES -->
+    <div class="infos-pratiques">
+      <div class="info-line">
+        <div class="icon">📅</div>
+        <div class="info-text">
+          Samedi 22 août 2026
+          <div class="info-sub">De 13h00 à 19h00</div>
         </div>
-        <div class="total-amount" id="totalAmount">35,00 €</div>
       </div>
-      <button type="submit" class="btn-primary" id="payBtn">Continuer vers le paiement →</button>
-    </div>
-  </form>
-
-  <div class="contact-footer">
-    <div class="contact-footer-title">📞 Pour plus d'infos, contactez-nous</div>
-    <div class="contact-footer-row">
-      <a href="https://wa.me/33668295077" class="contact-pill whatsapp">💬 WhatsApp +33 6 68 29 50 77</a>
-      <a href="tel:+33668295077" class="contact-pill">📞 Appeler</a>
-    </div>
-  </div>
-</div>
-
-<!-- MODALE CGU -->
-<div class="cgu-overlay" id="cguOverlay">
-  <div class="cgu-modal">
-    <div class="cgu-header">
-      <h2>📄 Conditions générales</h2>
-      <button class="cgu-close" id="cguClose" aria-label="Fermer">✕</button>
-    </div>
-    <div class="cgu-body">
-      <h3>🌴 L'événement</h3>
-      <p>
-        <strong>Brunch Ébène &amp; Saveurs</strong> — Samedi 22 août 2026 à 13h00<br>
-        Métropole lilloise (le lieu exact sera communiqué aux personnes inscrites).
-      </p>
-      <p>
-        Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
-      </p>
-
-      <h3>💰 Tarifs</h3>
-      <p>
-        Standard : 35 € (1 place) · Duo : 70 € (2 places) · Trio : 105 € (3 places).<br>
-        Les tarifs sont indiqués TTC et n'incluent pas les frais bancaires éventuels selon ton moyen de paiement.
-      </p>
-
-      <h3>↩️ Annulation &amp; remboursement</h3>
-      <div class="highlight-box">
-        <strong>✓ Remboursement intégral</strong> possible <strong>jusqu'à 10 jours avant l'événement</strong>, soit avant le <strong>12 août 2026</strong>.<br>
-        Envoie une demande par WhatsApp au +33 6 68 29 50 77 ou par email avec ton numéro de réservation.
+      <div class="info-line">
+        <div class="icon">📍</div>
+        <div class="info-text">
+          Métropole lilloise
+          <div class="info-sub">Lieu exact communiqué après réservation</div>
+        </div>
       </div>
-      <div class="warning-box">
-        <strong>⚠️ Passé le 12 août 2026</strong>, aucun remboursement ne sera possible (commandes engagées auprès des fournisseurs).<br>
-        En revanche, ton billet est <strong>transférable</strong> : tu peux donner ta place à quelqu'un d'autre (préviens-nous du changement de nom).
+      <div class="info-line">
+        <div class="icon">💰</div>
+        <div class="info-text">
+          Tarif unique
+          <div class="info-sub">Buffet à volonté + animations</div>
+        </div>
+        <div class="price-pill">35 €</div>
       </div>
-
-      <h3>🪪 Accès le jour J</h3>
-      <p>
-        Présente ton billet électronique (QR code reçu par email ou page de réservation) à l'entrée. Un bracelet te sera remis pour la durée de l'événement.<br>
-        Viens comme tu te sens bien — on est là pour passer un bon moment ensemble 🌴
-      </p>
-
-      <h3>🚫 Cas particuliers</h3>
-      <p>
-        L'organisateur se réserve le droit de refuser l'entrée en cas de comportement inapproprié, sans remboursement.<br>
-        L'événement peut être reporté ou annulé pour des raisons de force majeure (grève, météo extrême, restrictions sanitaires) : dans ce cas, tu seras intégralement remboursé(e) ou tu pourras conserver ta place pour la date de report.
-      </p>
-
-      <h3>🔐 Protection des données</h3>
-      <p>
-        Tes informations (nom, email, téléphone) sont collectées <strong>uniquement</strong> pour la gestion de ta réservation et la communication autour de l'événement.
-      </p>
-      <p>
-        Elles sont stockées de manière sécurisée (Supabase) et ne sont <strong>jamais cédées à des tiers</strong>. Elles seront supprimées dans les 3 mois après l'événement.
-      </p>
-      <p>
-        Tu peux à tout moment demander la suppression de tes données via WhatsApp ou par email.
-      </p>
-
-      <h3>📞 Contact</h3>
-      <p>
-        Une question sur ta réservation ?<br>
-        WhatsApp : <a href="https://wa.me/33668295077">+33 6 68 29 50 77</a><br>
-        Email : <a href="mailto:abayoassi@gmail.com">abayoassi@gmail.com</a>
-      </p>
-
-      <p style="font-size:12px; color:#8a6648; margin-top:24px; text-align:center;">
-        Dernière mise à jour : mai 2026
-      </p>
     </div>
-    <div class="cgu-footer">
-      <button id="cguAccept">✓ J'ai lu et j'accepte</button>
+
+    <!-- 🎟️ BOUTON RÉSERVER (haut) -->
+    <a href="reservation.html" class="reserve-btn" id="reserveTopBtn">
+      🎟️ Réserver ma place →
+    </a>
+
+    <!-- BUFFET À VOLONTÉ -->
+    <div class="buffet-banner">
+      <h2>🍽️ BUFFET À VOLONTÉ</h2>
+      <div class="sub">Plats africains généreux · Servis tout l'après-midi</div>
     </div>
+
+    <!-- GRILLE DE PLATS -->
+    <div class="dishes">
+      <div class="dish"><div class="emoji">🍛</div><div class="name">Tchep</div></div>
+      <div class="dish"><div class="emoji">🍢</div><div class="name">Brochettes</div></div>
+      <div class="dish"><div class="emoji">🍗</div><div class="name">Alloco & Poulet</div></div>
+      <div class="dish"><div class="emoji">🐟</div><div class="name">Garba</div></div>
+      <div class="dish"><div class="emoji">🥘</div><div class="name">Placali</div></div>
+      <div class="dish"><div class="emoji">🍲</div><div class="name">Yassa</div></div>
+      <div class="dish"><div class="emoji">🍩</div><div class="name">Beignets</div></div>
+      <div class="dish"><div class="emoji">🍰</div><div class="name">Thiakry</div></div>
+      <div class="dish"><div class="emoji">🍹</div><div class="name">Apéro coco</div></div>
+    </div>
+
+    <!-- AU MENU détaillé -->
+    <div class="menu-section">
+      <h2 class="menu-title">Au menu</h2>
+      <div class="menu-cols">
+        <div class="menu-col">
+          <h3>🥥 Afro Apéro</h3>
+          <ul>
+            <li>Coco grillé</li>
+            <li>Caramel</li>
+            <li>Croquette</li>
+          </ul>
+        </div>
+        <div class="menu-col">
+          <h3>🥟 Entrées</h3>
+          <ul>
+            <li>Beignets</li>
+            <li>Bouillie de mil</li>
+            <li>Pastels</li>
+          </ul>
+        </div>
+        <div class="menu-col">
+          <h3>🍛 Plats chauds</h3>
+          <ul>
+            <li>Yassa</li>
+            <li>Placali Kopé</li>
+            <li>Attiéké Alloco poulet</li>
+            <li>Tchep</li>
+            <li>Garba</li>
+            <li>Brochettes (Poulet & bœuf)</li>
+          </ul>
+        </div>
+        <div class="menu-col">
+          <h3>🍚 Accompagnements</h3>
+          <ul>
+            <li>Riz blanc et rouge</li>
+            <li>Attiéké & Alloco</li>
+            <li>Frites</li>
+          </ul>
+        </div>
+        <div class="menu-col">
+          <h3>🍰 Desserts</h3>
+          <ul>
+            <li>Thiakry</li>
+            <li>Tiramisu aux fruits</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANIMATIONS CULTURELLES -->
+    <div class="animations">
+      <div class="title">🎭 Animations culturelles</div>
+      <div class="animations-grid">
+        <div class="anim-item"><div class="emoji">🥁</div><div class="label">Percussions live</div></div>
+        <div class="anim-item"><div class="emoji">🎧</div><div class="label">DJ Afro<br>Ambiance</div></div>
+        <div class="anim-item"><div class="emoji">🎁</div><div class="label">Tombola<br>& Cadeaux</div></div>
+        <div class="anim-item"><div class="emoji">📚</div><div class="label">Écrivains<br>africains</div></div>
+        <div class="anim-item"><div class="emoji">💃</div><div class="label">Danse traditionnelle<br>& Afro</div></div>
+        <div class="anim-item"><div class="emoji">🛍️</div><div class="label">Créateurs<br>& Artisans</div></div>
+      </div>
+    </div>
+
+    <!-- BONUS -->
+    <div class="bonus-card">
+      <div class="bonus-pill">🎁 BONUS</div>
+      <div class="desc">Surprises & moments inoubliables pendant tout l'événement</div>
+    </div>
+
+    <!-- 🎟️ BOUTON RÉSERVER (bas) -->
+    <a href="reservation.html" class="reserve-btn" id="reserveBottomBtn">
+      🎟️ Réserver ma place maintenant →
+    </a>
+
+    <!-- CONTACT -->
+    <div class="contact">
+      <div class="eyebrow">📞 Une question ?</div>
+      <div class="contact-pills">
+        <a href="https://wa.me/33668295077" class="contact-pill wa">💬 WhatsApp</a>
+        <a href="tel:+33668295077" class="contact-pill tel">📞 +33 6 68 29 50 77</a>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
   // 🔧 CONFIG : URL de ton API backend
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
-  const CAPACITY = 200;
-  const UNIT_PRICE = 35;
 
-  // 📊 TRACKING — sessionId par onglet (sessionStorage) → permet de bien mesurer le rebond
-  //    (chaque ouverture de fenêtre/onglet = nouvelle session, comme Google Analytics)
+  // 📊 TRACKING — sessionId par onglet (sessionStorage)
   function getSessionId() {
     let s = sessionStorage.getItem('ebene_session_id');
     if (!s) {
@@ -753,84 +594,23 @@
     return s;
   }
   function trackPageview(page) {
-    const sid = getSessionId();
-    console.log('[📊 tracking] pageview =', page, '· sessionId =', sid);
     try {
       fetch(API_URL + '/track/pageview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ page, sessionId: sid, referrer: document.referrer || null })
-      })
-      .then(async r => {
-        const data = await r.json().catch(() => ({}));
-        if (r.ok) console.log('[📊 tracking] ✅ enregistré :', page);
-        else console.error('[📊 tracking] ❌ ÉCHEC', r.status, page, '·', data.error || '');
-      })
-      .catch(e => console.warn('[📊 tracking] network failed', e.message));
-    } catch(e) { console.warn('[📊 tracking] error', e.message); }
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page, sessionId: getSessionId(), referrer: document.referrer || null })
+      }).catch(()=>{});
+    } catch(e) {}
   }
-  // Envoie la vue dès le chargement
+  // Envoie la pageview dès le chargement
   trackPageview('accueil');
 
-  // 🎁 ===== PROMO TRIO AUTO =====
-  //    La réduction -5€ s'applique AUTOMATIQUEMENT à toute résa Trio (qty=3)
-  //    Le code TRIO5 dans la bannière est purement marketing/communication
-  const PROMO_CODE = 'TRIO5';
-  const PROMO_DISCOUNT = 5;
-  // Toujours appliqué dès que Trio est sélectionné (cf. updateTotal/updatePromoUI ci-dessous)
-  let promoApplied = true;
-
-  // 🎁 Met à jour l'affichage du Trio (badge -5€ + prix barré) — UNIQUEMENT quand Trio sélectionné
-  function updatePromoUI() {
-    const badge = document.getElementById('trioDiscountBadge');
-    const priceEl = document.getElementById('trioPrice');
-    // 🎯 Badge / prix barré visibles SEULEMENT si Trio sélectionné (qty=3)
-    let isTrio = false;
-    try { isTrio = (typeof getCurrentFormulaId === 'function' && getCurrentFormulaId() === 'trio'); } catch(e) {}
-    if (isTrio) {
-      if (badge) badge.style.display = 'inline-block';
-      if (priceEl) priceEl.innerHTML = '<span style="text-decoration:line-through; color:#8a6648; font-size:13px; margin-right:6px;">105 €</span>100 €';
-    } else {
-      if (badge) badge.style.display = 'none';
-      if (priceEl) priceEl.textContent = '105 €';
-    }
-  }
-
-  // 📋 Clic sur le code dans la bannière → copie + tracking
-  document.getElementById('promoCopyBtn')?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(PROMO_CODE);
-      trackPageview('promo_copied');
-      const btn = document.getElementById('promoCopyBtn');
-      const original = btn.innerHTML;
-      btn.innerHTML = '<span style="letter-spacing:1px;">✓ Copié !</span>';
-      setTimeout(() => { btn.innerHTML = original; }, 1800);
-    } catch(e) {}
-  });
-
-  // ✕ Fermeture de la bannière
-  document.getElementById('promoCloseBtn')?.addEventListener('click', () => {
-    sessionStorage.setItem('ebene_promo_closed', '1');
-    document.getElementById('promoBanner').style.display = 'none';
-  });
-
-  // Si bannière déjà fermée par l'utilisateur précédemment, la cacher
-  if (sessionStorage.getItem('ebene_promo_closed') === '1') {
-    const b = document.getElementById('promoBanner'); if (b) b.style.display = 'none';
-  }
-
-  updatePromoUI();
-
   // 🔁 REBOND par engagement : si la personne ne fait RIEN pendant 5s
-  //    (pas de scroll, pas de clic, pas de touche) → c'est un rebond.
-  //    Toute interaction avant 5s = engagé (pas un rebond).
   let engaged = false;
   let bounceTimer = null;
   function markEngaged() {
     if (engaged) return;
     engaged = true;
     if (bounceTimer) { clearTimeout(bounceTimer); bounceTimer = null; }
-    // Retire les listeners (plus besoin)
     ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
       window.removeEventListener(ev, markEngaged)
     );
@@ -838,7 +618,6 @@
   ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
     window.addEventListener(ev, markEngaged, { passive: true })
   );
-  // Au bout de 5s sans interaction → on enregistre le rebond
   bounceTimer = setTimeout(() => {
     if (!engaged) {
       try {
@@ -847,327 +626,30 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ page: 'accueil_left', sessionId: getSessionId() }),
           keepalive: true
-        }).then(() => console.log('[📊 bounce] rebond enregistré (aucune interaction en 5s)')).catch(()=>{});
+        }).catch(()=>{});
       } catch(e) {}
     }
   }, 5000);
-  const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
 
-  // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci
+  // 📊 Track quand l'utilisateur clique sur un bouton "Réserver"
+  function trackReserveClick(where) {
+    try {
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'accueil_reserve_clicked', sessionId: getSessionId(), referrer: where })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  document.getElementById('topReserveBanner')?.addEventListener('click', () => trackReserveClick('banner_top'));
+  document.getElementById('reserveTopBtn')?.addEventListener('click', () => trackReserveClick('btn_top'));
+  document.getElementById('reserveBottomBtn')?.addEventListener('click', () => trackReserveClick('btn_bottom'));
+
+  // 🎉 Mode "événement passé"
+  const EVENT_END = new Date('2026-08-23T00:00:00+02:00');
   if (new Date() >= EVENT_END) {
     document.getElementById('pastEventBanner').style.display = 'block';
-    document.getElementById('hero').style.display = 'none';
-    document.getElementById('bookingForm').style.display = 'none';
-    document.querySelector('.contact-footer').style.display = 'none';
-    // On stoppe l'exécution du reste du script
-    throw new Error('Event past — script stopped');
+    document.getElementById('mainContent').style.display = 'none';
   }
-
-  // Mapping qty → formule
-  const FORMULAS = {
-    1: { id: 'standard', name: 'Standard' },
-    2: { id: 'duo',      name: 'Duo' },
-    3: { id: 'trio',     name: 'Trio' }
-  };
-
-  const state = {
-    qty: 1,
-    max: 10
-  };
-
-  // --- Sélection d'une formule (Standard / Duo / Trio) ---
-  document.querySelectorAll('.ticket').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      const places = parseInt(el.dataset.places, 10);
-      setQty(places);
-    });
-  });
-
-  // --- Boutons +/- ---
-  const qtyValueEl = document.getElementById('qtyValue');
-  document.getElementById('qtyMinus').addEventListener('click', () => {
-    if (state.qty > 1) setQty(state.qty - 1);
-  });
-  document.getElementById('qtyPlus').addEventListener('click', () => {
-    if (state.qty < state.max) setQty(state.qty + 1);
-  });
-
-  // 🆕 Saisie manuelle du nombre de places
-  qtyValueEl.addEventListener('input', (e) => {
-    let val = parseInt(e.target.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > state.max) val = state.max;
-    // On NE met PAS à jour le state ici pour permettre à l'user de taper sans interruption
-    // Mais on plafonne visuellement
-    if (val !== parseInt(e.target.value, 10)) e.target.value = val;
-    state.qty = val;
-    // Highlight + total + accompagnants
-    document.querySelectorAll('.ticket').forEach(t => {
-      t.classList.toggle('selected', parseInt(t.dataset.places, 10) === val);
-    });
-    updateTotal();
-    updateAccompagnantsFields();
-  });
-  // Au blur : si vide ou invalide, remet à 1
-  qtyValueEl.addEventListener('blur', () => {
-    let val = parseInt(qtyValueEl.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > state.max) val = state.max;
-    qtyValueEl.value = val;
-    setQty(val);
-  });
-
-  function setQty(n) {
-    state.qty = n;
-    qtyValueEl.value = n;
-    // Highlight la formule correspondante
-    document.querySelectorAll('.ticket').forEach(t => {
-      t.classList.toggle('selected', parseInt(t.dataset.places, 10) === n);
-    });
-    updateTotal();
-    updateAccompagnantsFields();
-    // 🎁 Met à jour la visibilité du bloc code promo (visible uniquement si Trio)
-    if (typeof updatePromoUI === 'function') updatePromoUI();
-  }
-
-  // 👥 Génère dynamiquement les champs accompagnants (qty - 1 invités)
-  function updateAccompagnantsFields() {
-    const section = document.getElementById('accompagnantsSection');
-    const list = document.getElementById('accompagnantsList');
-    const places = state.qty;
-    if (places <= 1) {
-      section.style.display = 'none';
-      list.innerHTML = '';
-      return;
-    }
-    section.style.display = 'block';
-    // Conserve les valeurs déjà saisies si possible
-    const existing = {};
-    list.querySelectorAll('input').forEach(inp => { existing[inp.name] = inp.value; });
-
-    let html = '';
-    for (let i = 1; i < places; i++) {
-      const pName = `acc${i}Prenom`, nName = `acc${i}Nom`;
-      const pVal = existing[pName] || '';
-      const nVal = existing[nName] || '';
-      html += `
-        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; padding: 10px; background: #0f0a06; border-radius: 10px;">
-          <div style="font-size: 11px; color: #c79270; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">👤 Accompagnant ${i}</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <input type="text" name="${pName}" placeholder="Prénom" value="${pVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
-            <input type="text" name="${nName}" placeholder="Nom" value="${nVal}" autocomplete="off" style="background: #14100a; border: 1.5px solid #3a2818; color: #ede5d1; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
-          </div>
-        </div>
-      `;
-    }
-    list.innerHTML = html;
-  }
-
-  function updateTotal() {
-    let total = UNIT_PRICE * state.qty;
-    // 🎁 Applique la promo TRIO5 si active ET formule Trio (qty === 3)
-    const discountActive = (typeof promoApplied !== 'undefined' && promoApplied) && state.qty === 3;
-    if (discountActive) total -= (typeof PROMO_DISCOUNT !== 'undefined' ? PROMO_DISCOUNT : 5);
-    const el = document.getElementById('totalAmount');
-    if (discountActive) {
-      el.innerHTML = `<span style="text-decoration:line-through; color:#8a6648; font-size:0.65em; margin-right:8px; font-weight:500;">${(UNIT_PRICE * state.qty).toFixed(2).replace('.', ',')} €</span>${total.toFixed(2).replace('.', ',')} €`;
-    } else {
-      el.textContent = total.toFixed(2).replace('.', ',') + ' €';
-    }
-  }
-
-  function getCurrentFormulaName() {
-    if (FORMULAS[state.qty]) return FORMULAS[state.qty].name;
-    return `Groupe (${state.qty} places)`;
-  }
-  function getCurrentFormulaId() {
-    if (FORMULAS[state.qty]) return FORMULAS[state.qty].id;
-    return 'groupe';
-  }
-
-  // --- Capacité dynamique + badge "Le + populaire" ---
-  async function loadCapacity() {
-    let bookedPlaces = 0;
-    let formulas = null;
-    if (API_URL) {
-      try {
-        const r = await fetch(API_URL + '/stats');
-        const data = await r.json();
-        bookedPlaces = data.places || 0;
-        formulas = data.formulas || null;
-      } catch(e) { /* fallback ci-dessous */ }
-    }
-    if (!bookedPlaces) {
-      const local = JSON.parse(localStorage.getItem('reservations') || '[]');
-      bookedPlaces = local.reduce((s, r) => s + (r.qty || 0), 0);
-    }
-    // 🔒 Compteur de places retiré du public (visible uniquement dans le dashboard admin)
-    // bookedPlaces et formulas restent dispo pour le badge "Le + populaire" ci-dessous
-
-    // Badge "Le + populaire" — sur la formule la plus choisie (min 3 résa pour afficher)
-    document.querySelectorAll('.ticket-flag').forEach(f => f.remove());
-    if (formulas) {
-      let best = null, bestCount = 0;
-      ['standard', 'duo', 'trio'].forEach(id => {
-        if ((formulas[id] || 0) > bestCount) { best = id; bestCount = formulas[id]; }
-      });
-      if (best && bestCount >= 3) {
-        const ticket = document.querySelector(`.ticket[data-id="${best}"]`);
-        if (ticket) {
-          const flag = document.createElement('span');
-          flag.className = 'ticket-flag';
-          flag.textContent = '🔥 Le + populaire';
-          ticket.insertBefore(flag, ticket.firstChild);
-        }
-      }
-    }
-  }
-  loadCapacity();
-
-  // --- Validation form ---
-  function showError(name, show) {
-    const err = document.querySelector(`.error[data-for="${name}"]`);
-    const input = document.getElementById(name);
-    if (err) err.classList.toggle('show', show);
-    if (input) input.classList.toggle('invalid', show);
-  }
-
-  // CGU checkbox visual feedback
-  const cguInput = document.getElementById('cgu');
-  const cguRow = cguInput.closest('.checkbox-row');
-  cguInput.addEventListener('change', () => {
-    cguRow.classList.toggle('checked', cguInput.checked);
-    if (cguInput.checked) showError('cgu', false);
-  });
-
-  // --- Modale CGU ---
-  const cguOverlay = document.getElementById('cguOverlay');
-  const openCgu = (e) => {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
-    cguOverlay.classList.add('show');
-    document.body.style.overflow = 'hidden';
-  };
-  const closeCgu = () => {
-    cguOverlay.classList.remove('show');
-    document.body.style.overflow = '';
-  };
-  document.getElementById('cguLink').addEventListener('click', openCgu);
-  document.getElementById('cguClose').addEventListener('click', closeCgu);
-  document.getElementById('cguAccept').addEventListener('click', () => {
-    cguInput.checked = true;
-    cguRow.classList.add('checked');
-    showError('cgu', false);
-    closeCgu();
-  });
-  cguOverlay.addEventListener('click', (e) => {
-    if (e.target === cguOverlay) closeCgu();
-  });
-  // Échap pour fermer
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && cguOverlay.classList.contains('show')) closeCgu();
-  });
-
-  document.getElementById('bookingForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const prenom = document.getElementById('prenom').value.trim();
-    const nom = document.getElementById('nom').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const telephone = document.getElementById('telephone').value.trim();
-    const cgu = document.getElementById('cgu').checked;
-    const message = document.getElementById('message').value.trim();
-
-    let ok = true;
-    showError('prenom', !prenom); if (!prenom) ok = false;
-    showError('nom', !nom); if (!nom) ok = false;
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    showError('email', !emailOk); if (!emailOk) ok = false;
-    showError('telephone', telephone.length < 6); if (telephone.length < 6) ok = false;
-    showError('cgu', !cgu); if (!cgu) ok = false;
-
-    if (!ok) {
-      document.querySelector('.invalid')?.scrollIntoView({behavior:'smooth', block:'center'});
-      return;
-    }
-
-    // 👥 Récupère les accompagnants
-    const accompagnants = [];
-    for (let i = 1; i < state.qty; i++) {
-      const p = (document.querySelector(`[name="acc${i}Prenom"]`)?.value || '').trim();
-      const n = (document.querySelector(`[name="acc${i}Nom"]`)?.value || '').trim();
-      if (p || n) accompagnants.push(`${p} ${n}`.trim());
-    }
-    // Validation des accompagnants
-    if (state.qty > 1 && accompagnants.length < state.qty - 1) {
-      alert(`Merci de remplir le prénom + nom de tes ${state.qty - 1} accompagnant(s) — c'est important pour la liste d'entrée 🙏`);
-      document.querySelector('#accompagnantsList input').focus();
-      return;
-    }
-
-    // 🔍 Anti-doublon : vérifie si l'email a déjà une résa active
-    if (API_URL) {
-      try {
-        const r = await fetch(API_URL + '/check-email/' + encodeURIComponent(email));
-        if (r.ok) {
-          const data = await r.json();
-          if (data.exists) {
-            if (!confirm(`⚠️ Tu as déjà ${data.count} réservation${data.count>1?'s':''} active${data.count>1?'s':''} avec cet email (${email}).\n\nContinuer quand même ?`)) return;
-          }
-        }
-      } catch(e) { console.warn('Check email skipped', e); }
-    }
-
-    // 🎁 Applique la réduction Trio si code promo actif ET formule Trio sélectionnée
-    const isTrio = getCurrentFormulaId() === 'trio';
-    const discountApplied = promoApplied && isTrio;
-    let rawTotal = UNIT_PRICE * state.qty;
-    let finalTotal = discountApplied ? (rawTotal - PROMO_DISCOUNT) : rawTotal;
-
-    const booking = {
-      prenom, nom, email, telephone, message,
-      accompagnants: accompagnants.join(', ') || null,
-      ticketId: getCurrentFormulaId(),
-      ticketName: getCurrentFormulaName(),
-      ticketPrice: UNIT_PRICE,
-      qty: state.qty,
-      total: finalTotal,
-      promoCode: discountApplied ? PROMO_CODE : null,
-      promoDiscount: discountApplied ? PROMO_DISCOUNT : 0,
-      timestamp: new Date().toISOString(),
-      status: 'paiement non confirmé'  // draft : passera à "en attente vérification" au clic "J'ai payé"
-      // ⚠️ Pas de bookingId ici — il est généré côté serveur (séquentiel EBENE-NOM-Y{NNN})
-    };
-
-    // 🎯 Récupère JUSTE un N° de résa (PAS d'insert en BDD)
-    //    L'insert n'aura lieu que quand l'utilisateur cliquera "J'ai payé"
-    if (!API_URL) {
-      alert('Service indisponible — veuillez réessayer.');
-      return;
-    }
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const oldBtnText = submitBtn ? submitBtn.innerHTML : '';
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '⏳ Préparation de votre paiement...'; }
-
-    try {
-      const r = await fetch(API_URL + '/reservations/reserve-id', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom })
-      });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const data = await r.json();
-      if (!data.bookingId) throw new Error('Pas de N° de résa');
-      booking.bookingId = data.bookingId;
-      localStorage.setItem('currentBooking', JSON.stringify(booking));
-      // 👍 Marqueur : on va vers paiement.html — pas un rebond
-      window.__navigatingToPaiement = true;
-      window.location.href = 'paiement.html';
-    } catch(err) {
-      console.error('Reserve ID échoué', err);
-      alert('Impossible de préparer votre paiement. Vérifiez votre connexion et réessayez.\n\n(' + (err.message || 'erreur réseau') + ')');
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = oldBtnText; }
-    }
-  });
 </script>
 </body>
 </html>

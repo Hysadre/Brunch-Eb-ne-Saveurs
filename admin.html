@@ -741,6 +741,12 @@
           <div style="position: relative; height: 280px;"><canvas id="chartFunnelOverview"></canvas></div>
         </div>
 
+        <!-- 📄 Performances par page (visites, uniques, rebond) -->
+        <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding: 14px; margin-top: 14px;">
+          <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:10px;">📄 Performances par page</div>
+          <div id="pagesPerfContent" style="font-size:13px; color:#d4a574;">Chargement…</div>
+        </div>
+
         <!-- 🌍 Géographie des visiteurs -->
         <div style="background:#0f0a06; border:1px solid #3a2818; border-radius:14px; padding: 14px; margin-top: 14px;">
           <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:10px;">🌍 Géographie des visiteurs</div>
@@ -891,7 +897,7 @@
         <div class="chart-wrap"><canvas id="chartParJour"></canvas></div>
       </div>
       <div class="chart-card wide">
-        <h3>👀 Visites par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(pageviews de l'accueil — granularité + comparaison depuis le filtre global ↑)</span></h3>
+        <h3>👀 Visites par période <span style="font-size:11px; color:#8a6648; font-weight:500; margin-left:8px;">(v2 · pageviews de l'accueil — granularité + comparaison depuis le filtre global ↑)</span></h3>
         <div class="chart-wrap"><canvas id="chartVisitesParJour"></canvas></div>
       </div>
       <div class="chart-card wide">
@@ -1199,7 +1205,7 @@
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       if (t.dataset.tab === 'analyse') renderAnalyse();
       if (t.dataset.tab === 'identification') { renderInvites(); renderPromoStats(); }
-      if (t.dataset.tab === 'overview') { renderFunnel(); renderGeoStats(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
+      if (t.dataset.tab === 'overview') { renderFunnel(); renderPagesPerf(); renderGeoStats(); setTimeout(() => drawFunnelVisual(CACHE, 'chartFunnelOverview'), 100); }
       if (t.dataset.tab === 'scan') renderCheckinHistory(CACHE);
     });
   });
@@ -1629,7 +1635,7 @@
     renderCheckinHistory(CACHE);
     renderCopiers(CACHE);
     renderPromoStats();
-    renderFunnel();
+    renderFunnel(); renderPagesPerf();
     renderGeoStats();
     // 🎯 Funnel visuel — uniquement si la canvas est visible (onglet Overview)
     if (document.getElementById('panel-overview')?.classList.contains('active')) {
@@ -2467,6 +2473,80 @@
     }
   }
 
+  // 📄 Performances par page — visites, uniques, rebond pour chaque étape du parcours
+  async function renderPagesPerf() {
+    const container = document.getElementById('pagesPerfContent');
+    if (!container) return;
+    try {
+      // Réutilise les mêmes filtres que le funnel principal
+      const [from, to] = getFunnelDateRange();
+      const params = new URLSearchParams();
+      if (from) params.set('from', from.toISOString());
+      if (to)   params.set('to',   to.toISOString());
+      const excludedIds = [];
+      const manualIdsTxt = (document.getElementById('globalExcludeIds')?.value || '').trim();
+      if (manualIdsTxt) manualIdsTxt.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean).forEach(id => excludedIds.push(id));
+      (CACHE || []).forEach(r => { if (isGloballyExcluded(r) && r.bookingId) excludedIds.push(r.bookingId); });
+      if (excludedIds.length > 0) params.set('excludeIds', [...new Set(excludedIds)].join(','));
+
+      const url = `${API_URL}/track/funnel${params.toString() ? '?' + params.toString() : ''}`;
+      const r = await fetch(url, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const pages = d.pages || {};
+
+      // Définition des 4 étapes du parcours utilisateur
+      const accueil       = pages.accueil       || { uniqueVisitors: 0, views: 0 };
+      const reservation   = pages.reservation   || { uniqueVisitors: 0, views: 0 };
+      const paiement      = pages.paiement      || { uniqueVisitors: 0, views: 0 };
+      const confirmation  = pages.confirmation  || { uniqueVisitors: 0, views: 0 };
+      const accueilLeft   = pages.accueil_left  || { uniqueVisitors: 0, views: 0 };
+      const reservationLeft = pages.reservation_left || { uniqueVisitors: 0, views: 0 };
+
+      // Calcule le rebond par page (= "left" / unique visitors)
+      const bouncePct = (left, total) => total > 0 ? Math.round(left / total * 100) : 0;
+      const accueilBounce = bouncePct(accueilLeft.uniqueVisitors, accueil.uniqueVisitors);
+      const resaBounce    = bouncePct(reservationLeft.uniqueVisitors, reservation.uniqueVisitors);
+
+      const colorForBounce = b => b >= 70 ? '#f87171' : (b >= 40 ? '#c79270' : '#22c55e');
+
+      const pageCard = (label, p, color, opts = {}) => {
+        const bounceStr = opts.bounce !== undefined
+          ? `<div style="margin-top:8px; padding-top:8px; border-top:1px solid #2a1810;">
+              <span style="font-size:11px; color:#8a6648;">🚪 Rebond :</span>
+              <strong style="color:${colorForBounce(opts.bounce)}; font-size:14px; margin-left:6px;">${opts.bounce}%</strong>
+              <span style="font-size:11px; color:#8a6648; margin-left:4px;">(${opts.bounceCount} session${opts.bounceCount>1?'s':''})</span>
+            </div>`
+          : '';
+        return `
+          <div style="background:#1a1108; border:1px solid #3a2818; border-radius:12px; padding:14px;">
+            <div style="font-size:11px; color:#8a6648; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">${label}</div>
+            <div style="font-size:24px; font-weight:800; color:${color}; margin-bottom:2px;">${p.uniqueVisitors}</div>
+            <div style="font-size:12px; color:#d4a574;">visiteurs uniques</div>
+            <div style="font-size:11px; color:#8a6648; margin-top:4px;">${p.views} visite${p.views>1?'s':''} totales</div>
+            ${bounceStr}
+          </div>
+        `;
+      };
+
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          ${pageCard('🏠 Accueil', accueil, '#06b6d4', { bounce: accueilBounce, bounceCount: accueilLeft.uniqueVisitors })}
+          ${pageCard('🎟️ Réservation', reservation, '#fbbf24', { bounce: resaBounce, bounceCount: reservationLeft.uniqueVisitors })}
+          ${pageCard('💳 Paiement', paiement, '#c79270')}
+          ${pageCard('✅ Paiement enregistré', confirmation, '#22c55e')}
+        </div>
+        <div style="font-size:11px; color:#8a6648; padding-top:10px; margin-top:10px; border-top:1px solid #2a1810; line-height: 1.6;">
+          💡 <strong style="color:#d4a574;">Visiteurs uniques</strong> = sessions distinctes ayant vu la page ·
+          <strong style="color:#d4a574;">Rebond</strong> = sessions qui ont quitté sans interagir 5s (calculé via beacon "${'<page>'}_left")
+        </div>
+      `;
+    } catch(e) {
+      console.warn('Pages perf fetch error:', e.message);
+      container.innerHTML = `<div style="color:#8a6648; font-size:13px; text-align:center; padding:18px;">📄 Stats indisponibles (${e.message})</div>`;
+    }
+  }
+
   // 📊 Timeline d'événements pour une résa
   function openTimelineModal(resa) {
     const tEl = document.getElementById('timelineModalText');
@@ -2930,7 +3010,7 @@
     renderInvites();
     renderCopiers(CACHE);
     renderCheckinHistory(CACHE);
-    renderFunnel();
+    renderFunnel(); renderPagesPerf();
     if (typeof drawFunnelVisual === 'function') drawFunnelVisual(CACHE, 'chartFunnelOverview');
     if (typeof renderAnalyse === 'function') renderAnalyse();
   }
@@ -4037,7 +4117,10 @@
   }
 
   // 👀 Visites par période (pageviews 'accueil') — même structure que drawParJour
-  async function drawVisitesParJour() {
+  //    On rend le chart D'ABORD avec les labels (synchrone), PUIS on récupère
+  //    les visites en async pour mettre à jour les valeurs. Évite l'écran vide
+  //    si le backend met du temps ou n'est pas dispo.
+  function drawVisitesParJour() {
     destroyChart('visitesParJour');
     const el = document.getElementById('chartVisitesParJour');
     if (!el) return;
@@ -4054,42 +4137,23 @@
     }
     const [compStart, compEnd, compMode] = getComparisonRange(displayStart, displayEnd);
 
-    // Helper : fetch des buckets de visites pour une plage
-    async function fetchBuckets(start, end) {
-      if (!start || !end) return {};
-      const params = new URLSearchParams();
-      params.set('page', 'accueil');
-      params.set('from', start.toISOString());
-      params.set('to', end.toISOString());
-      params.set('granularity', period);
-      // 🌍 Passe l'offset du fuseau du client pour que le backend bucketise dans la TZ locale
-      params.set('tzOffset', String(new Date().getTimezoneOffset()));
-      try {
-        const r = await fetch(`${API_URL}/track/timeseries?${params}`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
-        if (!r.ok) return {};
-        const d = await r.json();
-        return d.buckets || {};
-      } catch(e) { return {}; }
-    }
-
-    const [currentByBucket, compareByBucket] = await Promise.all([
-      fetchBuckets(displayStart, displayEnd),
-      (compMode !== 'none' && compStart) ? fetchBuckets(compStart, compEnd) : Promise.resolve({})
-    ]);
-
+    // 1️⃣ Synchronously build labels + zero data
     const currentKeys = generateBucketKeys(displayStart, displayEnd, period);
     const compareKeys = compStart ? generateBucketKeys(compStart, compEnd, period) : [];
-    const currentValues = currentKeys.map(k => currentByBucket[k] || 0);
-    const compareValues = currentKeys.map((_, i) => {
-      const ck = compareKeys[i];
-      return ck ? (compareByBucket[ck] || 0) : 0;
-    });
     const labels = currentKeys.map(k => bucketLabelFor(k, period));
     const compareLabels = compareKeys.map(k => bucketLabelFor(k, period));
+    const currentValues = currentKeys.map(() => 0);
+    const compareValues = currentKeys.map(() => 0);
+
+    if (!labels.length) {
+      // Edge case : aucune clé → on affiche un placeholder
+      labels.push('—');
+      currentValues.push(0);
+    }
 
     const datasets = [{
       label: 'Période actuelle',
-      data: currentValues.length ? currentValues : [0],
+      data: currentValues,
       borderColor: '#06b6d4',
       backgroundColor: 'rgba(6,182,212,0.15)',
       tension: 0.3,
@@ -4119,9 +4183,9 @@
       });
     }
 
-    charts.visitesParJour = new Chart(el, {
+    const chart = new Chart(el, {
       type: 'line',
-      data: { labels: labels.length ? labels : ['—'], datasets },
+      data: { labels, datasets },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
@@ -4141,6 +4205,46 @@
           y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#3a2818' }, title: { display: true, text: 'Visites', color: '#d4a574' } }
         }
       }
+    });
+    charts.visitesParJour = chart;
+
+    // 2️⃣ Async : récupère les vraies données via le backend
+    async function fetchBuckets(start, end) {
+      if (!start || !end) return {};
+      const params = new URLSearchParams();
+      params.set('page', 'accueil');
+      params.set('from', start.toISOString());
+      params.set('to', end.toISOString());
+      params.set('granularity', period);
+      params.set('tzOffset', String(new Date().getTimezoneOffset()));
+      try {
+        const r = await fetch(`${API_URL}/track/timeseries?${params}`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+        if (!r.ok) {
+          console.warn(`[visites] /track/timeseries HTTP ${r.status} — backend pas redéployé ?`);
+          return {};
+        }
+        const d = await r.json();
+        return d.buckets || {};
+      } catch(e) {
+        console.warn('[visites] fetch error', e);
+        return {};
+      }
+    }
+
+    Promise.all([
+      fetchBuckets(displayStart, displayEnd),
+      (compMode !== 'none' && compStart) ? fetchBuckets(compStart, compEnd) : Promise.resolve({})
+    ]).then(([currentByBucket, compareByBucket]) => {
+      // Si le chart a été remplacé entretemps, on s'arrête
+      if (charts.visitesParJour !== chart) return;
+      chart.data.datasets[0].data = currentKeys.map(k => currentByBucket[k] || 0);
+      if (chart.data.datasets[1]) {
+        chart.data.datasets[1].data = currentKeys.map((_, i) => {
+          const ck = compareKeys[i];
+          return ck ? (compareByBucket[ck] || 0) : 0;
+        });
+      }
+      chart.update();
     });
   }
 
