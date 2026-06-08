@@ -859,19 +859,22 @@ app.get('/api/track/funnel', requireAdmin, async (req, res) => {
     });
 
     // 🔁 Rebond : sessions qui ont vu l'accueil, ont QUITTÉ la page (beacon accueil_left)
-    //    et n'ont jamais progressé vers paiement/confirmation
+    //    et n'ont jamais progressé vers réservation/paiement/confirmation
     //    Si pas de beacon → session encore active (pas comptée, ni rebond ni pas rebond)
     const accueilSessions = sessionsByPage['accueil'] || new Set();
+    // 🆕 Le formulaire s'appelle maintenant 'reservation' (ex-'accueil' avant la séparation
+    //    landing/formulaire). Une session qui a atteint la résa N'EST PAS un rebond.
+    const reservationSessions = sessionsByPage['reservation'] || new Set();
     const paiementSessions = sessionsByPage['paiement'] || new Set();
     const confirmSessions  = sessionsByPage['confirmation'] || new Set();
     const leftSessions = sessionsByPage['accueil_left'] || new Set();
 
     // 🔁 Rebond = session qui n'a rien fait pendant 5s (signal accueil_left)
-    //    ET qui n'a pas progressé vers paiement
+    //    ET qui n'a pas progressé vers réservation/paiement/confirmation
     let bouncedCount = 0;
     let inProgressCount = 0;
     for (const sid of accueilSessions) {
-      if (paiementSessions.has(sid) || confirmSessions.has(sid)) continue;  // a progressé
+      if (reservationSessions.has(sid) || paiementSessions.has(sid) || confirmSessions.has(sid)) continue;  // a progressé
       if (leftSessions.has(sid)) bouncedCount++;  // rebond
       else inProgressCount++;  // a interagi mais n'a pas (encore) avancé
     }
