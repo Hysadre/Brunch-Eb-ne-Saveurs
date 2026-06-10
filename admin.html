@@ -773,15 +773,24 @@
         <option value="en attente vérification">⏳ En attente</option>
       </select>
       <select id="filterTicket">
-        <option value="">Toutes formules</option>
-        <option value="standard">Standard</option>
-        <option value="duo">Duo</option>
-        <option value="trio">Trio</option>
-        <option value="groupe">Groupe</option>
+        <option value="">Tous packs</option>
+        <optgroup label="Nouveaux packs">
+          <option value="normal">Normal (35€)</option>
+          <option value="enfant">Enfant (15€)</option>
+          <option value="vip">VIP (45€)</option>
+        </optgroup>
+        <optgroup label="Anciennes formules (legacy)">
+          <option value="standard">Standard</option>
+          <option value="duo">Duo</option>
+          <option value="trio">Trio</option>
+          <option value="groupe">Groupe</option>
+        </optgroup>
       </select>
       <select id="filterAmount" title="Filtrer par montant — utile pour matcher un paiement reçu sans référence">
         <option value="">💰 Tous montants</option>
+        <option value="15">15 €</option>
         <option value="35">35 €</option>
+        <option value="45">45 €</option>
         <option value="70">70 €</option>
         <option value="105">105 €</option>
         <option value="other">Autre montant…</option>
@@ -3505,10 +3514,16 @@
     }
     const newTotal = (resa.ticketPrice || 35) * newQty;
     let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
-    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
-    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
-    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
-    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+    // 🆕 Si c'est un PACK (Normal/Enfant/VIP), on garde le nom du pack inchangé
+    //    car le type de billet ne dépend plus de la quantité.
+    //    Pour les anciennes résa (legacy standard/duo/trio), on conserve l'auto-renommage.
+    const isNewPack = ['normal','enfant','vip'].includes(resa.ticketId);
+    if (!isNewPack) {
+      if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
+      else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
+      else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
+      else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+    }
 
     if (await updateReservation(resa.bookingId, {
       qty: newQty,
@@ -3556,11 +3571,16 @@
     // Recap
     const newQty = resa.qty + addCount;
     const newTotal = (resa.ticketPrice || 35) * newQty;
+    // 🆕 Pour les nouveaux packs, le nom reste celui du pack choisi à l'origine.
+    //    Pour les résa legacy (standard/duo/trio), on adapte le nom à la qté.
     let newFormula = resa.ticketName;
-    if (newQty === 1) newFormula = 'Standard';
-    else if (newQty === 2) newFormula = 'Duo';
-    else if (newQty === 3) newFormula = 'Trio';
-    else if (newQty > 3) newFormula = `Groupe (${newQty} places)`;
+    const isNewPackPreview = ['normal','enfant','vip'].includes(resa.ticketId);
+    if (!isNewPackPreview) {
+      if (newQty === 1) newFormula = 'Standard';
+      else if (newQty === 2) newFormula = 'Duo';
+      else if (newQty === 3) newFormula = 'Trio';
+      else if (newQty > 3) newFormula = `Groupe (${newQty} places)`;
+    }
     document.getElementById('editRecap').innerHTML = `
       <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Places</span><span><strong style="text-decoration:line-through; color:#8a6648;">${resa.qty}</strong> → <strong style="color:#22c55e;">${newQty}</strong></span></div>
       <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Formule</span><span><strong style="color:#fff;">${newFormula}</strong></span></div>
@@ -3591,10 +3611,14 @@
     const newQty = resa.qty + addCount;
     const newTotal = (resa.ticketPrice || 35) * newQty;
     let newTicketName = resa.ticketName, newTicketId = resa.ticketId;
-    if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
-    else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
-    else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
-    else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+    // 🆕 Garde le pack inchangé pour Normal/Enfant/VIP. Renomme seulement les legacy.
+    const isNewPackConfirm = ['normal','enfant','vip'].includes(resa.ticketId);
+    if (!isNewPackConfirm) {
+      if (newQty === 1) { newTicketName = 'Standard'; newTicketId = 'standard'; }
+      else if (newQty === 2) { newTicketName = 'Duo'; newTicketId = 'duo'; }
+      else if (newQty === 3) { newTicketName = 'Trio'; newTicketId = 'trio'; }
+      else if (newQty > 3) { newTicketName = `Groupe (${newQty} places)`; newTicketId = 'groupe'; }
+    }
 
     // Concat des accompagnants existants + nouveaux
     const oldAccomps = (resa.accompagnants || '').split(',').map(a => a.trim()).filter(a => a);
@@ -3767,18 +3791,50 @@
 
   function drawFormules(data) {
     destroyChart('formules');
-    const counts = { Standard: 0, Duo: 0, Trio: 0, Groupe: 0 };
+    // 🆕 Compte par PACK (nouveau) + ancien legacy. On compte par PLACES (qty) pour
+    //    refléter le nombre de personnes, pas le nombre de transactions.
+    const counts = {
+      'Normal': 0,
+      'Enfant': 0,
+      'VIP': 0,
+      // Legacy — conservés pour les anciennes résa, masqués si à 0
+      'Standard': 0,
+      'Duo': 0,
+      'Trio': 0,
+      'Groupe': 0
+    };
+    const idToLabel = {
+      normal: 'Normal', enfant: 'Enfant', vip: 'VIP',
+      standard: 'Standard', duo: 'Duo', trio: 'Trio', groupe: 'Groupe'
+    };
     data.forEach(r => {
-      const id = (r.ticketId || 'standard').charAt(0).toUpperCase() + (r.ticketId || 'standard').slice(1);
-      if (counts[id] !== undefined) counts[id]++; else counts.Groupe++;
+      const tid = (r.ticketId || 'normal').toLowerCase();
+      const label = idToLabel[tid] || 'Groupe';
+      counts[label] = (counts[label] || 0) + (r.qty || 1);
     });
+    // 🧹 Retire les catégories à 0 (sinon le donut affiche des segments vides illisibles)
+    const labels = [], values = [];
+    const colors = {
+      'Normal': '#b86a45',
+      'Enfant': '#06b6d4',
+      'VIP': '#fbbf24',
+      'Standard': '#8a6648',
+      'Duo': '#c79270',
+      'Trio': '#22c55e',
+      'Groupe': '#5a4028'
+    };
+    const bg = [];
+    Object.keys(counts).forEach(k => {
+      if (counts[k] > 0) { labels.push(k); values.push(counts[k]); bg.push(colors[k] || '#5a4028'); }
+    });
+    if (labels.length === 0) { labels.push('Aucune résa'); values.push(1); bg.push('#3a2818'); }
     charts.formules = new Chart(document.getElementById('chartFormules'), {
       type: 'doughnut',
       data: {
-        labels: Object.keys(counts),
+        labels: labels,
         datasets: [{
-          data: Object.values(counts),
-          backgroundColor: ['#b86a45', '#c79270', '#22c55e', '#06b6d4'],
+          data: values,
+          backgroundColor: bg,
           borderWidth: 0
         }]
       },
