@@ -209,7 +209,7 @@
     font-size: 13px;
   }
 
-  /* ============== GRILLE DE PLATS ============== */
+  /* ============== GRILLE DE PLATS (avec photos réelles) ============== */
   .dishes {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -219,24 +219,78 @@
   .dish {
     background: #1a1108;
     border: 1px solid #3a2818;
-    border-radius: 14px;
-    padding: 14px;
+    border-radius: 16px;
+    overflow: hidden;
     text-align: center;
     transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
   }
-  .dish:hover { transform: translateY(-2px); border-color: #b86a45; }
-  .dish .emoji {
-    font-size: 32px;
-    margin-bottom: 6px;
+  .dish:hover { transform: translateY(-3px); border-color: #b86a45; box-shadow: 0 8px 24px rgba(184,106,69,0.18); }
+  .dish-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #14100a;
   }
+  .dish-emoji-fallback {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    background: linear-gradient(135deg, #1a1108, #14100a);
+  }
+  .dish.no-img .dish-img { display: none; }
+  .dish.no-img .dish-emoji-fallback { display: flex; }
   .dish .name {
     color: #c79270;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 14px;
+    padding: 10px 8px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.5));
+    letter-spacing: 0.3px;
   }
   @media (min-width: 480px) {
     .dishes { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .dish .emoji { font-size: 38px; }
+  }
+  @media (min-width: 720px) {
+    .dishes { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ============== AFFICHE COMPLÈTE (bas de page) ============== */
+  .flyer-section {
+    margin: 30px 0 18px;
+    text-align: center;
+  }
+  .flyer-section .label {
+    font-size: 11px;
+    color: #8a6648;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .flyer-img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    border: 1px solid #3a2818;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+    display: block;
+    cursor: zoom-in;
+  }
+  .flyer-img:hover { border-color: #b86a45; }
+  .flyer-missing {
+    background: #1a1108;
+    border: 1px dashed #3a2818;
+    border-radius: 14px;
+    padding: 28px 16px;
+    color: #8a6648;
+    font-size: 13px;
+    text-align: center;
   }
 
   /* ============== AU MENU ============== */
@@ -482,17 +536,50 @@
       <div class="sub">Plats africains généreux · Servis tout l'après-midi</div>
     </div>
 
-    <!-- GRILLE DE PLATS -->
+    <!-- GRILLE DE PLATS — photos réelles (avec fallback emoji si l'image manque) -->
     <div class="dishes">
-      <div class="dish"><div class="emoji">🍛</div><div class="name">Tchep</div></div>
-      <div class="dish"><div class="emoji">🍢</div><div class="name">Brochettes</div></div>
-      <div class="dish"><div class="emoji">🍗</div><div class="name">Alloco & Poulet</div></div>
-      <div class="dish"><div class="emoji">🐟</div><div class="name">Garba</div></div>
-      <div class="dish"><div class="emoji">🥘</div><div class="name">Placali</div></div>
-      <div class="dish"><div class="emoji">🍲</div><div class="name">Yassa</div></div>
-      <div class="dish"><div class="emoji">🍩</div><div class="name">Beignets</div></div>
-      <div class="dish"><div class="emoji">🍰</div><div class="name">Thiakry</div></div>
-      <div class="dish"><div class="emoji">🍹</div><div class="name">Apéro coco</div></div>
+      <div class="dish">
+        <img class="dish-img" src="dish-tchep.jpg" alt="Tchep" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🍛</div>
+        <div class="name">Tchep</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-brochettes.jpg" alt="Brochettes" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🍢</div>
+        <div class="name">Brochettes</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-alloco-poulet.jpg" alt="Alloco &amp; Poulet" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🍗</div>
+        <div class="name">Alloco &amp; Poulet</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-garba.jpg" alt="Garba" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🐟</div>
+        <div class="name">Garba</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-placali.jpg" alt="Placali" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🥘</div>
+        <div class="name">Placali</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-yassa.jpg" alt="Yassa" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🍲</div>
+        <div class="name">Yassa</div>
+      </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-beignets.jpg" alt="Beignets" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🍩</div>
+        <div class="name">Beignets</div>
+      </div>
     </div>
 
     <!-- AU MENU détaillé -->
@@ -567,6 +654,19 @@
     <a href="reservation.html" class="reserve-btn" id="reserveBottomBtn">
       🎟️ Réserver ma place maintenant →
     </a>
+
+    <!-- 🖼️ AFFICHE COMPLÈTE (le flyer en grand) -->
+    <div class="flyer-section">
+      <div class="label">📋 L'affiche complète</div>
+      <a href="flyer-brunch.jpg" target="_blank" rel="noopener" id="flyerLink">
+        <img class="flyer-img" src="flyer-brunch.jpg" alt="Flyer Brunch Ébène &amp; Saveurs"
+             onerror="this.style.display='none'; document.getElementById('flyerMissing').style.display='block';">
+      </a>
+      <div id="flyerMissing" class="flyer-missing" style="display:none;">
+        🖼️ L'affiche complète n'est pas encore disponible.<br>
+        <span style="color:#5a4028; font-size:11px;">(ajoute <code style="color:#c79270;">flyer-brunch.jpg</code> dans le dossier)</span>
+      </div>
+    </div>
 
     <!-- CONTACT -->
     <div class="contact">
