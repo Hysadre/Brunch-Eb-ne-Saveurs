@@ -259,39 +259,6 @@
     .dishes { grid-template-columns: repeat(4, 1fr); }
   }
 
-  /* ============== AFFICHE COMPLÈTE (bas de page) ============== */
-  .flyer-section {
-    margin: 30px 0 18px;
-    text-align: center;
-  }
-  .flyer-section .label {
-    font-size: 11px;
-    color: #8a6648;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .flyer-img {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    border-radius: 16px;
-    border: 1px solid #3a2818;
-    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
-    display: block;
-    cursor: zoom-in;
-  }
-  .flyer-img:hover { border-color: #b86a45; }
-  .flyer-missing {
-    background: #1a1108;
-    border: 1px dashed #3a2818;
-    border-radius: 14px;
-    padding: 28px 16px;
-    color: #8a6648;
-    font-size: 13px;
-    text-align: center;
-  }
 
   /* ============== AU MENU ============== */
   .menu-section {
@@ -390,6 +357,134 @@
     letter-spacing: 0.5px;
     line-height: 1.3;
   }
+
+  /* ============== TARIFS / PACKS ============== */
+  .tarifs-section {
+    margin: 28px 0 22px;
+  }
+  .tarifs-title {
+    text-align: center;
+    margin: 0 0 6px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .tarifs-subtitle {
+    text-align: center;
+    color: #d4a574;
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+  .tarifs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 720px) {
+    .tarifs-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+  }
+  .pack-card {
+    position: relative;
+    background: #1a1108;
+    border: 1px solid #3a2818;
+    border-radius: 18px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+  }
+  .pack-card:hover { transform: translateY(-2px); }
+  .pack-card.vip {
+    background: linear-gradient(160deg, #2a1810 0%, #1a1108 100%);
+    border: 2px solid #c79270;
+    box-shadow: 0 12px 40px rgba(199,146,112,0.18);
+  }
+  .pack-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: linear-gradient(135deg, #fbbf24, #d4a574);
+    color: #1a1108;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .pack-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 8px;
+    letter-spacing: 0.5px;
+  }
+  .pack-card.vip .pack-name { color: #fbbf24; }
+  .pack-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .pack-currency {
+    font-size: 22px;
+    color: #c79270;
+    font-weight: 700;
+  }
+  .pack-price {
+    font-size: 44px;
+    color: #fff;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .pack-card.vip .pack-price { color: #fbbf24; }
+  .pack-unit {
+    font-size: 12px;
+    color: #8a6648;
+    margin-bottom: 16px;
+  }
+  .pack-desc {
+    color: #d4a574;
+    font-size: 13.5px;
+    margin: 0 0 18px;
+    line-height: 1.55;
+  }
+  .pack-features {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    flex: 1;
+  }
+  .pack-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 0;
+    color: #ede5d1;
+    font-size: 13.5px;
+  }
+  .pack-features .ok { color: #22c55e; font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
+  .pack-features .ko { color: #6b5444; font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
+  .pack-features li.disabled { color: #6b5444; text-decoration: line-through; }
+  .pack-cta {
+    display: block;
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    color: #1a1108;
+    text-decoration: none;
+    padding: 13px 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 14px;
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+  .pack-card.vip .pack-cta {
+    background: linear-gradient(135deg, #fbbf24, #d4a574);
+    box-shadow: 0 6px 18px rgba(251,191,36,0.3);
+  }
+  .pack-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
   /* ============== BONUS ============== */
   .bonus-card {
@@ -580,6 +675,12 @@
         <div class="dish-emoji-fallback">🍩</div>
         <div class="name">Beignets</div>
       </div>
+      <div class="dish">
+        <img class="dish-img" src="dish-bouillie-mil.jpg" alt="Bouillie de mil" loading="lazy"
+             onerror="this.parentElement.classList.add('no-img');">
+        <div class="dish-emoji-fallback">🥣</div>
+        <div class="name">Bouillie de mil</div>
+      </div>
     </div>
 
     <!-- AU MENU détaillé -->
@@ -650,23 +751,78 @@
       <div class="desc">Surprises & moments inoubliables pendant tout l'événement</div>
     </div>
 
+    <!-- 💰 TARIFS / PACKS -->
+    <section class="tarifs-section">
+      <h2 class="tarifs-title">Tarifs</h2>
+      <p class="tarifs-subtitle">3 packs au choix · Le pack VIP inclut les boissons alcoolisées</p>
+
+      <div class="tarifs-grid">
+
+        <!-- PACK NORMAL -->
+        <div class="pack-card">
+          <h3 class="pack-name">Normal</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">35</span>
+          </div>
+          <div class="pack-unit">par personne</div>
+          <p class="pack-desc">L'essentiel pour profiter du brunch africain à volonté.</p>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> Animations culturelles incluses</li>
+            <li class="disabled"><span class="ko">✕</span> Boissons alcoolisées</li>
+            <li class="disabled"><span class="ko">✕</span> After brunch</li>
+          </ul>
+          <a href="reservation.html?pack=normal" class="pack-cta">Réserver Normal →</a>
+        </div>
+
+        <!-- PACK ENFANT -->
+        <div class="pack-card">
+          <h3 class="pack-name">Enfant</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">15</span>
+          </div>
+          <div class="pack-unit">enfants de 4 à 10 ans</div>
+          <p class="pack-desc">Tarif réduit pour les enfants. <strong style="color:#fbbf24;">Gratuit pour les moins de 4 ans</strong> 🍼</p>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté (portion enfant)</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> Animations culturelles incluses</li>
+            <li class="disabled"><span class="ko">✕</span> Boissons alcoolisées</li>
+            <li><span class="ok">✓</span> -4 ans : <strong>gratuit</strong></li>
+          </ul>
+          <a href="reservation.html?pack=enfant" class="pack-cta">Réserver Enfant →</a>
+        </div>
+
+        <!-- PACK VIP (en évidence) -->
+        <div class="pack-card vip">
+          <span class="pack-badge">⭐ Populaire</span>
+          <h3 class="pack-name">VIP</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">45</span>
+          </div>
+          <div class="pack-unit">par personne</div>
+          <p class="pack-desc">L'expérience complète. Boissons alcoolisées incluses à volonté.</p>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> Animations culturelles incluses</li>
+            <li><span class="ok">✓</span> <strong>Boissons alcoolisées à volonté</strong></li>
+            <li><span class="ok">✓</span> Accès privilégié</li>
+          </ul>
+          <a href="reservation.html?pack=vip" class="pack-cta">Passer en VIP →</a>
+        </div>
+
+      </div>
+    </section>
+
     <!-- 🎟️ BOUTON RÉSERVER (bas) -->
     <a href="reservation.html" class="reserve-btn" id="reserveBottomBtn">
       🎟️ Réserver ma place maintenant →
     </a>
-
-    <!-- 🖼️ AFFICHE COMPLÈTE (le flyer en grand) -->
-    <div class="flyer-section">
-      <div class="label">📋 L'affiche complète</div>
-      <a href="flyer-brunch.jpg" target="_blank" rel="noopener" id="flyerLink">
-        <img class="flyer-img" src="flyer-brunch.jpg" alt="Flyer Brunch Ébène &amp; Saveurs"
-             onerror="this.style.display='none'; document.getElementById('flyerMissing').style.display='block';">
-      </a>
-      <div id="flyerMissing" class="flyer-missing" style="display:none;">
-        🖼️ L'affiche complète n'est pas encore disponible.<br>
-        <span style="color:#5a4028; font-size:11px;">(ajoute <code style="color:#c79270;">flyer-brunch.jpg</code> dans le dossier)</span>
-      </div>
-    </div>
 
     <!-- CONTACT -->
     <div class="contact">

@@ -132,6 +132,112 @@
   }
   textarea { resize: vertical; min-height: 80px; }
 
+  /* ============== PACKS (identiques à index.html) ============== */
+  .packs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 640px) {
+    .packs-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+  }
+  .pack-card {
+    position: relative;
+    background: #1a1108;
+    border: 1.5px solid #3a2818;
+    border-radius: 18px;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+  .pack-card:hover { transform: translateY(-2px); border-color: #5a4028; }
+  .pack-card.vip {
+    background: linear-gradient(160deg, #2a1810 0%, #1a1108 100%);
+    border: 2px solid #c79270;
+    box-shadow: 0 12px 40px rgba(199,146,112,0.15);
+  }
+  .pack-card.selected {
+    border-color: #b86a45;
+    background: #241408;
+    box-shadow: 0 8px 24px rgba(184,106,69,0.25);
+  }
+  .pack-card.vip.selected {
+    border-color: #fbbf24;
+    background: linear-gradient(160deg, #3a2810 0%, #241408 100%);
+    box-shadow: 0 12px 36px rgba(251,191,36,0.3);
+  }
+  .pack-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #fbbf24, #d4a574);
+    color: #1a1108;
+    padding: 3px 11px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+  .pack-radio {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #5a4028;
+    background: #0f0a06;
+    transition: border-color 0.2s ease;
+  }
+  .pack-card.selected .pack-radio { border-color: #b86a45; }
+  .pack-card.vip.selected .pack-radio { border-color: #fbbf24; }
+  .pack-card.selected .pack-radio::after {
+    content: '';
+    display: block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #b86a45;
+    margin: 3px auto 0;
+  }
+  .pack-card.vip.selected .pack-radio::after { background: #fbbf24; }
+  .pack-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 6px;
+    padding-left: 30px;
+    letter-spacing: 0.5px;
+  }
+  .pack-card.vip .pack-name { color: #fbbf24; }
+  .pack-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .pack-currency { font-size: 20px; color: #c79270; font-weight: 700; }
+  .pack-price { font-size: 40px; color: #fff; font-weight: 800; line-height: 1; }
+  .pack-card.vip .pack-price { color: #fbbf24; }
+  .pack-unit { font-size: 11px; color: #8a6648; margin-bottom: 14px; }
+  .pack-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .pack-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    color: #ede5d1;
+    font-size: 13px;
+  }
+  .pack-features .ok { color: #22c55e; font-weight: 800; flex-shrink: 0; font-size: 14px; line-height: 1; }
+  .pack-features .ko { color: #6b5444; font-weight: 800; flex-shrink: 0; font-size: 14px; line-height: 1; }
+  .pack-features li.disabled { color: #6b5444; text-decoration: line-through; }
+
   .ticket-options { display: flex; flex-direction: column; gap: 10px; }
   .ticket {
     display: flex; align-items: center; gap: 14px;
@@ -519,12 +625,7 @@
   <a href="reservation.html" style="flex:1; text-align:center; padding:10px 14px; border-radius:10px; color:#1a1108; text-decoration:none; font-weight:800; font-size:14px; background:linear-gradient(135deg,#b86a45,#c79270); box-shadow:0 2px 8px rgba(184,106,69,0.3);">🎟️ Réservations</a>
 </nav>
 
-<!-- 🎁 Bannière promo Trio (visible en haut, sticky) — réduction automatique -->
-<div id="promoBanner" style="background: linear-gradient(135deg, #b86a45, #c79270); color: #1a1108; padding: 12px 16px; text-align: center; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 56px; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-  <span style="font-size: 16px;">🎁</span>
-  <span><strong>-5€ exclusivement pour l'offre Trio</strong> · Profitez-en !</span>
-  <button id="promoCloseBtn" type="button" title="Fermer" style="background:transparent; border:none; color:#1a1108; cursor:pointer; font-size:16px; font-weight:800; padding: 4px 8px;">✕</button>
-</div>
+<!-- (Bannière promo Trio retirée — l'offre VIP est maintenant la formule premium) -->
 
 <div class="app">
 
@@ -562,40 +663,63 @@
   <form id="bookingForm" novalidate>
 
     <div class="card">
-      <h2>🎫 Choisissez votre formule</h2>
-      <div class="ticket-options" id="tickets">
-        <label class="ticket selected" data-id="standard" data-places="1" data-price="35">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Standard</div>
-            <div class="ticket-desc">1 place</div>
+      <h2>🎫 Choisissez votre pack</h2>
+      <div class="packs-grid" id="packsGrid">
+
+        <!-- PACK NORMAL -->
+        <div class="pack-card" data-pack="normal" data-price="35">
+          <span class="pack-radio"></span>
+          <h3 class="pack-name">Normal</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">35</span>
           </div>
-          <div class="ticket-price">35 €</div>
-        </label>
-        <label class="ticket" data-id="duo" data-places="2" data-price="70">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Duo</div>
-            <div class="ticket-desc">2 places</div>
+          <div class="pack-unit">par personne</div>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li class="disabled"><span class="ko">✕</span> Boissons alcoolisées</li>
+          </ul>
+        </div>
+
+        <!-- PACK ENFANT -->
+        <div class="pack-card" data-pack="enfant" data-price="15">
+          <span class="pack-radio"></span>
+          <h3 class="pack-name">Enfant</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">15</span>
           </div>
-          <div class="ticket-price">70 €</div>
-        </label>
-        <label class="ticket" data-id="trio" data-places="3" data-price="105">
-          <span class="ticket-radio"></span>
-          <div class="ticket-info">
-            <div class="ticket-name">Trio <span id="trioDiscountBadge" style="display:none; background:#dc2626; color:white; font-size:11px; font-weight:800; padding:2px 8px; border-radius:99px; margin-left:6px;">−5€</span></div>
-            <div class="ticket-desc">3 places</div>
+          <div class="pack-unit">4 à 10 ans · gratuit -4 ans</div>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> -4 ans : <strong>gratuit</strong></li>
+          </ul>
+        </div>
+
+        <!-- PACK VIP (en évidence) -->
+        <div class="pack-card vip" data-pack="vip" data-price="45">
+          <span class="pack-badge">⭐ Populaire</span>
+          <span class="pack-radio"></span>
+          <h3 class="pack-name">VIP</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">45</span>
           </div>
-          <div class="ticket-price" id="trioPrice">105 €</div>
-        </label>
+          <div class="pack-unit">par personne</div>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> <strong>Alcool à volonté</strong></li>
+          </ul>
+        </div>
+
       </div>
 
-      <!-- 🎁 Section code promo retirée — la réduction -5€ s'applique automatiquement sur Trio -->
-
-
       <div class="label" style="margin-top:18px;">
-        Nombre de places
-        <span style="font-weight: 500; color: #8a6648; font-size: 11px; margin-left: 4px;">(modifiable jusqu'à 10)</span>
+        Nombre de personnes
+        <span style="font-weight: 500; color: #8a6648; font-size: 11px; margin-left: 4px;">(1 à 10, du pack sélectionné)</span>
       </div>
       <div class="qty">
         <button type="button" id="qtyMinus" aria-label="Diminuer">−</button>
@@ -746,7 +870,8 @@
   // 🔧 CONFIG : URL de ton API backend
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
   const CAPACITY = 200;
-  const UNIT_PRICE = 35;
+  // 🆕 UNIT_PRICE n'est plus une constante — il dépend du pack sélectionné.
+  //    Utilise getCurrentUnitPrice() (défini plus bas) pour récupérer le prix actuel.
 
   // 📊 TRACKING — sessionId par onglet (sessionStorage) → permet de bien mesurer le rebond
   //    (chaque ouverture de fenêtre/onglet = nouvelle session, comme Google Analytics)
@@ -778,54 +903,7 @@
   // Envoie la vue dès le chargement
   trackPageview('reservation');
 
-  // 🎁 ===== PROMO TRIO AUTO =====
-  //    La réduction -5€ s'applique AUTOMATIQUEMENT à toute résa Trio (qty=3)
-  //    Le code TRIO5 dans la bannière est purement marketing/communication
-  const PROMO_CODE = 'TRIO5';
-  const PROMO_DISCOUNT = 5;
-  // Toujours appliqué dès que Trio est sélectionné (cf. updateTotal/updatePromoUI ci-dessous)
-  let promoApplied = true;
-
-  // 🎁 Met à jour l'affichage du Trio (badge -5€ + prix barré) — UNIQUEMENT quand Trio sélectionné
-  function updatePromoUI() {
-    const badge = document.getElementById('trioDiscountBadge');
-    const priceEl = document.getElementById('trioPrice');
-    // 🎯 Badge / prix barré visibles SEULEMENT si Trio sélectionné (qty=3)
-    let isTrio = false;
-    try { isTrio = (typeof getCurrentFormulaId === 'function' && getCurrentFormulaId() === 'trio'); } catch(e) {}
-    if (isTrio) {
-      if (badge) badge.style.display = 'inline-block';
-      if (priceEl) priceEl.innerHTML = '<span style="text-decoration:line-through; color:#8a6648; font-size:13px; margin-right:6px;">105 €</span>100 €';
-    } else {
-      if (badge) badge.style.display = 'none';
-      if (priceEl) priceEl.textContent = '105 €';
-    }
-  }
-
-  // 📋 Clic sur le code dans la bannière → copie + tracking
-  document.getElementById('promoCopyBtn')?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(PROMO_CODE);
-      trackPageview('promo_copied');
-      const btn = document.getElementById('promoCopyBtn');
-      const original = btn.innerHTML;
-      btn.innerHTML = '<span style="letter-spacing:1px;">✓ Copié !</span>';
-      setTimeout(() => { btn.innerHTML = original; }, 1800);
-    } catch(e) {}
-  });
-
-  // ✕ Fermeture de la bannière
-  document.getElementById('promoCloseBtn')?.addEventListener('click', () => {
-    sessionStorage.setItem('ebene_promo_closed', '1');
-    document.getElementById('promoBanner').style.display = 'none';
-  });
-
-  // Si bannière déjà fermée par l'utilisateur précédemment, la cacher
-  if (sessionStorage.getItem('ebene_promo_closed') === '1') {
-    const b = document.getElementById('promoBanner'); if (b) b.style.display = 'none';
-  }
-
-  updatePromoUI();
+  // 🎁 (Promo Trio retirée — remplacée par le pack VIP qui est l'offre premium)
 
   // 🔁 REBOND par engagement : si la personne ne fait RIEN pendant 5s
   //    (pas de scroll, pas de clic, pas de touche) → c'est un rebond.
@@ -869,26 +947,44 @@
     throw new Error('Event past — script stopped');
   }
 
-  // Mapping qty → formule
-  const FORMULAS = {
-    1: { id: 'standard', name: 'Standard' },
-    2: { id: 'duo',      name: 'Duo' },
-    3: { id: 'trio',     name: 'Trio' }
+  // 🎫 Catalogue des packs disponibles
+  const PACKS = {
+    normal: { id: 'normal', name: 'Normal', price: 35 },
+    enfant: { id: 'enfant', name: 'Enfant', price: 15 },
+    vip:    { id: 'vip',    name: 'VIP',    price: 45 }
   };
 
   const state = {
+    pack: 'normal',   // pack sélectionné par défaut
     qty: 1,
     max: 10
   };
 
-  // --- Sélection d'une formule (Standard / Duo / Trio) ---
-  document.querySelectorAll('.ticket').forEach(el => {
+  // 🔗 Si l'URL contient ?pack=normal|enfant|vip, on pré-sélectionne ce pack
+  //    (utilisé par les CTA "Réserver Normal/Enfant/VIP" depuis l'accueil)
+  (function readPackFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const p = (urlParams.get('pack') || '').toLowerCase();
+    if (PACKS[p]) state.pack = p;
+  })();
+
+  // --- Sélection d'un pack (clic sur une carte) ---
+  function selectPack(packId) {
+    if (!PACKS[packId]) return;
+    state.pack = packId;
+    document.querySelectorAll('.pack-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.pack === packId);
+    });
+    updateTotal();
+  }
+  document.querySelectorAll('.pack-card').forEach(el => {
     el.addEventListener('click', (e) => {
       e.preventDefault();
-      const places = parseInt(el.dataset.places, 10);
-      setQty(places);
+      selectPack(el.dataset.pack);
     });
   });
+  // Sélection initiale
+  selectPack(state.pack);
 
   // --- Boutons +/- ---
   const qtyValueEl = document.getElementById('qtyValue');
@@ -899,19 +995,13 @@
     if (state.qty < state.max) setQty(state.qty + 1);
   });
 
-  // 🆕 Saisie manuelle du nombre de places
+  // 🆕 Saisie manuelle du nombre de personnes
   qtyValueEl.addEventListener('input', (e) => {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val) || val < 1) val = 1;
     if (val > state.max) val = state.max;
-    // On NE met PAS à jour le state ici pour permettre à l'user de taper sans interruption
-    // Mais on plafonne visuellement
     if (val !== parseInt(e.target.value, 10)) e.target.value = val;
     state.qty = val;
-    // Highlight + total + accompagnants
-    document.querySelectorAll('.ticket').forEach(t => {
-      t.classList.toggle('selected', parseInt(t.dataset.places, 10) === val);
-    });
     updateTotal();
     updateAccompagnantsFields();
   });
@@ -924,17 +1014,12 @@
     setQty(val);
   });
 
+  // 🆕 setQty ne change PLUS le pack — qty est indépendant du type de pack choisi
   function setQty(n) {
     state.qty = n;
     qtyValueEl.value = n;
-    // Highlight la formule correspondante
-    document.querySelectorAll('.ticket').forEach(t => {
-      t.classList.toggle('selected', parseInt(t.dataset.places, 10) === n);
-    });
     updateTotal();
     updateAccompagnantsFields();
-    // 🎁 Met à jour la visibilité du bloc code promo (visible uniquement si Trio)
-    if (typeof updatePromoUI === 'function') updatePromoUI();
   }
 
   // 👥 Génère dynamiquement les champs accompagnants (qty - 1 invités)
@@ -970,26 +1055,24 @@
     list.innerHTML = html;
   }
 
+  // 🆕 Le total dépend désormais du PACK choisi (et plus de promo Trio)
+  function getCurrentPack() {
+    return PACKS[state.pack] || PACKS.normal;
+  }
+  function getCurrentUnitPrice() {
+    return getCurrentPack().price;
+  }
   function updateTotal() {
-    let total = UNIT_PRICE * state.qty;
-    // 🎁 Applique la promo TRIO5 si active ET formule Trio (qty === 3)
-    const discountActive = (typeof promoApplied !== 'undefined' && promoApplied) && state.qty === 3;
-    if (discountActive) total -= (typeof PROMO_DISCOUNT !== 'undefined' ? PROMO_DISCOUNT : 5);
+    const total = getCurrentUnitPrice() * state.qty;
     const el = document.getElementById('totalAmount');
-    if (discountActive) {
-      el.innerHTML = `<span style="text-decoration:line-through; color:#8a6648; font-size:0.65em; margin-right:8px; font-weight:500;">${(UNIT_PRICE * state.qty).toFixed(2).replace('.', ',')} €</span>${total.toFixed(2).replace('.', ',')} €`;
-    } else {
-      el.textContent = total.toFixed(2).replace('.', ',') + ' €';
-    }
+    el.textContent = total.toFixed(2).replace('.', ',') + ' €';
   }
 
   function getCurrentFormulaName() {
-    if (FORMULAS[state.qty]) return FORMULAS[state.qty].name;
-    return `Groupe (${state.qty} places)`;
+    return getCurrentPack().name;
   }
   function getCurrentFormulaId() {
-    if (FORMULAS[state.qty]) return FORMULAS[state.qty].id;
-    return 'groupe';
+    return getCurrentPack().id;
   }
 
   // --- Capacité dynamique + badge "Le + populaire" ---
@@ -1011,23 +1094,9 @@
     // 🔒 Compteur de places retiré du public (visible uniquement dans le dashboard admin)
     // bookedPlaces et formulas restent dispo pour le badge "Le + populaire" ci-dessous
 
-    // Badge "Le + populaire" — sur la formule la plus choisie (min 3 résa pour afficher)
-    document.querySelectorAll('.ticket-flag').forEach(f => f.remove());
-    if (formulas) {
-      let best = null, bestCount = 0;
-      ['standard', 'duo', 'trio'].forEach(id => {
-        if ((formulas[id] || 0) > bestCount) { best = id; bestCount = formulas[id]; }
-      });
-      if (best && bestCount >= 3) {
-        const ticket = document.querySelector(`.ticket[data-id="${best}"]`);
-        if (ticket) {
-          const flag = document.createElement('span');
-          flag.className = 'ticket-flag';
-          flag.textContent = '🔥 Le + populaire';
-          ticket.insertBefore(flag, ticket.firstChild);
-        }
-      }
-    }
+    // 🆕 L'ancien badge dynamique "le + populaire" est retiré.
+    //    Le pack VIP a maintenant un badge "⭐ Populaire" statique.
+    //    (Si tu veux réactiver un badge dynamique sur Normal/Enfant, on pourra ajouter.)
   }
   loadCapacity();
 
@@ -1123,22 +1192,18 @@
       } catch(e) { console.warn('Check email skipped', e); }
     }
 
-    // 🎁 Applique la réduction Trio si code promo actif ET formule Trio sélectionnée
-    const isTrio = getCurrentFormulaId() === 'trio';
-    const discountApplied = promoApplied && isTrio;
-    let rawTotal = UNIT_PRICE * state.qty;
-    let finalTotal = discountApplied ? (rawTotal - PROMO_DISCOUNT) : rawTotal;
+    // 🆕 Le prix dépend du pack sélectionné (Normal 35€ / Enfant 15€ / VIP 45€)
+    const unitPrice = getCurrentUnitPrice();
+    const finalTotal = unitPrice * state.qty;
 
     const booking = {
       prenom, nom, email, telephone, message,
       accompagnants: accompagnants.join(', ') || null,
-      ticketId: getCurrentFormulaId(),
-      ticketName: getCurrentFormulaName(),
-      ticketPrice: UNIT_PRICE,
+      ticketId: getCurrentFormulaId(),       // 'normal' | 'enfant' | 'vip'
+      ticketName: getCurrentFormulaName(),   // 'Normal' | 'Enfant' | 'VIP'
+      ticketPrice: unitPrice,                // 35 | 15 | 45
       qty: state.qty,
       total: finalTotal,
-      promoCode: discountApplied ? PROMO_CODE : null,
-      promoDiscount: discountApplied ? PROMO_DISCOUNT : 0,
       timestamp: new Date().toISOString(),
       status: 'paiement non confirmé'  // draft : passera à "en attente vérification" au clic "J'ai payé"
       // ⚠️ Pas de bookingId ici — il est généré côté serveur (séquentiel EBENE-NOM-Y{NNN})
