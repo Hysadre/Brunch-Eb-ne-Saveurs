@@ -85,10 +85,10 @@
     padding: 0 18px 60px;
   }
 
-  /* ============== HERO LOGO + TITRE ============== */
+  /* ============== HERO AFFICHE (en grand, tout en haut) ============== */
   .hero {
     text-align: center;
-    padding: 28px 14px 18px;
+    padding: 20px 0 14px;
   }
   .hero-eyebrow {
     font-size: 11px;
@@ -96,20 +96,23 @@
     text-transform: uppercase;
     color: #c79270;
     font-weight: 700;
-    margin-bottom: 18px;
+    margin: 14px 0 18px;
   }
-  .logo-wrap {
+  .affiche-wrap {
     display: flex;
     justify-content: center;
-    margin-bottom: 14px;
+    margin: 14px 0;
   }
-  .logo-wrap img {
-    max-width: 240px;
-    width: 60%;
+  .affiche-wrap img {
+    max-width: 100%;
+    width: 100%;
     height: auto;
-    filter: drop-shadow(0 6px 20px rgba(199,146,112,0.15));
+    border-radius: 18px;
+    border: 1px solid #3a2818;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+    display: block;
   }
-  .logo-fallback {
+  .affiche-fallback {
     /* affiché si l'image n'a pas pu charger */
     font-family: Georgia, "Times New Roman", serif;
     font-size: 30px;
@@ -118,8 +121,13 @@
     letter-spacing: 1px;
     line-height: 1.1;
     text-align: center;
+    padding: 50px 20px;
+    background: #1a1108;
+    border: 1px dashed #3a2818;
+    border-radius: 18px;
   }
-  .logo-fallback .em { color: #b86a45; font-style: italic; }
+  .affiche-fallback .em { color: #b86a45; font-style: italic; }
+  .affiche-fallback .small { display: block; margin-top: 12px; font-size: 12px; color: #8a6648; font-family: -apple-system, sans-serif; letter-spacing: 1px; font-weight: 500; }
 
   /* ============== INFOS PRATIQUES (carte top) ============== */
   .infos-pratiques {
@@ -580,18 +588,18 @@
 
   <div id="mainContent">
 
-    <!-- HERO : Logo + tagline -->
+    <!-- HERO : Affiche complète en grand -->
     <div class="hero">
-      <div class="tagline">SAVEURS · CULTURE · PARTAGE</div>
-      <div class="logo-wrap">
-        <img src="logo-accueil.png" alt="Brunch Ébène & Saveurs"
-             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
+      <div class="affiche-wrap">
+        <img src="affiche-brunch.jpg" alt="Affiche Brunch Ébène & Saveurs · 22 août 2026"
+             onerror="this.style.display='none'; document.getElementById('afficheFallback').style.display='block';">
       </div>
-      <div id="logoFallback" class="logo-fallback" style="display:none;">
+      <div id="afficheFallback" class="affiche-fallback" style="display:none;">
         <div>Brunch</div>
         <div><span class="em">Ébène</span> & Saveurs</div>
+        <span class="small">🖼️ Ajoute <code style="color:#c79270;">affiche-brunch.jpg</code> dans le dossier</span>
       </div>
-      <div class="hero-eyebrow" style="margin-top: 18px;">🌴 Édition 2026</div>
+      <div class="hero-eyebrow">🌴 Édition 2026 · 22 août 2026</div>
     </div>
 
     <!-- INFOS PRATIQUES -->
@@ -758,6 +766,24 @@
 
       <div class="tarifs-grid">
 
+        <!-- PACK ENFANT (en premier) -->
+        <div class="pack-card">
+          <h3 class="pack-name">Enfant</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">15</span>
+          </div>
+          <div class="pack-unit">enfants de 4 à 10 ans</div>
+          <p class="pack-desc">Tarif réduit pour les enfants. <strong style="color:#fbbf24;">Gratuit pour les moins de 4 ans</strong> 🍼</p>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté (portion enfant)</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> Animations culturelles incluses</li>
+            <li><span class="ok">✓</span> -4 ans : <strong>gratuit</strong></li>
+          </ul>
+          <a href="reservation.html?pack=enfant" class="pack-cta">Réserver Enfant →</a>
+        </div>
+
         <!-- PACK NORMAL -->
         <div class="pack-card">
           <h3 class="pack-name">Normal</h3>
@@ -772,28 +798,8 @@
             <li><span class="ok">✓</span> Boissons soft à volonté</li>
             <li><span class="ok">✓</span> Animations culturelles incluses</li>
             <li class="disabled"><span class="ko">✕</span> Boissons alcoolisées</li>
-            <li class="disabled"><span class="ko">✕</span> After brunch</li>
           </ul>
           <a href="reservation.html?pack=normal" class="pack-cta">Réserver Normal →</a>
-        </div>
-
-        <!-- PACK ENFANT -->
-        <div class="pack-card">
-          <h3 class="pack-name">Enfant</h3>
-          <div class="pack-price-wrap">
-            <span class="pack-currency">€</span>
-            <span class="pack-price">15</span>
-          </div>
-          <div class="pack-unit">enfants de 4 à 10 ans</div>
-          <p class="pack-desc">Tarif réduit pour les enfants. <strong style="color:#fbbf24;">Gratuit pour les moins de 4 ans</strong> 🍼</p>
-          <ul class="pack-features">
-            <li><span class="ok">✓</span> Buffet à volonté (portion enfant)</li>
-            <li><span class="ok">✓</span> Boissons soft à volonté</li>
-            <li><span class="ok">✓</span> Animations culturelles incluses</li>
-            <li class="disabled"><span class="ko">✕</span> Boissons alcoolisées</li>
-            <li><span class="ok">✓</span> -4 ans : <strong>gratuit</strong></li>
-          </ul>
-          <a href="reservation.html?pack=enfant" class="pack-cta">Réserver Enfant →</a>
         </div>
 
         <!-- PACK VIP (en évidence) -->
