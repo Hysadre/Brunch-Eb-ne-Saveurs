@@ -18,10 +18,10 @@
   :root {
     --bg-main:        #f4e8d0;   /* fond principal (couleur du logo) */
     --bg-soft:        #ece0c5;   /* fond légèrement plus marqué */
-    --bg-card:        #fbf3e3;   /* carte standard */
-    --bg-card-2:      #e8d9b8;   /* carte alternative */
-    --border:         #d4b896;   /* bordure standard */
-    --border-strong:  #b89870;   /* bordure marquée */
+    --bg-card:        #ffffff;   /* carte standard — BLANC pur pour contraster */
+    --bg-card-2:      #fef7e6;   /* carte alternative légèrement crème */
+    --border:         #c4a878;   /* bordure standard (plus marquée qu'avant) */
+    --border-strong:  #a8794a;   /* bordure marquée */
     --text-primary:   #3a2818;   /* texte principal (foncé) */
     --text-secondary: #6b4a2e;   /* texte secondaire */
     --text-muted:     #8a6648;   /* texte atténué (légendes) */
@@ -29,13 +29,15 @@
     --accent-dark:    #8a4a2e;   /* brun foncé accent */
     --gold:           #c79270;   /* doré */
     --gold-bright:    #d4a574;   /* doré clair */
-    --gold-vip:       #c19234;   /* doré VIP plus foncé pour lisibilité */
+    --gold-vip:       #b58220;   /* doré VIP plus foncé pour lisibilité */
+    --gold-vip-light: #ffd97a;   /* doré VIP clair (gradient) */
     --green:          #16a34a;   /* succès */
     --green-dark:     #15803d;
     --amber:          #d97706;   /* warning */
     --red:            #dc2626;   /* erreur */
-    --shadow-soft:    0 8px 28px rgba(58,40,24,0.10);
-    --shadow-strong:  0 14px 38px rgba(58,40,24,0.18);
+    /* Ombres plus prononcées pour que les cartes "lévitent" au-dessus du fond cream */
+    --shadow-soft:    0 6px 20px rgba(58,40,24,0.12), 0 2px 6px rgba(58,40,24,0.08);
+    --shadow-strong:  0 14px 36px rgba(58,40,24,0.22), 0 4px 12px rgba(58,40,24,0.12);
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -137,11 +139,15 @@
     margin: 14px 0 22px;
   }
   .hero-logo img {
-    max-width: 200px;
-    width: 50%;
+    max-width: 220px;
+    width: 55%;
     height: auto;
-    border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(58,40,24,0.18);
+    /* 🪄 mix-blend-mode: multiply → le fond cream de l'image se fond avec le fond
+       cream de la page (les couleurs lumineuses se "multiplient" et disparaissent).
+       Astuce CSS standard pour intégrer un logo sur fond identique sans devoir
+       refaire un PNG transparent. */
+    mix-blend-mode: multiply;
+    /* Pas de bordure ni d'ombre — sinon ça redessine un rectangle visible */
   }
   .hero-intro {
     color: var(--text-secondary);
@@ -460,41 +466,64 @@
   .tarifs-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 22px;                                 /* + d'espace pour le badge sortant */
+    padding-top: 14px;                          /* room pour le badge "POPULAIRE" en haut */
   }
   @media (min-width: 720px) {
-    .tarifs-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+    .tarifs-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; gap: 20px; }
   }
   .pack-card {
     position: relative;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: var(--bg-card);              /* BLANC pur — bien distinct du fond cream */
+    border: 2px solid var(--border-strong);  /* bordure marquée brun */
     border-radius: 18px;
-    padding: 24px 20px;
+    padding: 26px 22px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     box-shadow: var(--shadow-soft);
   }
-  .pack-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-strong); }
+  .pack-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--accent-warm);
+  }
   .pack-card.vip {
-    background: linear-gradient(160deg, #fff6e3 0%, var(--bg-card) 100%);
-    border: 2px solid var(--gold-vip);
-    box-shadow: 0 12px 40px rgba(193,146,52,0.25);
+    /* 🌟 VIP : fond doré gradient + bordure doré épaisse + glow doré + scale léger */
+    background: linear-gradient(160deg, #fff4d4 0%, #ffe9a8 60%, #fbd97a 100%);
+    border: 3px solid var(--gold-vip);
+    box-shadow:
+      0 0 0 4px rgba(255,217,122,0.35),       /* halo doré extérieur */
+      0 18px 42px rgba(181,130,32,0.32),      /* ombre dorée portée */
+      0 4px 12px rgba(58,40,24,0.15);
+    transform: scale(1.02);                    /* légèrement plus grand */
+  }
+  .pack-card.vip:hover {
+    transform: scale(1.02) translateY(-3px);
+    box-shadow:
+      0 0 0 5px rgba(255,217,122,0.5),
+      0 22px 52px rgba(181,130,32,0.42),
+      0 6px 18px rgba(58,40,24,0.18);
+  }
+  @media (max-width: 720px) {
+    /* Sur mobile, désactive le scale pour ne pas dépasser la grille */
+    .pack-card.vip { transform: none; }
+    .pack-card.vip:hover { transform: translateY(-3px); }
   }
   .pack-badge {
     position: absolute;
-    top: 14px;
-    right: 14px;
-    background: linear-gradient(135deg, var(--gold-vip), var(--amber));
+    top: -12px;                                /* sort de la carte vers le haut */
+    right: 18px;
+    background: linear-gradient(135deg, #b58220, #d97706);
     color: #fff;
-    padding: 4px 12px;
+    padding: 6px 14px;
     border-radius: 99px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    box-shadow: 0 2px 6px rgba(193,146,52,0.3);
+    box-shadow: 0 4px 12px rgba(181,130,32,0.5);
+    border: 2px solid #fff;
   }
   .pack-name {
     font-size: 22px;
@@ -503,7 +532,10 @@
     margin: 0 0 8px;
     letter-spacing: 0.5px;
   }
-  .pack-card.vip .pack-name { color: var(--gold-vip); }
+  .pack-card.vip .pack-name {
+    color: #6b4a05;   /* doré très foncé pour bien ressortir sur fond doré clair */
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
   .pack-price-wrap {
     display: flex;
     align-items: baseline;
@@ -521,7 +553,15 @@
     font-weight: 800;
     line-height: 1;
   }
-  .pack-card.vip .pack-price { color: var(--gold-vip); }
+  .pack-card.vip .pack-price {
+    color: #6b4a05;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.4);
+  }
+  .pack-card.vip .pack-currency { color: #8a6418; font-weight: 800; }
+  .pack-card.vip .pack-unit { color: #8a6418; font-weight: 600; }
+  .pack-card.vip .pack-desc { color: #4a3208; font-weight: 600; }
+  .pack-card.vip .pack-features li { color: #3a2700; font-weight: 600; }
+  .pack-card.vip .pack-features .ok { color: #15803d; }
   .pack-unit {
     font-size: 12px;
     color: var(--text-muted);
@@ -565,9 +605,13 @@
     box-shadow: 0 4px 12px rgba(184,106,69,0.25);
   }
   .pack-card.vip .pack-cta {
-    background: linear-gradient(135deg, var(--gold-vip), var(--amber));
-    box-shadow: 0 6px 18px rgba(193,146,52,0.4);
+    background: linear-gradient(135deg, #6b4a05, #b58220 70%, #d97706);
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(107,74,5,0.5);
+    border: 1px solid #6b4a05;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
   }
+  .pack-card.vip .pack-cta:hover { filter: brightness(1.1); }
   .pack-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
   /* ============== BONUS ============== */
