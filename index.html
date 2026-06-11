@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f0a06">
+<meta name="theme-color" content="#f4e8d0">
 <title>Brunch Ébène & Saveurs · 22 août 2026</title>
 <meta name="description" content="Brunch africain à volonté · Métropole lilloise · Samedi 22 août 2026 · 35€">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -12,12 +12,38 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>
+  /* ===========================================================
+     🎨 PALETTE — thème CLAIR inspiré du fond du logo (cream/beige)
+     =========================================================== */
+  :root {
+    --bg-main:        #f4e8d0;   /* fond principal (couleur du logo) */
+    --bg-soft:        #ece0c5;   /* fond légèrement plus marqué */
+    --bg-card:        #fbf3e3;   /* carte standard */
+    --bg-card-2:      #e8d9b8;   /* carte alternative */
+    --border:         #d4b896;   /* bordure standard */
+    --border-strong:  #b89870;   /* bordure marquée */
+    --text-primary:   #3a2818;   /* texte principal (foncé) */
+    --text-secondary: #6b4a2e;   /* texte secondaire */
+    --text-muted:     #8a6648;   /* texte atténué (légendes) */
+    --accent-warm:    #b86a45;   /* brun chaud accent */
+    --accent-dark:    #8a4a2e;   /* brun foncé accent */
+    --gold:           #c79270;   /* doré */
+    --gold-bright:    #d4a574;   /* doré clair */
+    --gold-vip:       #c19234;   /* doré VIP plus foncé pour lisibilité */
+    --green:          #16a34a;   /* succès */
+    --green-dark:     #15803d;
+    --amber:          #d97706;   /* warning */
+    --red:            #dc2626;   /* erreur */
+    --shadow-soft:    0 8px 28px rgba(58,40,24,0.10);
+    --shadow-strong:  0 14px 38px rgba(58,40,24,0.18);
+  }
+
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-    background: #0f0a06;
-    color: #ede5d1;
+    background: var(--bg-main);
+    color: var(--text-primary);
     min-height: 100vh;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
@@ -26,14 +52,15 @@
 
   /* ============== NAVIGATION ONGLETS (sticky top) ============== */
   .topnav {
-    background: #0f0a06;
-    border-bottom: 1px solid #3a2818;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
     display: flex;
     gap: 6px;
     padding: 8px 12px;
     position: sticky;
     top: 0;
     z-index: 101;
+    box-shadow: var(--shadow-soft);
   }
   .topnav a {
     flex: 1;
@@ -43,25 +70,25 @@
     text-decoration: none;
     font-weight: 700;
     font-size: 14px;
-    color: #d4a574;
+    color: var(--accent-dark);
     background: transparent;
     transition: all 0.2s ease;
   }
   .topnav a.active {
-    color: #1a1108;
+    color: #fff;
     font-weight: 800;
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    box-shadow: 0 2px 8px rgba(184,106,69,0.3);
+    background: linear-gradient(135deg, var(--accent-warm), var(--gold));
+    box-shadow: 0 3px 10px rgba(184,106,69,0.35);
   }
   .topnav a:not(.active):hover {
-    background: rgba(255,255,255,0.04);
-    color: #ede5d1;
+    background: rgba(184,106,69,0.08);
+    color: var(--accent-warm);
   }
 
   /* ============== BANNIÈRE RÉSERVER (tout en haut) ============== */
   .cta-banner {
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    color: #1a1108;
+    background: linear-gradient(135deg, var(--accent-warm), var(--gold));
+    color: #fff;
     padding: 11px 16px;
     text-align: center;
     font-weight: 800;
@@ -72,8 +99,9 @@
     gap: 10px;
     flex-wrap: wrap;
     text-decoration: none;
-    border-bottom: 1px solid rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(58,40,24,0.15);
     transition: filter 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   }
   .cta-banner:hover { filter: brightness(1.08); }
   .cta-banner-arrow { font-size: 16px; }
@@ -85,57 +113,76 @@
     padding: 0 18px 60px;
   }
 
-  /* ============== HERO AFFICHE (en grand, tout en haut) ============== */
+  /* ============== HERO (Bienvenue + logo + intro) ============== */
   .hero {
     text-align: center;
-    padding: 20px 0 14px;
+    padding: 36px 18px 24px;
   }
+  .hero-welcome {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(28px, 6vw, 44px);
+    line-height: 1.15;
+    color: var(--text-primary);
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .hero-welcome .em {
+    color: var(--accent-warm);
+    font-style: italic;
+  }
+  .hero-logo {
+    display: flex;
+    justify-content: center;
+    margin: 14px 0 22px;
+  }
+  .hero-logo img {
+    max-width: 200px;
+    width: 50%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(58,40,24,0.18);
+  }
+  .hero-intro {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 580px;
+    margin: 0 auto;
+    font-weight: 500;
+  }
+  .hero-intro strong { color: var(--accent-dark); font-weight: 700; }
   .hero-eyebrow {
     font-size: 11px;
     letter-spacing: 4px;
     text-transform: uppercase;
-    color: #c79270;
+    color: var(--accent-warm);
     font-weight: 700;
-    margin: 14px 0 18px;
+    margin: 22px 0 4px;
   }
-  .affiche-wrap {
-    display: flex;
-    justify-content: center;
-    margin: 14px 0;
-  }
-  .affiche-wrap img {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    border-radius: 18px;
-    border: 1px solid #3a2818;
-    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
-    display: block;
-  }
-  .affiche-fallback {
-    /* affiché si l'image n'a pas pu charger */
+  .hero-logo-fallback {
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 30px;
-    color: #c79270;
+    font-size: 22px;
+    color: var(--accent-dark);
     font-weight: 700;
-    letter-spacing: 1px;
-    line-height: 1.1;
-    text-align: center;
-    padding: 50px 20px;
-    background: #1a1108;
-    border: 1px dashed #3a2818;
-    border-radius: 18px;
+    line-height: 1.2;
+    padding: 30px 24px;
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    max-width: 260px;
+    margin: 0 auto;
   }
-  .affiche-fallback .em { color: #b86a45; font-style: italic; }
-  .affiche-fallback .small { display: block; margin-top: 12px; font-size: 12px; color: #8a6648; font-family: -apple-system, sans-serif; letter-spacing: 1px; font-weight: 500; }
+  .hero-logo-fallback .em { color: var(--accent-warm); font-style: italic; }
 
   /* ============== INFOS PRATIQUES (carte top) ============== */
   .infos-pratiques {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 18px;
     padding: 20px 18px;
     margin-bottom: 18px;
+    box-shadow: var(--shadow-soft);
   }
   .info-line {
     display: flex;
@@ -144,13 +191,13 @@
     padding: 8px 0;
     font-size: 15px;
   }
-  .info-line + .info-line { border-top: 1px solid #2a1810; }
+  .info-line + .info-line { border-top: 1px solid var(--border); }
   .info-line .icon {
     flex-shrink: 0;
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: rgba(199,146,112,0.10);
+    background: rgba(184,106,69,0.10);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,29 +205,30 @@
   }
   .info-line .info-text {
     flex: 1;
-    color: #ede5d1;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-weight: 700;
   }
   .info-line .info-sub {
-    color: #8a6648;
+    color: var(--text-muted);
     font-size: 12px;
     font-weight: 500;
     margin-top: 2px;
   }
   .price-pill {
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    color: #1a1108;
+    background: linear-gradient(135deg, var(--accent-warm), var(--gold));
+    color: #fff;
     padding: 4px 12px;
     border-radius: 99px;
     font-weight: 800;
     font-size: 14px;
+    box-shadow: 0 2px 6px rgba(184,106,69,0.3);
   }
 
   /* ============== BOUTON RÉSERVER PRINCIPAL ============== */
   .reserve-btn {
     display: block;
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    color: #1a1108;
+    background: linear-gradient(135deg, var(--accent-warm), var(--gold));
+    color: #fff;
     text-decoration: none;
     padding: 17px 24px;
     border-radius: 14px;
@@ -189,16 +237,17 @@
     font-size: 17px;
     letter-spacing: 0.3px;
     margin: 16px 0;
-    box-shadow: 0 6px 20px rgba(184,106,69,0.25);
+    box-shadow: 0 6px 20px rgba(184,106,69,0.35);
     transition: all 0.2s ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
   }
-  .reserve-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(184,106,69,0.4); }
+  .reserve-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(184,106,69,0.45); }
   .reserve-btn:active { transform: translateY(0); }
 
   /* ============== SECTION BUFFET ============== */
   .buffet-banner {
-    background: #1a1108;
-    border: 2px dashed #b86a45;
+    background: var(--bg-card);
+    border: 2px dashed var(--accent-warm);
     border-radius: 14px;
     padding: 18px;
     text-align: center;
@@ -208,12 +257,12 @@
     margin: 0;
     font-size: 20px;
     font-weight: 800;
-    color: #c79270;
+    color: var(--accent-dark);
     letter-spacing: 1px;
   }
   .buffet-banner .sub {
     margin-top: 4px;
-    color: #d4a574;
+    color: var(--text-secondary);
     font-size: 13px;
   }
 
@@ -225,21 +274,22 @@
     margin-bottom: 24px;
   }
   .dish {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     overflow: hidden;
     text-align: center;
     transition: transform 0.2s ease, border-color 0.2s ease;
     position: relative;
+    box-shadow: var(--shadow-soft);
   }
-  .dish:hover { transform: translateY(-3px); border-color: #b86a45; box-shadow: 0 8px 24px rgba(184,106,69,0.18); }
+  .dish:hover { transform: translateY(-3px); border-color: var(--accent-warm); box-shadow: 0 12px 28px rgba(184,106,69,0.22); }
   .dish-img {
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     display: block;
-    background: #14100a;
+    background: var(--bg-soft);
   }
   .dish-emoji-fallback {
     width: 100%;
@@ -248,16 +298,17 @@
     align-items: center;
     justify-content: center;
     font-size: 56px;
-    background: linear-gradient(135deg, #1a1108, #14100a);
+    background: linear-gradient(135deg, var(--bg-soft), var(--bg-card-2));
   }
   .dish.no-img .dish-img { display: none; }
   .dish.no-img .dish-emoji-fallback { display: flex; }
   .dish .name {
-    color: #c79270;
+    color: var(--accent-dark);
     font-weight: 800;
     font-size: 14px;
     padding: 10px 8px;
-    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.5));
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
     letter-spacing: 0.3px;
   }
   @media (min-width: 480px) {
@@ -270,16 +321,17 @@
 
   /* ============== AU MENU ============== */
   .menu-section {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px 18px;
     margin-bottom: 18px;
+    box-shadow: var(--shadow-soft);
   }
   .menu-title {
     text-align: center;
     margin: 0 0 18px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 22px;
     font-weight: 800;
     letter-spacing: 2px;
@@ -296,18 +348,18 @@
   .menu-col h3 {
     margin: 0 0 8px;
     font-size: 13px;
-    color: #b86a45;
+    color: var(--accent-warm);
     font-weight: 800;
     letter-spacing: 1px;
     text-transform: uppercase;
-    border-bottom: 1px solid #3a2818;
+    border-bottom: 1px solid var(--border);
     padding-bottom: 6px;
   }
   .menu-col ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    color: #d4a574;
+    color: var(--text-secondary);
     font-size: 13.5px;
   }
   .menu-col li {
@@ -317,23 +369,23 @@
   }
   .menu-col li::before {
     content: '•';
-    color: #c79270;
+    color: var(--accent-warm);
     position: absolute;
     left: 0;
     font-weight: 800;
   }
 
-  /* ============== ANIMATIONS CULTURELLES ============== */
+  /* ============== ANIMATIONS CULTURELLES (avec photos réelles) ============== */
   .animations {
-    background: linear-gradient(135deg, #1a1108, #14100a);
-    border: 1px solid #3a2818;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px 18px;
     margin-bottom: 18px;
   }
   .animations .title {
     text-align: center;
-    color: #c79270;
+    color: var(--accent-dark);
     font-size: 16px;
     font-weight: 800;
     letter-spacing: 2px;
@@ -349,21 +401,41 @@
     .animations-grid { grid-template-columns: repeat(3, 1fr); }
   }
   .anim-item {
-    background: rgba(199,146,112,0.06);
-    border: 1px solid #3a2818;
-    border-radius: 12px;
-    padding: 12px 8px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
     text-align: center;
-    transition: background 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
   }
-  .anim-item:hover { background: rgba(199,146,112,0.12); }
-  .anim-item .emoji { font-size: 26px; margin-bottom: 4px; }
+  .anim-item:hover { transform: translateY(-2px); border-color: var(--accent-warm); }
+  .anim-img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-soft);
+  }
+  .anim-emoji-fallback {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    background: linear-gradient(135deg, var(--bg-soft), var(--bg-card-2));
+  }
+  .anim-item.no-img .anim-img { display: none; }
+  .anim-item.no-img .anim-emoji-fallback { display: flex; }
   .anim-item .label {
-    font-size: 11px;
-    color: #d4a574;
-    font-weight: 700;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 800;
     letter-spacing: 0.5px;
     line-height: 1.3;
+    padding: 10px 6px;
   }
 
   /* ============== TARIFS / PACKS ============== */
@@ -373,7 +445,7 @@
   .tarifs-title {
     text-align: center;
     margin: 0 0 6px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 24px;
     font-weight: 800;
     letter-spacing: 3px;
@@ -381,7 +453,7 @@
   }
   .tarifs-subtitle {
     text-align: center;
-    color: #d4a574;
+    color: var(--text-secondary);
     font-size: 13px;
     margin-bottom: 18px;
   }
@@ -395,41 +467,43 @@
   }
   .pack-card {
     position: relative;
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 18px;
     padding: 24px 20px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--shadow-soft);
   }
-  .pack-card:hover { transform: translateY(-2px); }
+  .pack-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-strong); }
   .pack-card.vip {
-    background: linear-gradient(160deg, #2a1810 0%, #1a1108 100%);
-    border: 2px solid #c79270;
-    box-shadow: 0 12px 40px rgba(199,146,112,0.18);
+    background: linear-gradient(160deg, #fff6e3 0%, var(--bg-card) 100%);
+    border: 2px solid var(--gold-vip);
+    box-shadow: 0 12px 40px rgba(193,146,52,0.25);
   }
   .pack-badge {
     position: absolute;
     top: 14px;
     right: 14px;
-    background: linear-gradient(135deg, #fbbf24, #d4a574);
-    color: #1a1108;
+    background: linear-gradient(135deg, var(--gold-vip), var(--amber));
+    color: #fff;
     padding: 4px 12px;
     border-radius: 99px;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 1.2px;
     text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(193,146,52,0.3);
   }
   .pack-name {
     font-size: 22px;
     font-weight: 800;
-    color: #fff;
+    color: var(--text-primary);
     margin: 0 0 8px;
     letter-spacing: 0.5px;
   }
-  .pack-card.vip .pack-name { color: #fbbf24; }
+  .pack-card.vip .pack-name { color: var(--gold-vip); }
   .pack-price-wrap {
     display: flex;
     align-items: baseline;
@@ -438,23 +512,23 @@
   }
   .pack-currency {
     font-size: 22px;
-    color: #c79270;
+    color: var(--accent-warm);
     font-weight: 700;
   }
   .pack-price {
     font-size: 44px;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 800;
     line-height: 1;
   }
-  .pack-card.vip .pack-price { color: #fbbf24; }
+  .pack-card.vip .pack-price { color: var(--gold-vip); }
   .pack-unit {
     font-size: 12px;
-    color: #8a6648;
+    color: var(--text-muted);
     margin-bottom: 16px;
   }
   .pack-desc {
-    color: #d4a574;
+    color: var(--text-secondary);
     font-size: 13.5px;
     margin: 0 0 18px;
     line-height: 1.55;
@@ -470,16 +544,17 @@
     align-items: flex-start;
     gap: 10px;
     padding: 7px 0;
-    color: #ede5d1;
+    color: var(--text-primary);
     font-size: 13.5px;
+    font-weight: 500;
   }
-  .pack-features .ok { color: #22c55e; font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
-  .pack-features .ko { color: #6b5444; font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
-  .pack-features li.disabled { color: #6b5444; text-decoration: line-through; }
+  .pack-features .ok { color: var(--green); font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
+  .pack-features .ko { color: var(--text-muted); font-weight: 800; flex-shrink: 0; font-size: 16px; line-height: 1; }
+  .pack-features li.disabled { color: var(--text-muted); text-decoration: line-through; }
   .pack-cta {
     display: block;
-    background: linear-gradient(135deg, #b86a45, #c79270);
-    color: #1a1108;
+    background: linear-gradient(135deg, var(--accent-warm), var(--gold));
+    color: #fff;
     text-decoration: none;
     padding: 13px 20px;
     border-radius: 12px;
@@ -487,17 +562,18 @@
     font-weight: 800;
     font-size: 14px;
     transition: filter 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(184,106,69,0.25);
   }
   .pack-card.vip .pack-cta {
-    background: linear-gradient(135deg, #fbbf24, #d4a574);
-    box-shadow: 0 6px 18px rgba(251,191,36,0.3);
+    background: linear-gradient(135deg, var(--gold-vip), var(--amber));
+    box-shadow: 0 6px 18px rgba(193,146,52,0.4);
   }
   .pack-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
   /* ============== BONUS ============== */
   .bonus-card {
-    background: linear-gradient(135deg, rgba(251,191,36,0.10), rgba(199,146,112,0.06));
-    border: 1px dashed rgba(251,191,36,0.4);
+    background: linear-gradient(135deg, rgba(217,119,6,0.12), rgba(184,106,69,0.05));
+    border: 1px dashed var(--amber);
     border-radius: 14px;
     padding: 16px;
     margin-bottom: 18px;
@@ -505,18 +581,20 @@
   }
   .bonus-pill {
     display: inline-block;
-    background: #fbbf24;
-    color: #1a1108;
+    background: var(--amber);
+    color: #fff;
     padding: 3px 12px;
     border-radius: 99px;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 1px;
+    box-shadow: 0 2px 6px rgba(217,119,6,0.3);
   }
   .bonus-card .desc {
-    color: #d4a574;
+    color: var(--text-secondary);
     font-size: 13px;
     margin-top: 8px;
+    font-weight: 500;
   }
 
   /* ============== FOOTER CONTACT ============== */
@@ -526,7 +604,7 @@
   }
   .contact .eyebrow {
     font-size: 11px;
-    color: #8a6648;
+    color: var(--text-muted);
     letter-spacing: 2px;
     text-transform: uppercase;
     font-weight: 700;
@@ -544,20 +622,10 @@
     border-radius: 99px;
     font-weight: 700;
     font-size: 13px;
+    box-shadow: var(--shadow-soft);
   }
-  .contact-pill.wa { background: #16a34a; color: white; }
-  .contact-pill.tel { background: #1a1108; border: 1px solid #3a2818; color: #c79270; }
-
-  /* Couleur tagline tout en haut */
-  .tagline {
-    font-size: 11px;
-    letter-spacing: 5px;
-    text-transform: uppercase;
-    color: #8a6648;
-    font-weight: 700;
-    text-align: center;
-    margin: 22px 0 14px;
-  }
+  .contact-pill.wa { background: var(--green); color: white; }
+  .contact-pill.tel { background: var(--bg-card); border: 1px solid var(--border); color: var(--accent-dark); }
 </style>
 </head>
 <body>
@@ -588,17 +656,29 @@
 
   <div id="mainContent">
 
-    <!-- HERO : Affiche complète en grand -->
+    <!-- HERO : Bienvenue + logo + intro -->
     <div class="hero">
-      <div class="affiche-wrap">
-        <img src="affiche-brunch.jpg" alt="Affiche Brunch Ébène & Saveurs · 22 août 2026"
-             onerror="this.style.display='none'; document.getElementById('afficheFallback').style.display='block';">
+      <h1 class="hero-welcome">
+        Bienvenue au Brunch<br>
+        <span class="em">Ébène &amp; Saveurs</span>
+      </h1>
+
+      <div class="hero-logo">
+        <img src="logo-accueil.png" alt="Logo Brunch Ébène & Saveurs"
+             onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';">
       </div>
-      <div id="afficheFallback" class="affiche-fallback" style="display:none;">
-        <div>Brunch</div>
-        <div><span class="em">Ébène</span> & Saveurs</div>
-        <span class="small">🖼️ Ajoute <code style="color:#c79270;">affiche-brunch.jpg</code> dans le dossier</span>
+      <div id="logoFallback" class="hero-logo-fallback" style="display:none;">
+        Brunch <span class="em">Ébène</span> &amp; Saveurs
       </div>
+
+      <p class="hero-intro">
+        Le Brunch <strong>Ébène &amp; Saveurs</strong> est un événement <strong>afro-chic</strong> qui célèbre
+        la richesse des cultures africaines à travers la gastronomie, la musique, la danse et le partage.
+        <br><br>
+        Un moment <strong>convivial et élégant</strong> où les saveurs rencontrent la culture
+        pour offrir une expérience unique et chaleureuse 🌴
+      </p>
+
       <div class="hero-eyebrow">🌴 Édition 2026 · 22 août 2026</div>
     </div>
 
@@ -740,16 +820,46 @@
       </div>
     </div>
 
-    <!-- ANIMATIONS CULTURELLES -->
+    <!-- ANIMATIONS CULTURELLES (photos réelles + fallback emoji) -->
     <div class="animations">
       <div class="title">🎭 Animations culturelles</div>
       <div class="animations-grid">
-        <div class="anim-item"><div class="emoji">🥁</div><div class="label">Percussions live</div></div>
-        <div class="anim-item"><div class="emoji">🎧</div><div class="label">DJ Afro<br>Ambiance</div></div>
-        <div class="anim-item"><div class="emoji">🎁</div><div class="label">Tombola<br>& Cadeaux</div></div>
-        <div class="anim-item"><div class="emoji">📚</div><div class="label">Écrivains<br>africains</div></div>
-        <div class="anim-item"><div class="emoji">💃</div><div class="label">Danse traditionnelle<br>& Afro</div></div>
-        <div class="anim-item"><div class="emoji">🛍️</div><div class="label">Créateurs<br>& Artisans</div></div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-percussions.jpg" alt="Percussions live" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">🥁</div>
+          <div class="label">Percussions live</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-dj.jpg" alt="DJ Afro" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">🎧</div>
+          <div class="label">DJ Afro<br>Ambiance</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-tombola.jpg" alt="Tombola" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">🎁</div>
+          <div class="label">Tombola<br>& Cadeaux</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-ecrivains.jpg" alt="Écrivains africains" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">📚</div>
+          <div class="label">Écrivains<br>africains</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-danse.jpg" alt="Danse traditionnelle" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">💃</div>
+          <div class="label">Danse traditionnelle<br>& Afro</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-artisans.jpg" alt="Créateurs & Artisans" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">🛍️</div>
+          <div class="label">Créateurs<br>& Artisans</div>
+        </div>
       </div>
     </div>
 
