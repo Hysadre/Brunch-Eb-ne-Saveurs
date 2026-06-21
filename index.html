@@ -637,6 +637,74 @@
     font-weight: 500;
   }
 
+  /* ============== RÉSEAUX SOCIAUX ============== */
+  .socials {
+    margin: 30px 0 14px;
+    padding: 24px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+  }
+  .socials-title {
+    text-align: center;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .socials-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin: 0 0 18px;
+  }
+  .socials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+  }
+  .social-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 10px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .social-link:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-warm);
+    box-shadow: var(--shadow-soft);
+  }
+  .social-link img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+  .social-link .social-name {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    text-align: center;
+  }
+  .social-link .social-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
   /* ============== FOOTER CONTACT ============== */
   .contact {
     text-align: center;
@@ -980,6 +1048,55 @@
       🎟️ Réserver ma place maintenant →
     </a>
 
+    <!-- 🌐 RÉSEAUX SOCIAUX -->
+    <section class="socials">
+      <h2 class="socials-title">Suivez-nous</h2>
+      <p class="socials-subtitle">Rejoignez la communauté Ébène &amp; Saveurs 🌴</p>
+      <div class="socials-grid">
+
+        <a href="https://chat.whatsapp.com/GHADxG3qg9K3cHwyPWVwtt?s=cl&p=a&mlu=1"
+           target="_blank" rel="noopener"
+           class="social-link" id="socWhatsApp">
+          <img src="logo-whatsapp.webp" alt="WhatsApp">
+          <span class="social-sub">WhatsApp</span>
+          <span class="social-name">Rejoindre le groupe</span>
+        </a>
+
+        <a href="https://fb.me/e/4UdP4gvVm"
+           target="_blank" rel="noopener"
+           class="social-link" id="socFbEvent">
+          <img src="logo-facebook.webp" alt="Facebook événement">
+          <span class="social-sub">Facebook</span>
+          <span class="social-name">Voir l'événement</span>
+        </a>
+
+        <a href="https://www.facebook.com/share/1BHxxpKudU/"
+           target="_blank" rel="noopener"
+           class="social-link" id="socFbPage">
+          <img src="logo-facebook.webp" alt="Page Facebook">
+          <span class="social-sub">Facebook</span>
+          <span class="social-name">Notre page</span>
+        </a>
+
+        <a href="https://www.instagram.com/brunch_ebene_et_saveurs?igsh=MW9hOW94bjEydmdvaQ=="
+           target="_blank" rel="noopener"
+           class="social-link" id="socInstagram">
+          <img src="logo-instagram.png" alt="Instagram">
+          <span class="social-sub">Instagram</span>
+          <span class="social-name">@brunch_ebene_et_saveurs</span>
+        </a>
+
+        <a href="https://vm.tiktok.com/ZNR7o7SKm/"
+           target="_blank" rel="noopener"
+           class="social-link" id="socTikTok">
+          <img src="logo-tiktok.webp" alt="TikTok">
+          <span class="social-sub">TikTok</span>
+          <span class="social-name">Suivez-nous</span>
+        </a>
+
+      </div>
+    </section>
+
     <!-- CONTACT -->
     <div class="contact">
       <div class="eyebrow">📞 Une question ?</div>
@@ -1055,6 +1172,21 @@
   document.getElementById('topReserveBanner')?.addEventListener('click', () => trackReserveClick('banner_top'));
   document.getElementById('reserveTopBtn')?.addEventListener('click', () => trackReserveClick('btn_top'));
   document.getElementById('reserveBottomBtn')?.addEventListener('click', () => trackReserveClick('btn_bottom'));
+
+  // 🌐 Track clic sur les réseaux sociaux
+  function trackSocialClick(network) {
+    try {
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'accueil_social_' + network, sessionId: getSessionId() })
+      }).catch(()=>{});
+    } catch(e) {}
+  }
+  document.getElementById('socWhatsApp')?.addEventListener('click', () => trackSocialClick('whatsapp'));
+  document.getElementById('socFbEvent')?.addEventListener('click',  () => trackSocialClick('fb_event'));
+  document.getElementById('socFbPage')?.addEventListener('click',   () => trackSocialClick('fb_page'));
+  document.getElementById('socInstagram')?.addEventListener('click',() => trackSocialClick('instagram'));
+  document.getElementById('socTikTok')?.addEventListener('click',   () => trackSocialClick('tiktok'));
 
   // 🎉 Mode "événement passé"
   const EVENT_END = new Date('2026-08-23T00:00:00+02:00');
