@@ -35,7 +35,7 @@ const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
   time: '13h00',
-  place: 'Métropole lilloise'
+  place: 'Lille'
 };
 
 const app = express();
