@@ -507,6 +507,83 @@
   }
   /* 📸 Défilé = photo plein corps → biais plus fort vers le haut pour cadrer le visage */
   .anim-img.portrait-top { object-position: 50% 8% !important; }
+  /* 📸 Photo portrait dézoomée : montre TOUT le sujet, avec léger padding cream */
+  .anim-img.contain {
+    object-fit: contain !important;
+    background: var(--bg-soft);
+    padding: 6px;
+  }
+
+  /* Cursor pointer sur les images cliquables */
+  .anim-img { cursor: zoom-in; }
+  .dish-img { cursor: zoom-in; }
+  .boisson-img { cursor: zoom-in; }
+
+  /* ============== LIGHTBOX (visualisation plein écran) ============== */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 10, 6, 0.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 40px 20px;
+    animation: lightbox-fade-in 0.2s ease-out;
+  }
+  .lightbox.show { display: flex; }
+  @keyframes lightbox-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    cursor: default;
+  }
+  .lightbox-caption {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 18px;
+    border-radius: 99px;
+    letter-spacing: 0.5px;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .lightbox-close:hover {
+    background: rgba(255,255,255,0.28);
+    transform: rotate(90deg);
+  }
   .anim-emoji-fallback {
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -1093,7 +1170,7 @@
           <div class="label">Défilé en tenue<br>traditionnelle</div>
         </div>
         <div class="anim-item">
-          <img class="anim-img" src="anim-danse.jpg" alt="Danse traditionnelle" loading="lazy"
+          <img class="anim-img contain" src="anim-danse.jpg" alt="Danse traditionnelle" loading="lazy"
                onerror="this.parentElement.classList.add('no-img');">
           <div class="anim-emoji-fallback">💃</div>
           <div class="label">Danse traditionnelle<br>& Afro</div>
@@ -1245,6 +1322,13 @@
   </div>
 </div>
 
+<!-- 🖼️ LIGHTBOX : visualisation plein écran des images cliquables -->
+<div class="lightbox" id="lightbox" role="dialog" aria-label="Aperçu de l'image" aria-hidden="true">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Fermer">✕</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
 <script>
   // 🔧 CONFIG : URL de ton API backend
   const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
@@ -1330,6 +1414,54 @@
     document.getElementById('pastEventBanner').style.display = 'block';
     document.getElementById('mainContent').style.display = 'none';
   }
+
+  // 🖼️ LIGHTBOX — visualisation plein écran des photos (dishes, boissons, animations)
+  (function initLightbox() {
+    const lightbox     = document.getElementById('lightbox');
+    const lightboxImg  = document.getElementById('lightboxImg');
+    const lightboxCap  = document.getElementById('lightboxCaption');
+    const lightboxBtn  = document.getElementById('lightboxClose');
+    if (!lightbox) return;
+
+    function openLightbox(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt || '';
+      lightboxCap.textContent = alt || '';
+      lightboxCap.style.display = alt ? 'block' : 'none';
+      lightbox.classList.add('show');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';   // empêche le scroll du body pendant la lightbox
+    }
+    function closeLightbox() {
+      lightbox.classList.remove('show');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      lightboxImg.src = '';
+    }
+
+    // Rend cliquables toutes les images de plats, boissons, animations
+    document.querySelectorAll('.dish-img, .boisson-img, .anim-img').forEach(img => {
+      img.addEventListener('click', (e) => {
+        e.preventDefault();
+        // On récupère le nom du sujet depuis le label voisin, sinon l'alt
+        const parent = img.parentElement;
+        const nameEl = parent?.querySelector('.name, .label, .boisson-name');
+        const caption = (nameEl?.textContent || img.alt || '').replace(/\s+/g, ' ').trim();
+        openLightbox(img.src, caption);
+      });
+    });
+
+    // Fermeture : clic sur la croix
+    lightboxBtn?.addEventListener('click', closeLightbox);
+    // Fermeture : clic sur le fond (mais pas sur l'image elle-même)
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    // Fermeture : touche Échap
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('show')) closeLightbox();
+    });
+  })();
 </script>
 </body>
 </html>
