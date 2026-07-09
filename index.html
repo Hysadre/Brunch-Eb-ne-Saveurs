@@ -506,7 +506,7 @@
     background: var(--bg-soft);
   }
   /* 📸 Défilé = photo plein corps → biais plus fort vers le haut pour cadrer le visage */
-  .anim-item img[src="anim-defile.jpg"] { object-position: 50% 10%; }
+  .anim-img.portrait-top { object-position: 50% 8% !important; }
   .anim-emoji-fallback {
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -1087,7 +1087,7 @@
           <div class="label">Écrivains<br>africains</div>
         </div>
         <div class="anim-item">
-          <img class="anim-img" src="anim-defile.jpg" alt="Défilé en tenue traditionnelle" loading="lazy"
+          <img class="anim-img portrait-top" src="anim-defile.jpg" alt="Défilé en tenue traditionnelle" loading="lazy"
                onerror="this.parentElement.classList.add('no-img');">
           <div class="anim-emoji-fallback">👗</div>
           <div class="label">Défilé en tenue<br>traditionnelle</div>
