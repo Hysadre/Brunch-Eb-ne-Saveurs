@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f0e3c7">
 <title>Brunch Ébène & Saveurs · 22 août 2026</title>
-<meta name="description" content="Brunch africain à volonté · Métropole lilloise · Samedi 22 août 2026 · 35€">
+<meta name="description" content="Brunch africain à volonté · Lille · Samedi 22 août 2026 · à partir de 15€">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
@@ -320,6 +320,88 @@
     .dishes { grid-template-columns: repeat(4, 1fr); }
   }
 
+
+  /* ============== BOISSONS ============== */
+  .boissons-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 18px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-soft);
+  }
+  .boissons-title {
+    text-align: center;
+    margin: 0 0 6px;
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .boissons-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    margin: 0 0 16px;
+  }
+  .boissons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .boisson-card {
+    background: var(--bg-card-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .boisson-card:hover { transform: translateY(-2px); border-color: var(--accent-warm); }
+  .boisson-card.vip { border: 2px solid var(--gold-vip); background: linear-gradient(160deg, #fff4d4 0%, #ffe9a8 100%); }
+  .boisson-img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-soft);
+  }
+  .boisson-emoji-fallback {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    background: linear-gradient(135deg, var(--bg-soft), var(--bg-card-2));
+  }
+  .boisson-card.no-img .boisson-img { display: none; }
+  .boisson-card.no-img .boisson-emoji-fallback { display: flex; }
+  .boisson-body {
+    padding: 12px 10px 14px;
+    text-align: center;
+  }
+  .boisson-name {
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.25;
+    letter-spacing: 0.2px;
+  }
+  .boisson-tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .boisson-tag.free { background: rgba(22,163,74,0.12); color: var(--green); }
+  .boisson-tag.paid { background: rgba(184,106,69,0.15); color: var(--accent-dark); }
+  .boisson-tag.vip  { background: linear-gradient(135deg, #b58220, #d97706); color: #fff; }
 
   /* ============== AU MENU ============== */
   .menu-section {
@@ -694,8 +776,12 @@
     font-weight: 800;
     color: var(--text-primary);
     letter-spacing: 0.3px;
-    line-height: 1.2;
+    line-height: 1.25;
     text-align: center;
+    /* Empêche les pseudos longs (@brunch_ebene_et_saveurs) de déborder */
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
   }
   .social-link .social-sub {
     font-size: 10px;
@@ -802,17 +888,17 @@
       <div class="info-line">
         <div class="icon">📍</div>
         <div class="info-text">
-          Métropole lilloise
+          Lille
           <div class="info-sub">Lieu exact communiqué après réservation</div>
         </div>
       </div>
       <div class="info-line">
         <div class="icon">💰</div>
         <div class="info-text">
-          Tarif unique
-          <div class="info-sub">Buffet à volonté + animations</div>
+          Différents tarifs
+          <div class="info-sub">Enfant · Normal · VIP</div>
         </div>
-        <div class="price-pill">35 €</div>
+        <div class="price-pill">dès 15 €</div>
       </div>
     </div>
 
@@ -922,11 +1008,50 @@
           <h3>🍰 Desserts</h3>
           <ul>
             <li>Thiakry</li>
-            <li>Tiramisu aux fruits</li>
+            <li>La surprise du chef 🤫</li>
           </ul>
         </div>
       </div>
     </div>
+
+    <!-- 🍹 BOISSONS -->
+    <section class="boissons-section">
+      <h2 class="boissons-title">🍹 Boissons</h2>
+      <p class="boissons-subtitle">Une sélection de rafraîchissements pour accompagner votre expérience</p>
+      <div class="boissons-grid">
+
+        <div class="boisson-card">
+          <img class="boisson-img" src="boisson-biere.jpg" alt="Formule bière" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="boisson-emoji-fallback">🍺</div>
+          <div class="boisson-body">
+            <div class="boisson-name">Formule bière</div>
+            <span class="boisson-tag paid">En vente sur place</span>
+          </div>
+        </div>
+
+        <div class="boisson-card">
+          <img class="boisson-img" src="boisson-bissap.jpg" alt="Bissap & gingembre" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="boisson-emoji-fallback">🥤</div>
+          <div class="boisson-body">
+            <div class="boisson-name">Bissap &amp; Gingembre</div>
+            <span class="boisson-tag free">À volonté ✓</span>
+          </div>
+        </div>
+
+        <div class="boisson-card vip">
+          <img class="boisson-img" src="boisson-cocktail.jpg" alt="Cocktail alcoolisé" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="boisson-emoji-fallback">🍹</div>
+          <div class="boisson-body">
+            <div class="boisson-name">Cocktail alcoolisé</div>
+            <span class="boisson-tag vip">⭐ VIP à volonté</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
 
     <!-- ANIMATIONS CULTURELLES (photos réelles + fallback emoji) -->
     <div class="animations">
@@ -955,6 +1080,12 @@
                onerror="this.parentElement.classList.add('no-img');">
           <div class="anim-emoji-fallback">📚</div>
           <div class="label">Écrivains<br>africains</div>
+        </div>
+        <div class="anim-item">
+          <img class="anim-img" src="anim-defile.jpg" alt="Défilé en tenue traditionnelle" loading="lazy"
+               onerror="this.parentElement.classList.add('no-img');">
+          <div class="anim-emoji-fallback">👗</div>
+          <div class="label">Défilé en tenue<br>traditionnelle</div>
         </div>
         <div class="anim-item">
           <img class="anim-img" src="anim-danse.jpg" alt="Danse traditionnelle" loading="lazy"
@@ -1083,7 +1214,7 @@
            class="social-link" id="socInstagram">
           <img src="logo-instagram.png" alt="Instagram">
           <span class="social-sub">Instagram</span>
-          <span class="social-name">@brunch_ebene_et_saveurs</span>
+          <span class="social-name">Notre compte</span>
         </a>
 
         <a href="https://vm.tiktok.com/ZNR7o7SKm/"
