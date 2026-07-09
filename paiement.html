@@ -509,16 +509,40 @@
     <!-- 🔒 Wrapper verrouillé tant que la référence n'est pas copiée -->
     <div id="payMethodsLock" class="pay-locked">
 
-    <!-- WERO (1er - recommandé, sélectionné par défaut) -->
-    <label class="payment-option selected" data-method="wero">
+    <!-- PAYPAL (1er - sélectionné par défaut) -->
+    <label class="payment-option selected" data-method="paypal">
+      <span class="pay-radio"></span>
+      <span class="pay-logo paypal"><span>Pay</span><span class="pp-i">Pal</span></span>
+      <div class="pay-info">
+        <div class="pay-name">PayPal <span class="pay-badge fast">Recommandé</span></div>
+        <div class="pay-desc">Paiement rapide · option « Entre proches »</div>
+      </div>
+    </label>
+    <div class="pay-details show" data-panel="paypal">
+      <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-paypal"></span></div>
+      <a href="https://paypal.me/Audeyamble" target="_blank" rel="noopener" class="pay-action-btn" id="paypalBtn" onclick="trackEvent('payment_link_clicked', { method: 'paypal' })">
+        Ouvrir PayPal →
+      </a>
+      <div class="info-note">
+        <strong>⚠️ Important :</strong> utilisez impérativement l'option <strong>« Entre proches »</strong> (paiement gratuit) et <em>non</em> « Marchandise et service ».<br><br>
+        <strong>💡 Comment faire :</strong><br>
+        1. Copiez la <strong>référence</strong> ci-dessus<br>
+        2. Cliquez sur "Ouvrir PayPal" → <strong>Envoyer entre proches</strong><br>
+        3. Saisissez le montant + <strong>collez la référence en note</strong><br>
+        4. Revenez ici et cliquez sur "J'ai payé" en bas
+      </div>
+    </div>
+
+    <!-- WERO (2e) -->
+    <label class="payment-option" data-method="wero">
       <span class="pay-radio"></span>
       <span class="pay-logo wero">wero</span>
       <div class="pay-info">
-        <div class="pay-name">Wero <span class="pay-badge fast">Recommandé</span></div>
+        <div class="pay-name">Wero</div>
         <div class="pay-desc">Paiement instantané · avec votre numéro</div>
       </div>
     </label>
-    <div class="pay-details show" data-panel="wero">
+    <div class="pay-details" data-panel="wero">
       <div class="row">
         <span class="k">Numéro Wero 1</span>
         <span class="v"><span style="user-select:none; -webkit-user-select:none; pointer-events:none;">+33 6 68 29 50 77</span> <button class="copy-btn wero-copy" data-copy="+33668295077" data-which="1">📋 Copier</button></span>
@@ -539,7 +563,7 @@
 
     <!-- 🔒 Virement bancaire (SEPA) retiré pour des raisons de sécurité (IBAN exposé) -->
 
-    <!-- REVOLUT (2e) -->
+    <!-- REVOLUT (3e) -->
     <label class="payment-option" data-method="revolut">
       <span class="pay-radio"></span>
       <span class="pay-logo revolut">R</span>
@@ -558,30 +582,6 @@
         1. Copiez la <strong>référence</strong> ci-dessus<br>
         2. Cliquez sur "Ouvrir Revolut" → saisissez le montant<br>
         3. <strong>Collez la référence en note</strong> du paiement<br>
-        4. Revenez ici et cliquez sur "J'ai payé" en bas
-      </div>
-    </div>
-
-    <!-- PAYPAL (3e) -->
-    <label class="payment-option" data-method="paypal">
-      <span class="pay-radio"></span>
-      <span class="pay-logo paypal"><span>Pay</span><span class="pp-i">Pal</span></span>
-      <div class="pay-info">
-        <div class="pay-name">PayPal</div>
-        <div class="pay-desc">Paiement rapide · option « Entre proches »</div>
-      </div>
-    </label>
-    <div class="pay-details" data-panel="paypal">
-      <div class="row"><span class="k">Montant à payer</span><span class="v" id="amt-paypal"></span></div>
-      <a href="#" target="_blank" rel="noopener" class="pay-action-btn" id="paypalBtn" onclick="trackEvent('payment_link_clicked', { method: 'paypal' })">
-        Ouvrir PayPal →
-      </a>
-      <div class="info-note">
-        <strong>⚠️ Important :</strong> utilisez impérativement l'option <strong>« Entre proches »</strong> (paiement gratuit) et <em>non</em> « Marchandise et service ».<br><br>
-        <strong>💡 Comment faire :</strong><br>
-        1. Copiez la <strong>référence</strong> ci-dessus<br>
-        2. Cliquez sur "Ouvrir PayPal" → <strong>Envoyer entre proches</strong><br>
-        3. Saisissez le montant + <strong>collez la référence en note</strong><br>
         4. Revenez ici et cliquez sur "J'ai payé" en bas
       </div>
     </div>
@@ -853,7 +853,7 @@
     }
   });
 
-  let method = 'wero';  // Wero sélectionné par défaut (recommandé)
+  let method = 'paypal';  // PayPal sélectionné par défaut (recommandé)
   document.querySelectorAll('.payment-option').forEach(opt => {
     opt.addEventListener('click', (e) => {
       e.preventDefault();
