@@ -499,9 +499,14 @@
     width: 100%;
     aspect-ratio: 4 / 3;
     object-fit: cover;
+    /* 🎯 Biais léger vers le haut : garde les visages/têtes visibles sur
+       les photos portraits sans casser les photos paysage/wide shots. */
+    object-position: 50% 25%;
     display: block;
     background: var(--bg-soft);
   }
+  /* 📸 Défilé = photo plein corps → biais plus fort vers le haut pour cadrer le visage */
+  .anim-item img[src="anim-defile.jpg"] { object-position: 50% 10%; }
   .anim-emoji-fallback {
     width: 100%;
     aspect-ratio: 4 / 3;
