@@ -198,6 +198,17 @@
   }
   .footer-note a { color: #c79270; text-decoration: none; }
 
+  /* 🌐 Réseaux sociaux (thème sombre) */
+  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #1a1108; border: 1px solid #3a2818; border-radius: 18px; }
+  .socials-title { text-align: center; margin: 0 0 4px; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .socials-subtitle { text-align: center; color: #d4a574; font-size: 12px; margin: 0 0 16px; }
+  .socials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 12px; text-decoration: none; color: #ede5d1; transition: transform 0.2s ease, border-color 0.2s ease; }
+  .social-link:hover { transform: translateY(-2px); border-color: #b86a45; }
+  .social-link img { width: 38px; height: 38px; object-fit: contain; }
+  .social-link .social-sub { font-size: 10px; color: #8a6648; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .social-link .social-name { font-size: 11px; font-weight: 800; color: #ede5d1; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+
   /* Contact footer commun */
   .contact-footer {
     margin-top: 32px;
@@ -304,7 +315,7 @@
     <h3>📍 Informations pratiques</h3>
     <div class="info-row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      <span class="v">Métropole lilloise</span>
+      <span class="v">Lille</span>
     </div>
     <div class="info-row" style="padding-top:0;">
       <span style="width:18px;"></span>
@@ -335,6 +346,39 @@
   <p class="footer-note">
     Au plaisir de vous accueillir au brunch 🍽️🎉
   </p>
+
+  <!-- 🌐 RÉSEAUX SOCIAUX -->
+  <section class="socials">
+    <h2 class="socials-title">Suivez-nous</h2>
+    <p class="socials-subtitle">Rejoignez la communauté Ébène &amp; Saveurs 🌴</p>
+    <div class="socials-grid">
+      <a href="https://chat.whatsapp.com/GHADxG3qg9K3cHwyPWVwtt?s=cl&p=a&mlu=1" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-whatsapp.webp" alt="WhatsApp">
+        <span class="social-sub">WhatsApp</span>
+        <span class="social-name">Rejoindre le groupe</span>
+      </a>
+      <a href="https://fb.me/e/4UdP4gvVm" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-facebook.webp" alt="Facebook événement">
+        <span class="social-sub">Facebook</span>
+        <span class="social-name">Voir l'événement</span>
+      </a>
+      <a href="https://www.facebook.com/share/1BHxxpKudU/" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-facebook.webp" alt="Page Facebook">
+        <span class="social-sub">Facebook</span>
+        <span class="social-name">Notre page</span>
+      </a>
+      <a href="https://www.instagram.com/brunch_ebene_et_saveurs?igsh=MW9hOW94bjEydmdvaQ==" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-instagram.png" alt="Instagram">
+        <span class="social-sub">Instagram</span>
+        <span class="social-name">Notre compte</span>
+      </a>
+      <a href="https://vm.tiktok.com/ZNR7o7SKm/" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-tiktok.webp" alt="TikTok">
+        <span class="social-sub">TikTok</span>
+        <span class="social-name">Suivez-nous</span>
+      </a>
+    </div>
+  </section>
 
   <div class="contact-footer">
     <div class="contact-footer-title">Une question ?</div>
@@ -431,7 +475,7 @@
   document.getElementById('shareBtn').addEventListener('click', async () => {
     const shareData = {
       title: 'Brunch Ébène & Saveurs',
-      text: `Bonjour, je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 dans la métropole lilloise 🌴 Voulez-vous nous rejoindre ?`,
+      text: `Bonjour, je viens de réserver pour le Brunch Ébène & Saveurs le 22 août 2026 à Lille 🌴 Voulez-vous nous rejoindre ?`,
       url: SITE_URL + '/'
     };
     try {
