@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f0a06">
+<meta name="theme-color" content="#f0e3c7">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
@@ -15,8 +15,8 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-    background: #0f0a06;
-    color: #ede5d1;
+    background: #f0e3c7;
+    color: #3a2818;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -29,25 +29,25 @@
   }
   .back {
     width: 40px; height: 40px;
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; color: #c79270;
     text-decoration: none;
   }
-  .topbar h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; color: #fff; }
+  .topbar h1 { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.3px; color: #3a2818; }
 
   .progress {
     display: flex; gap: 6px;
     margin-bottom: 18px;
   }
-  .step { flex: 1; height: 4px; background: #3a2818; border-radius: 99px; }
+  .step { flex: 1; height: 4px; background: #c4a878; border-radius: 99px; }
   .step.done { background: #b86a45; }
 
   .card {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 20px;
     padding: 20px;
     margin-top: 14px;
@@ -57,7 +57,7 @@
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.2px;
-    color: #fff;
+    color: #3a2818;
   }
   .card-section-title {
     display: flex;
@@ -68,7 +68,7 @@
   .card-section-title h2 { margin: 0; }
   .card-section-sub {
     font-size: 13px;
-    color: #d4a574;
+    color: #8a4a2e;
     margin: 0 0 16px;
   }
 
@@ -76,9 +76,9 @@
     display: flex; justify-content: space-between; padding: 8px 0;
     font-size: 15px;
   }
-  .recap-row .k { color: #d4a574; }
-  .recap-row .v { font-weight: 600; color: #ede5d1; }
-  .recap-divider { height: 1px; background: #3a2818; margin: 8px 0; }
+  .recap-row .k { color: #8a4a2e; }
+  .recap-row .v { font-weight: 600; color: #3a2818; }
+  .recap-divider { height: 1px; background: #c4a878; margin: 8px 0; }
   .recap-total { font-size: 22px; font-weight: 800; }
   .recap-total span:last-child { color: #c79270; }
 
@@ -86,25 +86,25 @@
   .payment-option {
     display: flex; align-items: center; gap: 14px;
     padding: 18px 16px;
-    border: 2px solid #3a2818;
+    border: 2px solid #c4a878;
     border-radius: 18px;
     cursor: pointer;
     margin-bottom: 12px;
     transition: all .2s ease;
-    background: #0f0a06;
+    background: #f0e3c7;
     position: relative;
   }
-  .payment-option:hover { border-color: #5a4028; transform: translateY(-1px); }
+  .payment-option:hover { border-color: #a8794a; transform: translateY(-1px); }
   .payment-option.selected {
     border-color: #b86a45;
-    background: linear-gradient(135deg, #241408, #1a1108);
+    background: linear-gradient(135deg, #fff4d4, #ffffff);
     box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
   }
   .payment-option:last-child { margin-bottom: 0; }
   .pay-radio {
     width: 24px; height: 24px;
     border-radius: 50%;
-    border: 2.5px solid #5a4028;
+    border: 2.5px solid #a8794a;
     flex: 0 0 24px;
     position: relative;
   }
@@ -120,7 +120,7 @@
     border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
     font-weight: 800;
-    color: white;
+    color: #3a2818;
     flex: 0 0 56px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
@@ -136,11 +136,11 @@
     font-size: 11px;
   }
   .pay-logo.virement{ background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 22px; }
-  .pay-logo.paypal  { background: #003087; font-size: 20px; color: #fff; }
+  .pay-logo.paypal  { background: #003087; font-size: 20px; color: #3a2818; }
   .pay-logo.paypal .pp-i { color: #009cde; }
   .pay-info { flex: 1; min-width: 0; }
-  .pay-name { font-weight: 800; font-size: 17px; color: #fff; }
-  .pay-desc { font-size: 13px; color: #d4a574; margin-top: 3px; }
+  .pay-name { font-weight: 800; font-size: 17px; color: #3a2818; }
+  .pay-desc { font-size: 13px; color: #8a4a2e; margin-top: 3px; }
   .pay-badge {
     display: inline-block;
     background: rgba(22, 163, 74, 0.2);
@@ -164,9 +164,9 @@
     margin-top: -4px;
     margin-bottom: 12px;
     padding: 16px;
-    background: #0a0604;
+    background: #e8d9b8;
     border-radius: 14px;
-    border: 1px dashed #5a4028;
+    border: 1px dashed #a8794a;
     font-size: 14px;
     animation: slideDown .25s ease;
   }
@@ -176,10 +176,10 @@
   }
   .pay-details.show { display: block; }
   .pay-details .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; gap: 10px; flex-wrap: wrap; }
-  .pay-details .row .k { color: #d4a574; font-size: 13px; }
-  .pay-details .row .v { font-weight: 700; color: #ede5d1; text-align: right; word-break: break-all; }
+  .pay-details .row .k { color: #8a4a2e; font-size: 13px; }
+  .pay-details .row .v { font-weight: 700; color: #3a2818; text-align: right; word-break: break-all; }
   .copy-btn {
-    background: #3a2818;
+    background: #c4a878;
     border: none;
     color: #c79270;
     padding: 6px 12px;
@@ -190,14 +190,14 @@
     margin-left: 8px;
     transition: background .15s;
   }
-  .copy-btn:active { background: #5a4028; }
+  .copy-btn:active { background: #a8794a; }
 
   .pay-action-btn {
     width: 100%;
     margin-top: 14px;
     padding: 14px;
     background: linear-gradient(135deg, #b86a45, #8a4a2e);
-    color: white;
+    color: #3a2818;
     border: none;
     border-radius: 12px;
     font-size: 15px;
@@ -220,14 +220,14 @@
     border-radius: 12px;
   }
   .qr-block svg, .qr-block img { width: 180px; height: 180px; }
-  .qr-caption { text-align: center; color: #d4a574; font-size: 13px; margin-top: 10px; }
+  .qr-caption { text-align: center; color: #8a4a2e; font-size: 13px; margin-top: 10px; }
 
   .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-  .field label { font-size: 13px; font-weight: 600; color: #d4a574; }
+  .field label { font-size: 13px; font-weight: 600; color: #8a4a2e; }
   .field input {
-    background: #14100a;
-    border: 1.5px solid #3a2818;
-    color: #ede5d1;
+    background: #fef7e6;
+    border: 1.5px solid #c4a878;
+    color: #3a2818;
     border-radius: 12px;
     padding: 12px 14px;
     font-size: 15px;
@@ -244,12 +244,12 @@
     background: rgba(15, 10, 6, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid #3a2818;
+    border-top: 1px solid #c4a878;
   }
   .btn-primary {
     width: 100%;
     background: linear-gradient(135deg, #b86a45, #8a4a2e);
-    color: white;
+    color: #3a2818;
     border: none;
     border-radius: 16px;
     padding: 17px;
@@ -263,7 +263,7 @@
   }
   .btn-primary:active { transform: scale(.98); }
   .btn-primary:disabled {
-    background: #3a2818;
+    background: #c4a878;
     color: #8a6648;
     cursor: not-allowed;
     box-shadow: none;
@@ -285,7 +285,7 @@
   .spinner {
     width: 18px; height: 18px;
     border: 2.5px solid rgba(255,255,255,.3);
-    border-top-color: white;
+    border-top-color: #3a2818;
     border-radius: 50%;
     animation: spin .8s linear infinite;
   }
@@ -294,7 +294,7 @@
   .toast {
     position: fixed; left: 50%; bottom: 100px;
     transform: translateX(-50%) translateY(20px);
-    background: #16a34a; color: white;
+    background: #16a34a; color: #3a2818;
     padding: 12px 18px; border-radius: 12px;
     font-size: 14px;
     font-weight: 700;
@@ -307,7 +307,7 @@
 
   .info-note {
     font-size: 13px;
-    color: #d4a574;
+    color: #8a4a2e;
     background: rgba(251, 191, 36, 0.08);
     border: 1px solid rgba(251, 191, 36, 0.2);
     border-radius: 10px;
@@ -328,7 +328,7 @@
   }
   .ref-bigbox {
     background: linear-gradient(135deg, #b86a45 0%, #c79270 100%);
-    border: 3px solid #ede5d1;
+    border: 3px solid #3a2818;
     border-radius: 20px;
     padding: 22px 20px;
     margin-bottom: 22px;
@@ -339,7 +339,7 @@
   .ref-bigbox-label {
     font-size: 13px;
     font-weight: 800;
-    color: #1a1108;
+    color: #3a2818;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 10px;
@@ -348,7 +348,7 @@
     font-family: 'SF Mono', Menlo, Consolas, monospace;
     font-size: 26px;
     font-weight: 800;
-    color: #1a1108;
+    color: #3a2818;
     background: #fff8e7;
     border-radius: 14px;
     padding: 18px 12px;
@@ -356,11 +356,11 @@
     margin-bottom: 8px;
     overflow-wrap: anywhere;  /* casse propre uniquement si vraiment nécessaire */
     line-height: 1.2;
-    border: 2.5px dashed #1a1108;
+    border: 2.5px dashed #ffffff;
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.08);
   }
   .ref-arrow {
-    color: #1a1108;
+    color: #3a2818;
     font-size: 24px;
     margin: 4px 0 0;
     animation: arrowBounce 1.2s ease-in-out infinite;
@@ -370,8 +370,8 @@
   .ref-copy-btn {
     width: 100%;
     margin-top: 6px;
-    background: #1a1108;
-    color: #ede5d1;
+    background: #ffffff;
+    color: #3a2818;
     border: none;
     border-radius: 14px;
     padding: 16px;
@@ -388,8 +388,8 @@
     letter-spacing: 0.5px;
   }
   .ref-copy-btn:active { transform: scale(.97); }
-  .ref-copy-btn:hover { background: #2a1810; }
-  .ref-copy-btn.copied { background: #16a34a; color: white; animation: none; }
+  .ref-copy-btn:hover { background: #e8d9b8; }
+  .ref-copy-btn.copied { background: #16a34a; color: #3a2818; animation: none; }
 
   /* 🔒 État verrouillé : tant que la référence n'est pas copiée, on grise tout */
   .pay-locked {
@@ -406,7 +406,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #3a2818;
     font-weight: 800;
     font-size: 13px;
     background: rgba(15, 10, 6, 0.55);
@@ -418,7 +418,7 @@
   .ref-bigbox-hint {
     margin-top: 12px;
     font-size: 12px;
-    color: #1a1108;
+    color: #3a2818;
     font-weight: 600;
     opacity: 0.9;
   }
@@ -428,21 +428,21 @@
   }
 
   /* 🌐 Réseaux sociaux (thème sombre) */
-  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #1a1108; border: 1px solid #3a2818; border-radius: 18px; }
-  .socials-title { text-align: center; margin: 0 0 4px; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
-  .socials-subtitle { text-align: center; color: #d4a574; font-size: 12px; margin: 0 0 16px; }
+  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #ffffff; border: 1px solid #c4a878; border-radius: 18px; }
+  .socials-title { text-align: center; margin: 0 0 4px; color: #3a2818; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .socials-subtitle { text-align: center; color: #8a4a2e; font-size: 12px; margin: 0 0 16px; }
   .socials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 12px; text-decoration: none; color: #ede5d1; transition: transform 0.2s ease, border-color 0.2s ease; }
+  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #f0e3c7; border: 1px solid #c4a878; border-radius: 12px; text-decoration: none; color: #3a2818; transition: transform 0.2s ease, border-color 0.2s ease; }
   .social-link:hover { transform: translateY(-2px); border-color: #b86a45; }
   .social-link img { width: 38px; height: 38px; object-fit: contain; }
   .social-link .social-sub { font-size: 10px; color: #8a6648; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-  .social-link .social-name { font-size: 11px; font-weight: 800; color: #ede5d1; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+  .social-link .social-name { font-size: 11px; font-weight: 800; color: #3a2818; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
 
   /* Contact footer */
   .contact-footer {
     margin-top: 24px;
     padding: 18px 0 80px;
-    border-top: 1px solid #3a2818;
+    border-top: 1px solid #c4a878;
     text-align: center;
   }
   .contact-footer-title {
@@ -459,8 +459,8 @@
   }
   .contact-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
@@ -469,6 +469,26 @@
     font-weight: 700;
   }
   .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+
+  /* 🎨 OVERRIDES thème clair — garde le texte BLANC sur les surfaces à gradient coloré */
+  .status-hero, .status-hero .status-title, .status-hero .status-sub,
+  .success-hero, .success-title, .success-sub,
+  .booking-ref-box, .booking-ref-code, .booking-ref-label,
+  .btn-primary, .btn-view,
+  .pay-action-btn:not(.wero):not(.cb),
+  .topnav a.active,
+  .cta-banner, .reserve-btn,
+  .price-pill,
+  .contact-pill.wa,
+  .pack-badge, .pay-badge,
+  .lightbox, .lightbox * { color: white; }
+  /* Restaure les icônes SVG colorées à leurs teintes voulues */
+  .status-hero.paid .status-icon svg { color: #16a34a; }
+  .status-hero.pending .status-icon svg { color: #b86a45; }
+  .status-hero.error .status-icon svg { color: #b91c1c; }
+  .status-hero.cancelled .status-icon svg { color: #8a4a2e; }
+  .check svg { color: #16a34a; }
+
 </style>
 </head>
 <body>
@@ -632,8 +652,8 @@
     <!-- 🆘 J'ai oublié de mettre la référence (apparaît seulement après copie) -->
     <div id="forgotRefBox" style="display:none; margin-top: 14px; padding: 14px 16px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 12px;">
       <div style="font-size: 13px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé sans mettre la référence ?</div>
-      <div style="font-size: 12px; color: #d4a574; margin-bottom: 10px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
-      <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px;">💬 Je vous écris sur WhatsApp</a>
+      <div style="font-size: 12px; color: #8a4a2e; margin-bottom: 10px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+      <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: #3a2818; text-decoration: none; padding: 10px 16px; border-radius: 99px; font-weight: 700; font-size: 13px;">💬 Je vous écris sur WhatsApp</a>
     </div>
   </div>
 
@@ -743,8 +763,8 @@
         <span class="k">Accompagnants</span>
         <span class="v">${accompList.length} <span style="color:#8a6648; font-size:11px; margin-left:4px;">▼ voir</span></span>
       </summary>
-      <div style="padding: 4px 0 8px; margin-left: 12px; border-left: 2px solid #3a2818; padding-left: 12px;">
-        ${accompList.map((n, i) => `<div style="color: #ede5d1; font-size: 13px; padding: 3px 0;">• ${n}</div>`).join('')}
+      <div style="padding: 4px 0 8px; margin-left: 12px; border-left: 2px solid #c4a878; padding-left: 12px;">
+        ${accompList.map((n, i) => `<div style="color: #3a2818; font-size: 13px; padding: 3px 0;">• ${n}</div>`).join('')}
       </div>
     </details>
   ` : '';
