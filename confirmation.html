@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f0a06">
+<meta name="theme-color" content="#f0e3c7">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
@@ -16,8 +16,8 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-    background: #0f0a06;
-    color: #ede5d1;
+    background: #f0e3c7;
+    color: #3a2818;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -54,8 +54,8 @@
     100% { transform: scale(1); opacity: 1; }
   }
   .check svg { width: 44px; height: 44px; color: #16a34a; }
-  .success-title { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px; position: relative; z-index: 1; color: white; }
-  .success-sub { font-size: 15px; opacity: .95; margin: 0; position: relative; z-index: 1; color: white; }
+  .success-title { font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px; position: relative; z-index: 1; color: #3a2818; }
+  .success-sub { font-size: 15px; opacity: .95; margin: 0; position: relative; z-index: 1; color: #3a2818; }
 
   .pending-banner {
     background: rgba(251, 191, 36, 0.12);
@@ -70,8 +70,8 @@
   .pending-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
 
   .ticket-card {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 20px;
     margin-top: 18px;
     overflow: hidden;
@@ -79,10 +79,10 @@
   }
   .ticket-top {
     padding: 22px 22px 16px;
-    background: linear-gradient(135deg, #1a1108, #2a1810);
+    background: linear-gradient(135deg, #ffffff, #e8d9b8);
   }
   .ticket-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #c79270; font-weight: 700; }
-  .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #fff; }
+  .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #3a2818; }
   .ticket-name .accent {
     background: linear-gradient(135deg, #b86a45, #c79270);
     -webkit-background-clip: text;
@@ -91,20 +91,20 @@
     font-style: italic;
   }
   .ticket-meta { display: flex; gap: 18px; flex-wrap: wrap; }
-  .ticket-meta .lab { font-size: 11px; color: #d4a574; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-  .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #fff; }
+  .ticket-meta .lab { font-size: 11px; color: #8a4a2e; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #3a2818; }
 
   .ticket-stub {
     position: relative;
     padding: 22px;
-    border-top: 2px dashed #3a2818;
+    border-top: 2px dashed #c4a878;
   }
   .ticket-stub::before, .ticket-stub::after {
     content: "";
     position: absolute;
     top: -14px;
     width: 28px; height: 28px;
-    background: #0f0a06;
+    background: #f0e3c7;
     border-radius: 50%;
   }
   .ticket-stub::before { left: -14px; }
@@ -130,7 +130,7 @@
   .booking-id-label {
     text-align: center;
     font-size: 11px;
-    color: #d4a574;
+    color: #8a4a2e;
     text-transform: uppercase;
     letter-spacing: 2px;
     font-weight: 600;
@@ -138,8 +138,8 @@
   }
 
   .info-card {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 20px;
     padding: 20px;
     margin-top: 14px;
@@ -148,13 +148,13 @@
     margin: 0 0 12px;
     font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: #3a2818;
   }
   .info-row {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 0;
     font-size: 14px;
-    color: #ede5d1;
+    color: #3a2818;
   }
   .info-row svg { color: #b86a45; flex: 0 0 18px; }
   .info-row .v { font-weight: 600; color: #c79270; }
@@ -175,18 +175,18 @@
   .btn:active { transform: scale(.98); }
   .btn-primary {
     background: linear-gradient(135deg, #b86a45, #8a4a2e);
-    color: white; border: none;
+    color: #3a2818; border: none;
     box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
   }
   .btn-view {
     background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: white; border: none;
+    color: #3a2818; border: none;
     box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
   }
   .btn-secondary {
-    background: #1a1108;
-    color: #ede5d1;
-    border: 1.5px solid #3a2818;
+    background: #ffffff;
+    color: #3a2818;
+    border: 1.5px solid #c4a878;
   }
 
   .footer-note {
@@ -199,21 +199,21 @@
   .footer-note a { color: #c79270; text-decoration: none; }
 
   /* 🌐 Réseaux sociaux (thème sombre) */
-  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #1a1108; border: 1px solid #3a2818; border-radius: 18px; }
-  .socials-title { text-align: center; margin: 0 0 4px; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
-  .socials-subtitle { text-align: center; color: #d4a574; font-size: 12px; margin: 0 0 16px; }
+  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #ffffff; border: 1px solid #c4a878; border-radius: 18px; }
+  .socials-title { text-align: center; margin: 0 0 4px; color: #3a2818; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .socials-subtitle { text-align: center; color: #8a4a2e; font-size: 12px; margin: 0 0 16px; }
   .socials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 12px; text-decoration: none; color: #ede5d1; transition: transform 0.2s ease, border-color 0.2s ease; }
+  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #f0e3c7; border: 1px solid #c4a878; border-radius: 12px; text-decoration: none; color: #3a2818; transition: transform 0.2s ease, border-color 0.2s ease; }
   .social-link:hover { transform: translateY(-2px); border-color: #b86a45; }
   .social-link img { width: 38px; height: 38px; object-fit: contain; }
   .social-link .social-sub { font-size: 10px; color: #8a6648; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-  .social-link .social-name { font-size: 11px; font-weight: 800; color: #ede5d1; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+  .social-link .social-name { font-size: 11px; font-weight: 800; color: #3a2818; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
 
   /* Contact footer commun */
   .contact-footer {
     margin-top: 32px;
     padding: 18px;
-    border-top: 1px solid #3a2818;
+    border-top: 1px solid #c4a878;
     text-align: center;
   }
   .contact-footer-title {
@@ -230,8 +230,8 @@
   }
   .contact-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
@@ -240,18 +240,38 @@
     font-weight: 700;
     transition: background .15s;
   }
-  .contact-pill:active { background: #2a1810; }
+  .contact-pill:active { background: #e8d9b8; }
   .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
 
   /* PRINT — pour Sauver en PDF */
   @media print {
-    body { background: white !important; color: #1a1108 !important; }
+    body { background: white !important; color: #ffffff !important; }
     .app { padding: 0; max-width: none; }
     .actions, .footer-note, .contact-footer, .pending-banner { display: none !important; }
     .success-hero { background: linear-gradient(135deg, #16a34a, #22c55e) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .ticket-card, .info-card { background: #1a1108 !important; color: #ede5d1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
-    .ticket-top { background: linear-gradient(135deg, #1a1108, #2a1810) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ticket-card, .info-card { background: #ffffff !important; color: #3a2818 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-inside: avoid; }
+    .ticket-top { background: linear-gradient(135deg, #ffffff, #e8d9b8) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
+
+  /* 🎨 OVERRIDES thème clair — garde le texte BLANC sur les surfaces à gradient coloré */
+  .status-hero, .status-hero .status-title, .status-hero .status-sub,
+  .success-hero, .success-title, .success-sub,
+  .booking-ref-box, .booking-ref-code, .booking-ref-label,
+  .btn-primary, .btn-view,
+  .pay-action-btn:not(.wero):not(.cb),
+  .topnav a.active,
+  .cta-banner, .reserve-btn,
+  .price-pill,
+  .contact-pill.wa,
+  .pack-badge, .pay-badge,
+  .lightbox, .lightbox * { color: white; }
+  /* Restaure les icônes SVG colorées à leurs teintes voulues */
+  .status-hero.paid .status-icon svg { color: #16a34a; }
+  .status-hero.pending .status-icon svg { color: #b86a45; }
+  .status-hero.error .status-icon svg { color: #b91c1c; }
+  .status-hero.cancelled .status-icon svg { color: #8a4a2e; }
+  .check svg { color: #16a34a; }
+
 </style>
 </head>
 <body>
@@ -270,7 +290,7 @@
     Une fois votre paiement vérifié, vous recevrez un email de confirmation définitive avec votre QR code. Cela prend généralement quelques minutes (jusqu'à 24h pour un virement).
   </div>
 
-  <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-size: 13px; color: #d4a574; line-height: 1.6;">
+  <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 14px 16px; margin-top: 14px; font-size: 13px; color: #8a4a2e; line-height: 1.6;">
     📩 <strong style="color: #06b6d4;">Vous n'avez pas reçu de mail de confirmation&nbsp;?</strong><br>
     Pensez à vérifier votre dossier <strong>spam / indésirables</strong>. Si vous ne recevez toujours rien sous 24h, n'hésitez pas à nous contacter via WhatsApp au <a href="https://wa.me/33668295077" style="color: #22c55e; text-decoration: none; font-weight: 700;">+33 6 68 29 50 77</a> en précisant votre numéro de réservation.
   </div>
@@ -302,7 +322,7 @@
       <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px; text-align: center;">
         <div style="font-size: 36px; margin-bottom: 8px;">⏳</div>
         <p style="margin: 0 0 6px; font-weight: 700; color: #c79270;">QR code en attente de validation</p>
-        <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.6;">
+        <p style="margin: 0; font-size: 13px; color: #8a4a2e; line-height: 1.6;">
           Votre QR unique vous sera envoyé par mail dès que votre <strong>paiement aura été vérifié</strong> (sous 24h).
         </p>
       </div>
@@ -319,7 +339,7 @@
     </div>
     <div class="info-row" style="padding-top:0;">
       <span style="width:18px;"></span>
-      <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+      <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #3a2818; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
     </div>
     <div class="info-row">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -395,8 +415,8 @@
   <!-- 🆘 Bloc "J'ai oublié la référence" — visible uniquement si Wero -->
   <div id="forgotRefBox" style="display:none; margin-top: 18px; padding: 16px 18px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px;">
     <div style="font-size: 14px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé sans mettre la référence ?</div>
-    <div style="font-size: 13px; color: #d4a574; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
-    <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
+    <div style="font-size: 13px; color: #8a4a2e; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+    <a id="forgotRefBtn" href="#" style="display:inline-block; background: #16a34a; color: #3a2818; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
   </div>
 </div>
 
@@ -505,7 +525,7 @@
 
       const ticket = document.querySelector('.ticket-card');
       const canvas = await html2canvas(ticket, {
-        backgroundColor: '#0f0a06',
+        backgroundColor: '#f0e3c7',
         scale: 2,
         useCORS: true,
         allowTaint: true,
