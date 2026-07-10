@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f0a06">
+<meta name="theme-color" content="#f0e3c7">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
@@ -15,8 +15,8 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-    background: #0f0a06;
-    color: #ede5d1;
+    background: #f0e3c7;
+    color: #3a2818;
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -30,10 +30,10 @@
     position: relative;
     overflow: hidden;
   }
-  .status-hero.paid { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; }
-  .status-hero.pending { background: linear-gradient(135deg, #b86a45, #c79270); color: #1a1108; }
-  .status-hero.error { background: linear-gradient(135deg, #b91c1c, #ef4444); color: white; }
-  .status-hero.cancelled { background: linear-gradient(135deg, #5a4028, #3a2818); color: white; }
+  .status-hero.paid { background: linear-gradient(135deg, #16a34a, #22c55e); color: #3a2818; }
+  .status-hero.pending { background: linear-gradient(135deg, #b86a45, #c79270); color: #3a2818; }
+  .status-hero.error { background: linear-gradient(135deg, #b91c1c, #ef4444); color: #3a2818; }
+  .status-hero.cancelled { background: linear-gradient(135deg, #a8794a, #c4a878); color: #3a2818; }
   .status-icon {
     width: 70px; height: 70px;
     background: white;
@@ -61,7 +61,7 @@
   .cancelled-banner .reason {
     margin-top: 8px;
     font-size: 13px;
-    color: #ede5d1;
+    color: #3a2818;
     font-style: italic;
   }
   @keyframes pop {
@@ -73,18 +73,18 @@
   .status-sub { font-size: 14px; opacity: .95; margin: 0; }
 
   .ticket-card {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 20px;
     margin-top: 18px;
     overflow: hidden;
   }
   .ticket-top {
     padding: 22px;
-    background: linear-gradient(135deg, #1a1108, #2a1810);
+    background: linear-gradient(135deg, #ffffff, #e8d9b8);
   }
   .ticket-eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #c79270; font-weight: 700; }
-  .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #fff; }
+  .ticket-name { font-size: 22px; font-weight: 800; margin: 6px 0 16px; letter-spacing: -0.3px; color: #3a2818; }
   .ticket-name .accent {
     background: linear-gradient(135deg, #b86a45, #c79270);
     -webkit-background-clip: text;
@@ -93,17 +93,17 @@
     font-style: italic;
   }
   .ticket-meta { display: flex; gap: 18px; flex-wrap: wrap; }
-  .ticket-meta .lab { font-size: 11px; color: #d4a574; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-  .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #fff; }
+  .ticket-meta .lab { font-size: 11px; color: #8a4a2e; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .ticket-meta .val { font-size: 15px; font-weight: 700; margin-top: 2px; color: #3a2818; }
   .ticket-stub {
     position: relative;
     padding: 22px;
-    border-top: 2px dashed #3a2818;
+    border-top: 2px dashed #c4a878;
   }
   .ticket-stub::before, .ticket-stub::after {
     content: ""; position: absolute; top: -14px;
     width: 28px; height: 28px;
-    background: #0f0a06; border-radius: 50%;
+    background: #f0e3c7; border-radius: 50%;
   }
   .ticket-stub::before { left: -14px; }
   .ticket-stub::after { right: -14px; }
@@ -114,24 +114,24 @@
   }
   .qr-wrap img { width: 100%; max-width: 220px; height: auto; }
   .qr-caption {
-    text-align: center; color: #d4a574;
+    text-align: center; color: #8a4a2e;
     font-size: 13px; margin-top: 12px;
     font-weight: 600;
   }
 
   .info-card {
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     border-radius: 20px;
     padding: 20px;
     margin-top: 14px;
   }
-  .info-card h3 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #fff; }
+  .info-card h3 { margin: 0 0 12px; font-size: 16px; font-weight: 700; color: #3a2818; }
   .info-row {
     display: flex; align-items: center; gap: 12px;
     padding: 10px 0;
     font-size: 14px;
-    color: #ede5d1;
+    color: #3a2818;
   }
   .info-row svg { color: #b86a45; flex: 0 0 18px; }
   .info-row .v { font-weight: 600; color: #c79270; }
@@ -142,7 +142,7 @@
     background: linear-gradient(135deg, #b86a45, #c79270);
     border-radius: 16px;
     text-align: center;
-    color: #1a1108;
+    color: #3a2818;
   }
   .booking-ref-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
   .booking-ref-code {
@@ -157,11 +157,11 @@
   .loading, .error-state {
     text-align: center;
     padding: 60px 20px;
-    color: #d4a574;
+    color: #8a4a2e;
   }
   .spinner {
     width: 40px; height: 40px;
-    border: 4px solid #3a2818;
+    border: 4px solid #c4a878;
     border-top-color: #b86a45;
     border-radius: 50%;
     margin: 0 auto 16px;
@@ -170,20 +170,20 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* 🌐 Réseaux sociaux (thème sombre) */
-  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #1a1108; border: 1px solid #3a2818; border-radius: 18px; }
-  .socials-title { text-align: center; margin: 0 0 4px; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
-  .socials-subtitle { text-align: center; color: #d4a574; font-size: 12px; margin: 0 0 16px; }
+  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #ffffff; border: 1px solid #c4a878; border-radius: 18px; }
+  .socials-title { text-align: center; margin: 0 0 4px; color: #3a2818; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .socials-subtitle { text-align: center; color: #8a4a2e; font-size: 12px; margin: 0 0 16px; }
   .socials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #0f0a06; border: 1px solid #3a2818; border-radius: 12px; text-decoration: none; color: #ede5d1; transition: transform 0.2s ease, border-color 0.2s ease; }
+  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #f0e3c7; border: 1px solid #c4a878; border-radius: 12px; text-decoration: none; color: #3a2818; transition: transform 0.2s ease, border-color 0.2s ease; }
   .social-link:hover { transform: translateY(-2px); border-color: #b86a45; }
   .social-link img { width: 38px; height: 38px; object-fit: contain; }
   .social-link .social-sub { font-size: 10px; color: #8a6648; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
-  .social-link .social-name { font-size: 11px; font-weight: 800; color: #ede5d1; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+  .social-link .social-name { font-size: 11px; font-weight: 800; color: #3a2818; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
 
   .contact-footer {
     margin-top: 32px;
     padding: 18px 0 24px;
-    border-top: 1px solid #3a2818;
+    border-top: 1px solid #c4a878;
     text-align: center;
   }
   .contact-footer-title {
@@ -197,8 +197,8 @@
   .contact-footer-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .contact-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    background: #1a1108;
-    border: 1px solid #3a2818;
+    background: #ffffff;
+    border: 1px solid #c4a878;
     color: #c79270;
     padding: 8px 14px;
     border-radius: 99px;
@@ -207,6 +207,26 @@
     font-weight: 700;
   }
   .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+
+  /* 🎨 OVERRIDES thème clair — garde le texte BLANC sur les surfaces à gradient coloré */
+  .status-hero, .status-hero .status-title, .status-hero .status-sub,
+  .success-hero, .success-title, .success-sub,
+  .booking-ref-box, .booking-ref-code, .booking-ref-label,
+  .btn-primary, .btn-view,
+  .pay-action-btn:not(.wero):not(.cb),
+  .topnav a.active,
+  .cta-banner, .reserve-btn,
+  .price-pill,
+  .contact-pill.wa,
+  .pack-badge, .pay-badge,
+  .lightbox, .lightbox * { color: white; }
+  /* Restaure les icônes SVG colorées à leurs teintes voulues */
+  .status-hero.paid .status-icon svg { color: #16a34a; }
+  .status-hero.pending .status-icon svg { color: #b86a45; }
+  .status-hero.error .status-icon svg { color: #b91c1c; }
+  .status-hero.cancelled .status-icon svg { color: #8a4a2e; }
+  .check svg { color: #16a34a; }
+
 </style>
 </head>
 <body>
@@ -331,7 +351,7 @@
       <div class="cancelled-banner">
         <div style="font-weight:800; font-size:15px;">⚠️ Cette réservation n'est plus active</div>
         ${b.cancelReason ? `<div class="reason">Motif : ${b.cancelReason}</div>` : ''}
-        <div style="margin-top:10px; font-size:13px; color:#d4a574;">
+        <div style="margin-top:10px; font-size:13px; color:#8a4a2e;">
           Si vous pensez qu'il s'agit d'une erreur, contactez-nous via WhatsApp ci-dessous.
         </div>
       </div>
@@ -368,7 +388,7 @@
           <div style="background: rgba(185, 28, 28, 0.10); border: 1px dashed rgba(185, 28, 28, 0.4); border-radius: 14px; padding: 24px;">
             <div style="font-size: 36px; margin-bottom: 8px;">🚫</div>
             <p style="margin: 0 0 6px; font-weight: 700; color: #fca5a5;">QR code désactivé</p>
-            <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.5;">
+            <p style="margin: 0; font-size: 13px; color: #8a4a2e; line-height: 1.5;">
               Cette réservation a été annulée — le QR code n'est plus valide à l'entrée du brunch.
             </p>
           </div>
@@ -378,7 +398,7 @@
           <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px; padding: 24px;">
             <div style="font-size: 36px; margin-bottom: 8px;">⏳</div>
             <p style="margin: 0 0 6px; font-weight: 700; color: #c79270;">QR code en attente</p>
-            <p style="margin: 0; font-size: 13px; color: #d4a574; line-height: 1.5;">
+            <p style="margin: 0; font-size: 13px; color: #8a4a2e; line-height: 1.5;">
               Votre QR code unique s'affichera ici dès que votre <strong>paiement aura été vérifié</strong>. Vous recevrez également un email de confirmation.
             </p>
           </div>
@@ -398,7 +418,7 @@
         </div>
         <div class="info-row" style="padding-top:0;">
           <span style="width:18px;"></span>
-          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
+          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: #3a2818; text-decoration: none; padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">🗺️ Voir l'itinéraire</a>
         </div>
         <div class="info-row">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
@@ -409,7 +429,7 @@
       ${!isCancelled ? `
       <!-- 📤 Bouton partager (masqué si annulée) -->
       <div style="margin-top: 14px;">
-        <button id="shareBtn" style="width:100%; background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button id="shareBtn" style="width:100%; background: linear-gradient(135deg, #16a34a, #22c55e); color: #3a2818; border: none; padding: 14px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;">
           📤 Inviter des amis au brunch
         </button>
       </div>
@@ -424,8 +444,8 @@
       <!-- 🆘 J'ai oublié de mettre la référence — uniquement pour Wero (et résa non encore validée) -->
       <div style="margin-top: 14px; padding: 16px 18px; background: rgba(251, 191, 36, 0.08); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 14px;">
         <div style="font-size: 14px; color: #fbbf24; font-weight: 700; margin-bottom: 8px;">🆘 Vous avez payé via Wero sans mettre la référence ?</div>
-        <div style="font-size: 13px; color: #d4a574; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
-        <a id="forgotRefBtnTicket" href="#" style="display:inline-block; background: #16a34a; color: white; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
+        <div style="font-size: 13px; color: #8a4a2e; margin-bottom: 12px; line-height: 1.5;">Pas de panique. Cliquez ci-dessous pour nous envoyer un message WhatsApp avec vos infos — on retrouvera votre paiement.</div>
+        <a id="forgotRefBtnTicket" href="#" style="display:inline-block; background: #16a34a; color: #3a2818; text-decoration: none; padding: 10px 18px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Je vous écris sur WhatsApp</a>
       </div>
       ` : ''}
     `;
@@ -485,7 +505,7 @@
         <p class="status-sub">${msg}</p>
       </div>
       <div class="info-card" style="margin-top: 20px;">
-        <p style="margin:0; color: #d4a574; font-size: 14px; line-height: 1.6;">
+        <p style="margin:0; color: #8a4a2e; font-size: 14px; line-height: 1.6;">
           Si vous pensez qu'il y a une erreur, contactez-nous via WhatsApp en bas avec votre numéro de réservation.
         </p>
       </div>
