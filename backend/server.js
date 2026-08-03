@@ -1123,6 +1123,7 @@ app.post('/api/interested', async (req, res) => {
       source: p.source || 'accueil',
       createdAt: new Date().toISOString()
     };
+    let tableMissing = false;
     try {
       await supa('interested_leads', {
         method: 'POST',
@@ -1132,19 +1133,87 @@ app.post('/api/interested', async (req, res) => {
       console.log(`❤️ Intéressé enregistré : ${p.email || p.telephone} (source=${row.source})`);
     } catch(e) {
       const msg = e.message || '';
-      // Si la table n'existe pas → warning silencieux
+      // Si la table n'existe pas → on flag mais on envoie quand même les emails (admin sera prévenu)
       if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
         console.warn('⚠️  Table "interested_leads" inexistante — exécute le SQL dans Supabase');
-        return res.json({ ok: true, warning: 'TABLE_MISSING' });
-      }
-      // Si conflit d'email unique (déjà enregistré) → réponse OK silencieuse (idempotent)
-      if (msg.includes('duplicate') || msg.includes('23505')) {
+        tableMissing = true;
+      } else if (msg.includes('duplicate') || msg.includes('23505')) {
         console.log(`ℹ️  Email/téléphone déjà présent : ${p.email || p.telephone}`);
+        // On envoie quand même une réponse OK (idempotent) sans re-envoyer d'email
         return res.json({ ok: true, alreadyRegistered: true });
+      } else {
+        console.warn('interested insert failed:', msg);
       }
-      console.warn('interested insert failed:', msg);
     }
-    res.json({ ok: true });
+
+    // 📧 Envoi des emails (fire-and-forget — ne bloque pas la réponse au client)
+    const displayName = row.prenom || (row.email ? row.email.split('@')[0] : 'Cher(e) intéressé(e)');
+
+    // 1) Email au client (uniquement si email fourni)
+    if (row.email) {
+      const clientHtml = `
+      <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #f4e8d0; color: #3a2818; border-radius: 16px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #b86a45, #c79270); padding: 30px 24px; text-align: center; color: #fff;">
+          <div style="font-size: 42px; margin-bottom: 6px;">❤️</div>
+          <h1 style="margin: 0; font-size: 22px;">Merci ${displayName} !</h1>
+          <p style="margin: 8px 0 0; opacity: .95;">On garde le contact 🌴</p>
+        </div>
+        <div style="padding: 26px 24px; background: #fff;">
+          <p style="margin: 0 0 14px; color: #3a2818; font-size: 15px; line-height: 1.6;">
+            On a bien enregistré ton intérêt pour le <strong>Brunch Ébène &amp; Saveurs</strong> du <strong>samedi 22 août 2026 à Lille</strong>.
+          </p>
+          <p style="margin: 0 0 18px; color: #6b4a2e; font-size: 14px; line-height: 1.6;">
+            On te tiendra au courant des nouveautés et te préviendra si les places commencent à se remplir 🎫
+          </p>
+          <div style="background: rgba(184,106,69,0.08); border-left: 3px solid #b86a45; padding: 14px 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #3a2818; font-size: 14px;">
+              💡 <strong>Envie de réserver dès maintenant ?</strong> Les tarifs commencent à <strong>15 €</strong> (pack Enfant), <strong>35 €</strong> (Normal) et <strong>45 €</strong> (VIP avec cocktails à volonté).
+            </p>
+          </div>
+          <a href="${SITE_URL}/reservation.html" style="display: block; background: linear-gradient(135deg, #b86a45, #c79270); color: #fff; text-decoration: none; padding: 14px 20px; border-radius: 12px; font-weight: 800; text-align: center; font-size: 15px;">
+            🎟️ Réserver ma place maintenant →
+          </a>
+          <p style="margin: 18px 0 0; font-size: 12px; color: #8a6648; text-align: center;">
+            Une question ? Réponds simplement à cet email ou contacte-nous sur WhatsApp au ${WHATSAPP_DISPLAY}.
+          </p>
+        </div>
+        <div style="padding: 16px; text-align: center; background: #f0e3c7; color: #8a6648; font-size: 11px;">
+          Brunch Ébène &amp; Saveurs · Édition 2026 · Lille
+        </div>
+      </div>`;
+      resendSend({
+        to: row.email,
+        subject: `❤️ Merci ${displayName} — on garde le contact !`,
+        html: clientHtml,
+        text: `Merci ${displayName} ! On a bien enregistré ton intérêt pour le Brunch Ébène & Saveurs du 22 août 2026 à Lille. Pour réserver dès maintenant : ${SITE_URL}/reservation.html`
+      }).catch(err => console.warn('interested client email fail:', err.message));
+    }
+
+    // 2) Notification admin
+    const adminHtml = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; background: #fff; color: #3a2818; border-radius: 16px; overflow: hidden; border: 1px solid #c4a878;">
+      <div style="background: linear-gradient(135deg, #e11d48, #dc2626); padding: 22px; text-align: center; color: #fff;">
+        <div style="font-size: 34px; margin-bottom: 4px;">❤️</div>
+        <h1 style="margin: 0; font-size: 20px;">Nouveau lead intéressé</h1>
+      </div>
+      <div style="padding: 22px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #3a2818;">
+          <tr><td style="padding: 6px 0; color: #8a4a2e; width: 38%;">Prénom</td><td style="padding: 6px 0; font-weight: 700;">${row.prenom || '<em style="color:#8a6648;">non renseigné</em>'}</td></tr>
+          <tr><td style="padding: 6px 0; color: #8a4a2e;">Email</td><td style="padding: 6px 0;">${row.email ? `<a href="mailto:${row.email}" style="color:#b86a45; text-decoration:none;">${row.email}</a>` : '<em style="color:#8a6648;">non renseigné</em>'}</td></tr>
+          <tr><td style="padding: 6px 0; color: #8a4a2e;">Téléphone</td><td style="padding: 6px 0;">${row.telephone ? `<a href="tel:${row.telephone}" style="color:#22c55e; text-decoration:none;">${row.telephone}</a>` : '<em style="color:#8a6648;">non renseigné</em>'}</td></tr>
+          <tr><td style="padding: 6px 0; color: #8a4a2e; border-top: 1px solid #e8d9b8;">Source</td><td style="padding: 6px 0; border-top: 1px solid #e8d9b8;"><strong style="color:#b86a45;">${row.source}</strong></td></tr>
+          <tr><td style="padding: 6px 0; color: #8a4a2e;">Date</td><td style="padding: 6px 0; font-size: 12px;">${new Date(row.createdAt).toLocaleString('fr-FR')}</td></tr>
+        </table>
+        ${tableMissing ? `<div style="margin-top: 18px; padding: 12px; background: rgba(251,191,36,0.15); border: 1px dashed #d97706; border-radius: 8px; color: #8a4a2e; font-size: 13px;">⚠️ <strong>Attention :</strong> la table Supabase <code>interested_leads</code> n'existe pas → ce lead n'est PAS stocké en BDD. Crée la table pour ne plus perdre de leads.</div>` : ''}
+      </div>
+    </div>`;
+    resendSend({
+      to: ORGANIZER_EMAIL,
+      subject: `❤️ Nouveau lead : ${row.email || row.telephone} (${row.source})`,
+      html: adminHtml
+    }).catch(err => console.warn('interested admin email fail:', err.message));
+
+    res.json({ ok: true, warning: tableMissing ? 'TABLE_MISSING' : undefined });
   } catch(e) {
     console.error('interested error:', e.message);
     res.status(500).json({ error: e.message });
