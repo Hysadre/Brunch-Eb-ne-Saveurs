@@ -801,6 +801,167 @@
     font-weight: 500;
   }
 
+  /* ============== BOUTON "JE SUIS INTÉRESSÉ(E)" ============== */
+  .interested-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #e11d48, #dc2626);
+    color: #fff;
+    text-decoration: none;
+    padding: 14px 20px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    margin: 10px 0 16px;
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.28);
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .interested-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(225, 29, 72, 0.4); }
+  .interested-btn .heart {
+    display: inline-block;
+    animation: heartbeat 1.4s ease-in-out infinite;
+    margin-right: 6px;
+  }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  /* ============== MODALE INTÉRESSÉ / EXIT INTENT ============== */
+  .lead-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(58, 40, 24, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+    animation: fade-in 0.2s ease-out;
+  }
+  .lead-modal-backdrop.show { display: flex; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .lead-modal {
+    background: var(--bg-card);
+    border-radius: 22px;
+    padding: 30px 24px 24px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    position: relative;
+    animation: slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .lead-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .lead-modal-close:hover { background: var(--bg-soft); transform: rotate(90deg); }
+  .lead-modal-icon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .lead-modal-title {
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    color: var(--text-primary);
+    margin: 8px 0 6px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .lead-modal-title .em { color: var(--accent-warm); font-style: italic; }
+  .lead-modal-desc {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0 0 20px;
+  }
+  .lead-form-field {
+    margin-bottom: 12px;
+  }
+  .lead-form-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .lead-form-field input {
+    width: 100%;
+    background: var(--bg-soft);
+    border: 1.5px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .lead-form-field input:focus { outline: none; border-color: var(--accent-warm); background: #fff; }
+  .lead-form-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin: -4px 0 14px;
+    font-style: italic;
+  }
+  .lead-submit-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #e11d48, #dc2626);
+    color: #fff;
+    border: none;
+    padding: 15px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .lead-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(225, 29, 72, 0.42); }
+  .lead-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .lead-success {
+    text-align: center;
+    padding: 30px 10px 10px;
+  }
+  .lead-success .emoji { font-size: 56px; margin-bottom: 10px; }
+  .lead-success h3 { font-family: Georgia, serif; color: var(--text-primary); font-size: 22px; margin: 0 0 8px; }
+  .lead-success p { color: var(--text-secondary); font-size: 14px; margin: 0; line-height: 1.5; }
+
   /* ============== RÉSEAUX SOCIAUX ============== */
   .socials {
     margin: 30px 0 14px;
@@ -988,6 +1149,11 @@
     <a href="reservation.html" class="reserve-btn" id="reserveTopBtn">
       🎟️ Réserver ma place →
     </a>
+
+    <!-- ❤️ CTA "Je suis intéressé(e)" — soft opt-in pour les hésitants -->
+    <button type="button" class="interested-btn" id="interestedBtnTop" data-source="accueil_top">
+      <span class="heart">❤️</span> Je suis intéressé(e) — Recevoir les infos
+    </button>
 
     <!-- BUFFET À VOLONTÉ -->
     <div class="buffet-banner">
@@ -1251,6 +1417,11 @@
       🎟️ Réserver ma place maintenant →
     </a>
 
+    <!-- ❤️ CTA intéressé (bas) — secondary opt-in -->
+    <button type="button" class="interested-btn" id="interestedBtnBottom" data-source="accueil_bas">
+      <span class="heart">❤️</span> Pas encore décidé(e) ? Restons en contact
+    </button>
+
     <!-- 🌐 RÉSEAUX SOCIAUX -->
     <section class="socials">
       <h2 class="socials-title">Suivez-nous</h2>
@@ -1317,6 +1488,48 @@
   <button class="lightbox-close" id="lightboxClose" aria-label="Fermer">✕</button>
   <img class="lightbox-img" id="lightboxImg" src="" alt="">
   <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<!-- ❤️ MODALE "JE SUIS INTÉRESSÉ(E)" — capture email/téléphone + exit intent -->
+<div class="lead-modal-backdrop" id="leadModal" role="dialog" aria-label="Restez informé" aria-hidden="true">
+  <div class="lead-modal">
+    <button class="lead-modal-close" id="leadModalClose" aria-label="Fermer">✕</button>
+
+    <!-- Form (avant soumission) -->
+    <div id="leadFormWrap">
+      <div class="lead-modal-icon">❤️</div>
+      <h2 class="lead-modal-title">Restez informé<span class="em">(e)</span> !</h2>
+      <p class="lead-modal-desc" id="leadModalDesc">
+        Laissez-nous votre email ou numéro — on vous enverra un rappel avant que les places ne soient toutes prises 🌴
+      </p>
+
+      <form id="leadForm">
+        <div class="lead-form-field">
+          <label for="leadPrenom">Prénom <span style="color: var(--text-muted); font-weight:500;">(optionnel)</span></label>
+          <input type="text" id="leadPrenom" name="prenom" autocomplete="given-name" placeholder="Votre prénom">
+        </div>
+        <div class="lead-form-field">
+          <label for="leadEmail">Email</label>
+          <input type="email" id="leadEmail" name="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.com">
+        </div>
+        <div class="lead-form-field">
+          <label for="leadTel">Téléphone</label>
+          <input type="tel" id="leadTel" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78">
+        </div>
+        <p class="lead-form-note">Au moins email <strong>OU</strong> téléphone requis · zéro spam, promis 🤞</p>
+        <button type="submit" class="lead-submit-btn" id="leadSubmitBtn">
+          ❤️ Oui, je veux les infos
+        </button>
+      </form>
+    </div>
+
+    <!-- Écran de succès -->
+    <div id="leadSuccess" class="lead-success" style="display:none;">
+      <div class="emoji">🎉</div>
+      <h3>Merci !</h3>
+      <p>On garde le contact. Vous recevrez des infos sur le brunch bientôt 🌴</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1404,6 +1617,168 @@
     document.getElementById('pastEventBanner').style.display = 'block';
     document.getElementById('mainContent').style.display = 'none';
   }
+
+  // ❤️ MODALE INTÉRESSÉ + EXIT INTENT — capture email/tél des visiteurs hésitants
+  (function initLeadCapture() {
+    const modal      = document.getElementById('leadModal');
+    const closeBtn   = document.getElementById('leadModalClose');
+    const form       = document.getElementById('leadForm');
+    const submitBtn  = document.getElementById('leadSubmitBtn');
+    const formWrap   = document.getElementById('leadFormWrap');
+    const successEl  = document.getElementById('leadSuccess');
+    const descEl     = document.getElementById('leadModalDesc');
+    if (!modal || !form) return;
+
+    // 📋 État session : est-ce que la personne a déjà été enregistrée / a déjà vu le popup exit
+    const STORAGE_KEYS = {
+      submitted: 'ebene_lead_submitted',
+      exitShown: 'ebene_exit_intent_shown'
+    };
+    function isSubmitted() { return localStorage.getItem(STORAGE_KEYS.submitted) === '1'; }
+    function markSubmitted() { localStorage.setItem(STORAGE_KEYS.submitted, '1'); }
+    function isExitShown() { return sessionStorage.getItem(STORAGE_KEYS.exitShown) === '1'; }
+    function markExitShown() { sessionStorage.setItem(STORAGE_KEYS.exitShown, '1'); }
+
+    function openModal(source, reason) {
+      // Reset l'affichage
+      formWrap.style.display = 'block';
+      successEl.style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+      // Adapte le message selon la raison
+      if (reason === 'exit') {
+        descEl.innerHTML = 'Attendez ! Ne partez pas les mains vides — laissez-nous votre email ou numéro pour être prévenu(e) 🌴';
+      } else {
+        descEl.innerHTML = 'Laissez-nous votre email ou numéro — on vous enverra un rappel avant que les places ne soient toutes prises 🌴';
+      }
+      form.dataset.source = source || 'accueil';
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      // Track ouverture
+      try { fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'accueil_lead_modal_open_' + (reason || 'click'), sessionId: getSessionId() })
+      }).catch(()=>{}); } catch(e){}
+    }
+    function closeModal() {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    // 🎯 Ouverture par clic sur les boutons "Je suis intéressé(e)"
+    document.querySelectorAll('.interested-btn').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.source || 'accueil', 'click'));
+    });
+
+    // 🎯 Fermeture : croix, clic hors modale, Échap
+    closeBtn?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+    });
+
+    // 📤 Soumission du formulaire
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prenom = document.getElementById('leadPrenom').value.trim();
+      const email  = document.getElementById('leadEmail').value.trim();
+      const tel    = document.getElementById('leadTel').value.trim();
+      if (!email && !tel) {
+        alert('Merci de renseigner au moins un email OU un numéro de téléphone 🙏');
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Enregistrement...';
+      try {
+        const r = await fetch(API_URL + '/interested', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prenom: prenom || null,
+            email: email || null,
+            telephone: tel || null,
+            source: form.dataset.source || 'accueil'
+          })
+        });
+        if (r.ok) {
+          markSubmitted();
+          formWrap.style.display = 'none';
+          successEl.style.display = 'block';
+          // Ferme auto après 2.5s
+          setTimeout(closeModal, 2800);
+        } else {
+          const err = await r.json().catch(() => ({}));
+          alert(err.error || 'Erreur enregistrement — réessayez');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+        }
+      } catch(err) {
+        alert('Impossible de vous enregistrer. Vérifiez votre connexion.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+      }
+    });
+
+    // 🚪 EXIT INTENT — détecte quand la personne s'apprête à quitter
+    //    Desktop : mouseleave sur le haut du viewport (souris qui remonte vers l'onglet/adresse)
+    //    Mobile  : visibilitychange (bascule vers autre app/onglet)
+    //    Conditions :
+    //      - Pas déjà enregistré(e) (isSubmitted)
+    //      - Popup pas déjà montré dans cette session (isExitShown)
+    //      - Au moins 5 secondes se sont écoulées (pour éviter les faux positifs à l'arrivée)
+    let pageLoadedAt = Date.now();
+    function canShowExitIntent() {
+      if (isSubmitted()) return false;
+      if (isExitShown()) return false;
+      if (modal.classList.contains('show')) return false;
+      // Attendre au moins 5s après l'arrivée sur la page
+      if (Date.now() - pageLoadedAt < 5000) return false;
+      return true;
+    }
+    function triggerExitIntent() {
+      if (!canShowExitIntent()) return;
+      markExitShown();
+      openModal('accueil_exit_intent', 'exit');
+    }
+
+    // Desktop : détecte mouseleave par le haut (souris qui remonte)
+    document.addEventListener('mouseleave', (e) => {
+      // clientY < 5 = la souris sort par le haut (barre d'onglet, adresse, X)
+      if (e.clientY <= 5) triggerExitIntent();
+    });
+
+    // Mobile / tab switch : detect visibilitychange
+    let mobileExitTimer = null;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        // Sur mobile, quand l'utilisateur bascule → potentiellement va fermer
+        // On arme un flag, si il revient rapidement on annule
+        mobileExitTimer = Date.now();
+      } else if (document.visibilityState === 'visible' && mobileExitTimer) {
+        // Il est revenu — s'il était parti > 800ms, on considère qu'il "allait partir"
+        const away = Date.now() - mobileExitTimer;
+        mobileExitTimer = null;
+        if (away > 800 && away < 30000) triggerExitIntent();
+      }
+    });
+
+    // Fallback : si l'utilisateur reste 60s sans interagir avec le formulaire et pas encore soumis
+    //    → on montre gentiment la modale (une seule fois)
+    let inactivityTimer = setTimeout(() => {
+      if (canShowExitIntent()) triggerExitIntent();
+    }, 60000);
+    // Réinit du timer si l'utilisateur bouge la souris ou scroll
+    ['click', 'scroll', 'keydown', 'touchstart'].forEach(ev => {
+      window.addEventListener(ev, () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+          if (canShowExitIntent()) triggerExitIntent();
+        }, 60000);
+      }, { passive: true });
+    });
+  })();
 
   // 🖼️ LIGHTBOX — visualisation plein écran des photos (dishes, boissons, animations)
   (function initLightbox() {
