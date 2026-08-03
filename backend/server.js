@@ -1103,6 +1103,69 @@ app.get('/api/prospects', requireAdmin, async (req, res) => {
   }
 });
 
+// ❤️ INTERESTED LEADS : capte email/téléphone des visiteurs "intéressés" mais qui n'ont pas encore réservé
+//    Sert à envoyer des rappels et relances par email/sms.
+app.post('/api/interested', async (req, res) => {
+  try {
+    const p = req.body || {};
+    // Au moins email OU téléphone doit être fourni
+    if (!p.email && !p.telephone) {
+      return res.status(400).json({ error: 'email ou téléphone requis' });
+    }
+    // Validation email simple
+    if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) {
+      return res.status(400).json({ error: 'email invalide' });
+    }
+    const row = {
+      prenom: p.prenom || null,
+      email: p.email ? p.email.toLowerCase().trim() : null,
+      telephone: p.telephone ? p.telephone.trim() : null,
+      source: p.source || 'accueil',
+      createdAt: new Date().toISOString()
+    };
+    try {
+      await supa('interested_leads', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal' },
+        body: JSON.stringify(row)
+      });
+      console.log(`❤️ Intéressé enregistré : ${p.email || p.telephone} (source=${row.source})`);
+    } catch(e) {
+      const msg = e.message || '';
+      // Si la table n'existe pas → warning silencieux
+      if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
+        console.warn('⚠️  Table "interested_leads" inexistante — exécute le SQL dans Supabase');
+        return res.json({ ok: true, warning: 'TABLE_MISSING' });
+      }
+      // Si conflit d'email unique (déjà enregistré) → réponse OK silencieuse (idempotent)
+      if (msg.includes('duplicate') || msg.includes('23505')) {
+        console.log(`ℹ️  Email/téléphone déjà présent : ${p.email || p.telephone}`);
+        return res.json({ ok: true, alreadyRegistered: true });
+      }
+      console.warn('interested insert failed:', msg);
+    }
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('interested error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET admin : liste tous les intéressés
+app.get('/api/interested', requireAdmin, async (req, res) => {
+  try {
+    const list = await supa('interested_leads?select=*&order=createdAt.desc') || [];
+    res.json(list);
+  } catch(e) {
+    const msg = e.message || '';
+    if (msg.includes('does not exist') || msg.includes('PGRST205') || msg.includes('42P01')) {
+      return res.json({ list: [], warning: 'TABLE_MISSING', message: 'Table "interested_leads" inexistante. Crée-la dans Supabase.' });
+    }
+    console.error('GET interested error:', msg);
+    res.status(500).json({ error: msg });
+  }
+});
+
 // 🎯 RESERVE-ID : génère juste un bookingId sans créer de ligne en BDD
 //    Utilisé au clic "Continuer vers le paiement" → le N° est réservé pour affichage
 //    sur paiement.html, mais aucune résa n'est créée tant que l'utilisateur ne clique pas "J'ai payé"
