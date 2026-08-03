@@ -307,13 +307,19 @@
     width: 44px; height: 44px;
     border-radius: 10px;
     border: none;
-    background: #c4a878;
-    color: #c79270;
-    font-size: 22px;
-    font-weight: 700;
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
     cursor: pointer;
-    transition: background .15s, transform .1s;
+    transition: filter .15s, transform .1s;
+    box-shadow: 0 3px 8px rgba(184,106,69,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
+  .qty button:hover { filter: brightness(1.08); }
   .qty button:active { transform: scale(.92); }
   .qty button:disabled { opacity: .4; cursor: not-allowed; }
   input.qty-value {
