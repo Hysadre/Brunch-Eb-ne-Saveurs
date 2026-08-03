@@ -983,6 +983,19 @@
       </summary>
       <div style="padding: 0 18px 18px;" id="copiersList"></div>
     </details>
+
+    <!-- ❤️ Prospects intéressés (leads captés via CTA "Je suis intéressé(e)" + exit intent) -->
+    <details open style="background:#1a1108; border:1px solid #3a2818; border-radius:16px; margin-bottom:14px;">
+      <summary style="cursor:pointer; padding:14px 18px; color:#fff; font-weight:700; user-select:none; list-style: none;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#e11d48;">❤️</span>
+          <span>Prospects intéressés (leads email/SMS)</span>
+          <span id="interestedCountBadge" style="background: rgba(225,29,72,.15); color:#f87171; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 800;"></span>
+          <span style="margin-left:auto; font-size:11px; color:#8a6648; text-transform:uppercase; letter-spacing:1px;">▼ replier / déplier</span>
+        </span>
+      </summary>
+      <div style="padding: 0 18px 18px;" id="interestedList">Chargement…</div>
+    </details>
   </div>
   <!-- ===== FIN TAB: Identification ===== -->
 </div>
@@ -1642,7 +1655,7 @@
     renderStats(CACHE);
     renderTable(CACHE);
     renderCheckinHistory(CACHE);
-    renderCopiers(CACHE);
+    renderCopiers(CACHE); renderInterested();
     renderPromoStats();
     renderFunnel(); renderPagesPerf();
     renderGeoStats();
@@ -1950,6 +1963,114 @@
   // 📋 Copieurs de référence — 2 tableaux séparés :
   //   • Ont copié SANS cliquer "J'ai payé" (prospects en attente — source : table prospects)
   //   • Ont copié ET cliqué "J'ai payé" (paiement déclaré — source : table reservations)
+  // ❤️ Prospects intéressés — captés via CTA "Je suis intéressé(e)" + exit intent
+  async function renderInterested() {
+    const container = document.getElementById('interestedList');
+    const badge = document.getElementById('interestedCountBadge');
+    if (!container) return;
+    try {
+      const r = await fetch(`${API_URL}/interested`, { headers: { 'X-Admin-Token': ADMIN_PWD } });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const list = Array.isArray(d) ? d : (d.list || []);
+
+      if (d.warning === 'TABLE_MISSING') {
+        if (badge) badge.textContent = '⚙️ Setup requis';
+        container.innerHTML = `
+          <div style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.4); border-radius: 12px; padding: 16px; color: #fbbf24; font-size: 13px; line-height: 1.6;">
+            <div style="font-weight: 800; margin-bottom: 6px;">⚙️ Table Supabase manquante</div>
+            <div style="color: #d4a574;">Crée la table <code style="background:#0f0a06; padding:2px 6px; border-radius:4px; color:#c79270;">interested_leads</code> dans Supabase (SQL fourni par Claude).</div>
+          </div>`;
+        return;
+      }
+      if (badge) badge.textContent = `${list.length}`;
+
+      if (list.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 30px 20px; color: #8a6648;">
+          <div style="font-size: 32px; margin-bottom: 8px;">❤️</div>
+          <p style="margin: 0;">Personne n'a encore laissé ses coordonnées</p>
+          <p style="margin: 4px 0 0; font-size: 12px;">Les visiteurs qui cliquent "Je suis intéressé(e)" ou qui déclenchent l'exit intent apparaîtront ici.</p>
+        </div>`;
+        return;
+      }
+
+      const rowHtml = (p) => {
+        const d = new Date(p.createdAt);
+        const dateStr = d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) + ' · ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+        const sourceBadge = {
+          'accueil':              '<span style="background:rgba(6,182,212,.15); color:#06b6d4;">🏠 Accueil</span>',
+          'accueil_top':          '<span style="background:rgba(6,182,212,.15); color:#06b6d4;">🏠 CTA haut</span>',
+          'accueil_bas':          '<span style="background:rgba(6,182,212,.15); color:#06b6d4;">🏠 CTA bas</span>',
+          'accueil_exit_intent':  '<span style="background:rgba(251,191,36,.15); color:#fbbf24;">🚪 Exit intent (accueil)</span>',
+          'paiement':             '<span style="background:rgba(184,106,69,.15); color:#c79270;">💳 Paiement</span>',
+          'paiement_exit_intent': '<span style="background:rgba(251,191,36,.15); color:#fbbf24;">🚪 Exit intent (paiement)</span>'
+        }[p.source] || `<span style="background:rgba(120,113,108,.15); color:#a8a29e;">${p.source || '?'}</span>`;
+        const emailHtml = p.email ? `<a href="mailto:${p.email}" style="color:#06b6d4; text-decoration:none;">${p.email}</a>` : '<em style="color:#8a6648;">—</em>';
+        const telHtml = p.telephone ? `<a href="tel:${p.telephone}" style="color:#22c55e; text-decoration:none;">${p.telephone}</a>` : '<em style="color:#8a6648;">—</em>';
+        const waHtml = p.telephone ? `<a href="https://wa.me/${p.telephone.replace(/[^0-9]/g,'').replace(/^0/, '33')}" target="_blank" style="background:#16a34a; color:white; text-decoration:none; padding:3px 8px; border-radius:99px; font-size:10px; font-weight:700;">💬 WA</a>` : '';
+        return `
+          <tr style="border-top:1px solid #2a1810;">
+            <td style="padding:10px 6px; color:#fff; font-weight:700;">${p.prenom || '<em style=\"color:#8a6648;\">—</em>'}</td>
+            <td style="padding:10px 6px;">${emailHtml}</td>
+            <td style="padding:10px 6px;">${telHtml} ${waHtml}</td>
+            <td style="padding:10px 6px; font-size:11px;">${sourceBadge}</td>
+            <td style="padding:10px 6px; color:#d4a574; font-size:12px;">${dateStr}</td>
+          </tr>
+        `;
+      };
+
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+          <p style="margin:0; font-size:12px; color:#d4a574; flex:1;">
+            💡 Ces personnes ont manifesté leur intérêt sans (encore) réserver. Relance-les par email / SMS / WhatsApp.
+          </p>
+          <button id="downloadInterestedCSV" style="background:#3a2818; border:1px solid rgba(225,29,72,0.4); color:#f87171; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">📥 Télécharger CSV</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr style="text-align:left; color:#8a6648; font-size:10px; text-transform:uppercase; letter-spacing:1px;">
+                <th style="padding:8px 6px;">Prénom</th>
+                <th style="padding:8px 6px;">Email</th>
+                <th style="padding:8px 6px;">Téléphone</th>
+                <th style="padding:8px 6px;">Source</th>
+                <th style="padding:8px 6px;">Date</th>
+              </tr>
+            </thead>
+            <tbody>${list.map(rowHtml).join('')}</tbody>
+          </table>
+        </div>
+      `;
+
+      // Bouton export CSV
+      setTimeout(() => {
+        const btn = document.getElementById('downloadInterestedCSV');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+          const headers = ['Prénom','Email','Téléphone','Source','Date'];
+          const rows = list.map(p => [
+            p.prenom || '',
+            p.email || '',
+            p.telephone || '',
+            p.source || '',
+            p.createdAt ? new Date(p.createdAt).toLocaleString('fr-FR') : ''
+          ]);
+          const esc = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+          const csv = '﻿' + [headers, ...rows].map(r => r.map(esc).join(';')).join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `brunch-ebene-interested-${new Date().toISOString().slice(0,10)}.csv`;
+          a.click(); URL.revokeObjectURL(url);
+          toast(`📥 ${list.length} lead${list.length>1?'s':''} exporté${list.length>1?'s':''}`);
+        });
+      }, 100);
+    } catch(e) {
+      console.warn('interested fetch error', e);
+      container.innerHTML = `<div style="color:#8a6648; font-size:13px; text-align:center; padding:18px;">❤️ Stats indisponibles (${e.message})</div>`;
+    }
+  }
+
   async function renderCopiers(data) {
     const container = document.getElementById('copiersList');
     const badge = document.getElementById('copiersCountBadge');
@@ -3017,7 +3138,7 @@
   function applyGlobalFilterToAll() {
     renderTable(CACHE);
     renderInvites();
-    renderCopiers(CACHE);
+    renderCopiers(CACHE); renderInterested();
     renderCheckinHistory(CACHE);
     renderFunnel(); renderPagesPerf();
     if (typeof drawFunnelVisual === 'function') drawFunnelVisual(CACHE, 'chartFunnelOverview');
