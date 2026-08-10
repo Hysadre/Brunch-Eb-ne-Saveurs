@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f0e3c7">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="shortcut icon" href="favicon.ico">
+<title>🎁 Réservation Invité · Brunch Ébène & Saveurs</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: #f0e3c7;
+    color: #3a2818;
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 0 20px 40px; }
+
+  .hero {
+    margin: 0 -20px;
+    padding: 36px 24px 28px;
+    background:
+      radial-gradient(circle at 80% 10%, rgba(251, 191, 36, 0.18), transparent 50%),
+      radial-gradient(circle at 10% 90%, rgba(22, 163, 74, 0.20), transparent 55%),
+      linear-gradient(160deg, #ffffff 0%, #e8d9b8 50%, #ffffff 100%);
+    color: #3a2818;
+    border-radius: 0 0 28px 28px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid #c4a878;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c79270;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 34px;
+    line-height: 1;
+    margin: 4px 0 6px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #3a2818;
+  }
+  .hero-title .accent {
+    background: linear-gradient(135deg, #b86a45, #c79270);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-style: italic;
+  }
+  .hero-tagline {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #8a4a2e;
+    margin: 10px 0 18px;
+    font-weight: 600;
+  }
+  .hero-meta {
+    display: flex; flex-direction: column; gap: 8px;
+    font-size: 15px;
+  }
+  .hero-meta .row { display: flex; align-items: center; gap: 10px; }
+  .hero-meta .ico { width: 18px; height: 18px; flex: 0 0 18px; color: #c79270; }
+
+  .badge-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(249, 115, 22, 0.15);
+    color: #fb923c;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 14px;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid #c4a878;
+    border-radius: 20px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #3a2818;
+  }
+  .label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8a4a2e;
+    margin: 14px 0 8px;
+    letter-spacing: 0.2px;
+  }
+  .label:first-child { margin-top: 0; }
+  input, select, textarea {
+    width: 100%;
+    background: #f0e3c7;
+    border: 1.5px solid #c4a878;
+    color: #3a2818;
+    border-radius: 14px;
+    padding: 14px 14px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: border-color .15s, background .15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #b86a45;
+    background: #fef7e6;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ============== PACKS (identiques à index.html) ============== */
+  .packs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;                /* + d'espace pour le badge VIP sortant en haut */
+    padding-top: 14px;         /* room pour le badge "POPULAIRE" qui dépasse */
+  }
+  @media (min-width: 640px) {
+    .packs-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; gap: 20px; }
+  }
+  .pack-card {
+    position: relative;
+    background: #ffffff;
+    border: 1.5px solid #c4a878;
+    border-radius: 18px;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+  .pack-card:hover { transform: translateY(-2px); border-color: #a8794a; }
+  .pack-card.vip { background: linear-gradient(160deg, #fff4d4 0%, #ffe9a8 60%, #fbd97a 100%) !important;
+    background: linear-gradient(160deg, #e8d9b8 0%, #ffffff 100%);
+    border: 3px solid #b58220;
+    box-shadow: 0 12px 40px rgba(199,146,112,0.15);
+  }
+  .pack-card.selected {
+    border-color: #b86a45;
+    background: #fff4d4;
+    box-shadow: 0 8px 24px rgba(184,106,69,0.25);
+  }
+  .pack-card.vip.selected {
+    border-color: #fbbf24;
+    background: linear-gradient(160deg, #3a2810 0%, #fff4d4 100%);
+    box-shadow: 0 12px 36px rgba(251,191,36,0.3);
+  }
+  .pack-badge {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: #3a2818;
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 2px solid #f0e3c7;   /* même couleur que le fond de la page */
+    box-shadow: 0 4px 14px rgba(251,191,36,0.55);
+    z-index: 3;
+  }
+  .pack-radio {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #a8794a;
+    background: #f0e3c7;
+    transition: border-color 0.2s ease;
+  }
+  /* 🌟 Sur la VIP, on cache le bouton radio :
+     le badge "POPULAIRE" seul suffit à indiquer que c'est la carte spéciale.
+     Le clic/sélection reste fonctionnel via le clic sur la carte. */
+  .pack-card.vip .pack-radio { display: none; }
+  .pack-card.selected .pack-radio { border-color: #b86a45; }
+  .pack-card.vip.selected .pack-radio { border-color: #fbbf24; }
+  .pack-card.selected .pack-radio::after {
+    content: '';
+    display: block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #b86a45;
+    margin: 3px auto 0;
+  }
+  .pack-card.vip.selected .pack-radio::after { background: #fbbf24; }
+  .pack-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #3a2818;
+    margin: 0 0 6px;
+    padding-left: 30px;
+    letter-spacing: 0.5px;
+  }
+  .pack-card.vip .pack-name { color: #6b4a05; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+  .pack-price-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .pack-currency { font-size: 20px; color: #c79270; font-weight: 700; }
+  .pack-price { font-size: 40px; color: #3a2818; font-weight: 800; line-height: 1; }
+  .pack-card.vip .pack-price { color: #6b4a05; text-shadow: 0 2px 0 rgba(255,255,255,0.4); }
+  .pack-unit { font-size: 11px; color: #8a4a2e; margin-bottom: 14px; }
+  .pack-card.vip .pack-unit { color: #6b4a05; font-weight: 700; }
+  .pack-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .pack-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    color: #3a2818;
+    font-size: 13px;
+  }
+  .pack-features .ok { color: #22c55e; font-weight: 800; flex-shrink: 0; font-size: 14px; line-height: 1; }
+  .pack-features .ko { color: #6b5444; font-weight: 800; flex-shrink: 0; font-size: 14px; line-height: 1; }
+  .pack-features li.disabled { color: #6b5444; text-decoration: line-through; }
+
+  .ticket-options { display: flex; flex-direction: column; gap: 10px; }
+  .ticket {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px;
+    border: 1.5px solid #c4a878;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .ticket.selected { border-color: #b86a45; background: #fff4d4; }
+  .ticket.disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  .ticket-radio {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid #a8794a;
+    flex: 0 0 22px;
+    position: relative;
+    transition: border-color .15s;
+  }
+  .ticket.selected .ticket-radio { border-color: #b86a45; }
+  .ticket.selected .ticket-radio::after {
+    content: "";
+    position: absolute; inset: 3px;
+    background: #b86a45;
+    border-radius: 50%;
+  }
+  .ticket-info { flex: 1; }
+  .ticket-name { font-weight: 700; font-size: 15px; color: #3a2818; }
+  .ticket-desc { font-size: 12px; color: #8a4a2e; margin-top: 2px; }
+  .ticket-price { font-weight: 800; font-size: 19px; color: #c79270; }
+  .ticket-flag {
+    position: absolute;
+    top: -8px; right: 12px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #3a2818;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .qty {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #f0e3c7;
+    border: 1.5px solid #c4a878;
+    border-radius: 14px;
+    padding: 8px;
+  }
+  .qty button {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter .15s, transform .1s;
+    box-shadow: 0 3px 8px rgba(184,106,69,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .qty button:hover { filter: brightness(1.08); }
+  .qty button:active { transform: scale(.92); }
+  .qty button:disabled { opacity: .4; cursor: not-allowed; }
+  input.qty-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #3a2818;
+    background: transparent;
+    border: none;
+    text-align: center;
+    width: 70px;
+    padding: 6px 0;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: textfield;
+  }
+  input.qty-value::-webkit-outer-spin-button,
+  input.qty-value::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input.qty-value:focus {
+    outline: none;
+    color: #c79270;
+  }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .menu-col h4 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #c79270;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    border-bottom: 1px solid #c4a878;
+    padding-bottom: 4px;
+  }
+  .menu-col ul {
+    margin: 0; padding: 0; list-style: none;
+    font-size: 13px;
+    color: #8a4a2e;
+    line-height: 1.7;
+  }
+  .menu-col li::before {
+    content: "•";
+    color: #16a34a;
+    margin-right: 6px;
+    font-weight: 800;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .feature {
+    text-align: center;
+    padding: 14px 6px;
+    background: #f0e3c7;
+    border-radius: 14px;
+    border: 1px solid #c4a878;
+  }
+  .feature-emoji { font-size: 24px; margin-bottom: 4px; }
+  .feature-label { font-size: 11px; color: #8a4a2e; font-weight: 600; line-height: 1.3; }
+
+  .total-bar {
+    position: sticky;
+    bottom: 0;
+    margin: 20px -20px 0;
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: rgba(240, 227, 199, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid #c4a878;
+    z-index: 10;
+  }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .total-label { font-size: 13px; color: #8a4a2e; }
+  .total-amount { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #c79270; }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
+    color: #3a2818;
+    border: none;
+    border-radius: 16px;
+    padding: 17px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .15s;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
+    font-family: inherit;
+  }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Checkbox custom — visuel clair, square + ✓ */
+  .checkbox-row {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 14px; color: #8a4a2e;
+    margin-top: 14px;
+    cursor: pointer;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1.5px solid #c4a878;
+    background: #f0e3c7;
+    transition: all .2s ease;
+    user-select: none;
+  }
+  .checkbox-row:hover {
+    border-color: #b86a45;
+    background: #ffffff;
+    color: #3a2818;
+  }
+  .checkbox-row input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .checkbox-row .custom-check {
+    width: 26px; height: 26px;
+    flex: 0 0 26px;
+    border: 2.5px solid #a8794a;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s ease;
+    background: #fef7e6;
+  }
+  .checkbox-row:hover .custom-check { border-color: #b86a45; }
+  .checkbox-row .custom-check svg {
+    width: 18px; height: 18px;
+    color: #3a2818;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .checkbox-row.checked {
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.10);
+    color: #3a2818;
+  }
+  .checkbox-row.checked .custom-check {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-color: #22c55e;
+  }
+  .checkbox-row.checked .custom-check svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .checkbox-row .check-text { flex: 1; line-height: 1.5; }
+  .checkbox-row a { color: #c79270; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+  .checkbox-row a:hover { color: #b86a45; }
+
+  /* CGU Modal */
+  .cgu-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none; align-items: flex-end; justify-content: center;
+    z-index: 200;
+  }
+  .cgu-overlay.show { display: flex; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .cgu-modal {
+    background: #ffffff;
+    width: 100%; max-width: 560px;
+    max-height: 90vh;
+    border-radius: 20px 20px 0 0;
+    display: flex; flex-direction: column;
+    animation: slideUp .3s cubic-bezier(.34, 1.2, .64, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (min-width: 600px) {
+    .cgu-overlay { align-items: center; padding: 20px; }
+    .cgu-modal { border-radius: 20px; max-height: 80vh; }
+  }
+  .cgu-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #c4a878;
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: #ffffff; border-radius: 20px 20px 0 0;
+  }
+  .cgu-header h2 { margin: 0; font-size: 18px; font-weight: 800; color: #3a2818; }
+  .cgu-close {
+    width: 36px; height: 36px;
+    background: #c4a878; border: none; color: #3a2818;
+    border-radius: 10px; cursor: pointer;
+    font-size: 18px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cgu-close:active { background: #a8794a; }
+  .cgu-body {
+    padding: 22px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #8a4a2e;
+  }
+  .cgu-body h3 {
+    color: #c79270;
+    font-size: 15px;
+    margin: 20px 0 8px;
+    font-weight: 700;
+  }
+  .cgu-body h3:first-child { margin-top: 0; }
+  .cgu-body p { margin: 0 0 12px; }
+  .cgu-body strong { color: #3a2818; }
+  .cgu-body .highlight-box {
+    background: rgba(22, 163, 74, 0.10);
+    border: 1px solid rgba(22, 163, 74, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 10px 0;
+    color: #3a2818;
+  }
+  .cgu-body .highlight-box strong { color: #22c55e; }
+  .cgu-body .warning-box {
+    background: rgba(249, 115, 22, 0.10);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 10px 0;
+    color: #3a2818;
+  }
+  .cgu-body .warning-box strong { color: #c79270; }
+  .cgu-footer {
+    padding: 16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #c4a878;
+    background: #ffffff;
+  }
+  .cgu-footer button {
+    width: 100%;
+    background: linear-gradient(135deg, #b86a45, #8a4a2e);
+    color: #3a2818;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .error { color: #f87171; font-size: 13px; margin-top: 6px; display: none; }
+  .error.show { display: block; }
+  input.invalid, select.invalid { border-color: #f87171; }
+
+  .capacity-bar {
+    margin-top: 10px;
+    height: 6px;
+    background: #c4a878;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .capacity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #c79270, #b86a45);
+    width: 32%;
+    border-radius: 99px;
+  }
+  .capacity-text {
+    font-size: 11px;
+    color: #8a4a2e;
+    margin-top: 6px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* 🌐 Réseaux sociaux (thème sombre) */
+  .socials { margin: 26px 0 14px; padding: 22px 16px; background: #ffffff; border: 1px solid #c4a878; border-radius: 18px; }
+  .socials-title { text-align: center; margin: 0 0 4px; color: #3a2818; font-size: 17px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .socials-subtitle { text-align: center; color: #8a4a2e; font-size: 12px; margin: 0 0 16px; }
+  .socials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  .social-link { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; background: #f0e3c7; border: 1px solid #c4a878; border-radius: 12px; text-decoration: none; color: #3a2818; transition: transform 0.2s ease, border-color 0.2s ease; }
+  .social-link:hover { transform: translateY(-2px); border-color: #b86a45; }
+  .social-link img { width: 38px; height: 38px; object-fit: contain; }
+  .social-link .social-sub { font-size: 10px; color: #8a6648; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .social-link .social-name { font-size: 11px; font-weight: 800; color: #3a2818; letter-spacing: 0.3px; line-height: 1.25; text-align: center; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+
+  /* ❤️ Bouton "Je suis intéressé(e)" + modale (thème clair cream) */
+  .interested-btn { display: block; width: 100%; background: linear-gradient(135deg, #e11d48, #dc2626); color: #fff; text-decoration: none; padding: 14px 20px; border-radius: 14px; text-align: center; font-weight: 800; font-size: 15px; letter-spacing: 0.3px; margin: 14px 0; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.28); transition: all 0.2s ease; border: none; cursor: pointer; font-family: inherit; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .interested-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(225, 29, 72, 0.4); }
+  .interested-btn .heart { display: inline-block; animation: heartbeat 1.4s ease-in-out infinite; margin-right: 6px; }
+  @keyframes heartbeat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+  .lead-modal-backdrop { position: fixed; inset: 0; background: rgba(58, 40, 24, 0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 9998; padding: 20px; animation: lead-fade-in 0.2s ease-out; }
+  .lead-modal-backdrop.show { display: flex; }
+  @keyframes lead-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .lead-modal { background: #ffffff; border-radius: 22px; padding: 30px 24px 24px; max-width: 460px; width: 100%; box-shadow: 0 30px 80px rgba(0,0,0,0.35); position: relative; animation: lead-slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-height: calc(100vh - 40px); overflow-y: auto; }
+  @keyframes lead-slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  .lead-modal-close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; background: transparent; border: 1.5px solid #c4a878; border-radius: 50%; color: #8a4a2e; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; }
+  .lead-modal-close:hover { background: #f0e3c7; transform: rotate(90deg); }
+  .lead-modal-icon { font-size: 48px; text-align: center; margin-bottom: 4px; }
+  .lead-modal-title { text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: 24px; color: #3a2818; margin: 8px 0 6px; font-weight: 700; letter-spacing: -0.3px; }
+  .lead-modal-title .em { color: #b86a45; font-style: italic; }
+  .lead-modal-desc { text-align: center; color: #8a4a2e; font-size: 14px; line-height: 1.55; margin: 0 0 20px; }
+  .lead-form-field { margin-bottom: 12px; }
+  .lead-form-field label { display: block; font-size: 12px; font-weight: 700; color: #8a4a2e; margin-bottom: 6px; letter-spacing: 0.3px; }
+  .lead-form-field input { width: 100%; background: #f0e3c7; border: 1.5px solid #c4a878; color: #3a2818; border-radius: 12px; padding: 12px 14px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; }
+  .lead-form-field input:focus { outline: none; border-color: #b86a45; background: #fff; }
+  .lead-form-note { font-size: 11px; color: #8a6648; text-align: center; margin: -4px 0 14px; font-style: italic; }
+  .lead-submit-btn { display: block; width: 100%; background: linear-gradient(135deg, #e11d48, #dc2626); color: #fff; border: none; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; font-family: inherit; box-shadow: 0 6px 20px rgba(225, 29, 72, 0.3); transition: transform 0.2s, box-shadow 0.2s; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .lead-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(225, 29, 72, 0.42); }
+  .lead-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .lead-success { text-align: center; padding: 30px 10px 10px; }
+  .lead-success .emoji { font-size: 56px; margin-bottom: 10px; }
+  .lead-success h3 { font-family: Georgia, serif; color: #3a2818; font-size: 22px; margin: 0 0 8px; }
+  .lead-success p { color: #8a4a2e; font-size: 14px; margin: 0; line-height: 1.5; }
+
+  /* Contact footer */
+  .contact-footer {
+    margin-top: 32px;
+    padding: 18px 0 24px;
+    border-top: 1px solid #c4a878;
+    text-align: center;
+  }
+  .contact-footer-title {
+    font-size: 11px;
+    color: #8a6648;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  .contact-footer-row {
+    display: flex; justify-content: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .contact-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #ffffff;
+    border: 1px solid #c4a878;
+    color: #c79270;
+    padding: 8px 14px;
+    border-radius: 99px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background .15s;
+  }
+  .contact-pill:active { background: #e8d9b8; }
+  .contact-pill.whatsapp { background: rgba(22, 163, 74, 0.1); color: #22c55e; border-color: rgba(22, 163, 74, 0.3); }
+
+  @media (max-width: 380px) {
+    .hero-title { font-size: 28px; }
+    .menu-grid { grid-template-columns: 1fr; }
+    .features { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* 🎨 OVERRIDES thème clair — garde le texte BLANC sur les surfaces à gradient coloré */
+  .status-hero, .status-hero .status-title, .status-hero .status-sub,
+  .success-hero, .success-title, .success-sub,
+  .booking-ref-box, .booking-ref-code, .booking-ref-label,
+  .btn-primary, .btn-view,
+  .pay-action-btn:not(.wero):not(.cb),
+  .topnav a.active,
+  .cta-banner, .reserve-btn,
+  .price-pill,
+  .contact-pill.wa,
+  .pack-badge, .pay-badge,
+  .lightbox, .lightbox * { color: white; }
+  /* Restaure les icônes SVG colorées à leurs teintes voulues */
+  .status-hero.paid .status-icon svg { color: #16a34a; }
+  .status-hero.pending .status-icon svg { color: #b86a45; }
+  .status-hero.error .status-icon svg { color: #b91c1c; }
+  .status-hero.cancelled .status-icon svg { color: #8a4a2e; }
+  .check svg { color: #16a34a; }
+
+</style>
+</head>
+<body>
+
+<!-- 🧭 Onglets de navigation (Accueil / Réservations) — toujours visibles en haut -->
+<nav style="background:#f0e3c7; border-bottom:1px solid #c4a878; display:flex; gap:4px; padding:8px 12px; position:sticky; top:0; z-index:101;">
+  <a href="index.html" style="flex:1; text-align:center; padding:10px 14px; border-radius:10px; color:#8a4a2e; text-decoration:none; font-weight:700; font-size:14px; background:transparent;">🏠 Accueil</a>
+  <a href="reservation.html" style="flex:1; text-align:center; padding:10px 14px; border-radius:10px; color:#ffffff; text-decoration:none; font-weight:800; font-size:14px; background:linear-gradient(135deg,#b86a45,#c79270); box-shadow:0 2px 8px rgba(184,106,69,0.3);">🎟️ Réservations</a>
+</nav>
+
+<!-- (Bannière promo Trio retirée — l'offre VIP est maintenant la formule premium) -->
+
+<div class="app">
+
+  <!-- 🎉 Mode événement passé (visible si date > 22 août 2026 23:59) -->
+  <div id="pastEventBanner" style="display:none; margin: 60px auto 40px; max-width: 480px; text-align: center; padding: 40px 24px;">
+    <div style="font-size: 72px; margin-bottom: 16px;">🌴</div>
+    <h1 style="font-size: 28px; color: #c79270; margin: 0 0 16px;">Merci à tous !</h1>
+    <p style="color: #8a4a2e; font-size: 16px; line-height: 1.6;">
+      Le Brunch Ébène &amp; Saveurs du 22 août 2026 est passé.<br>
+      Merci d'avoir été là 🎉<br><br>
+      <span style="font-size: 14px; color: #8a6648;">À très vite pour la prochaine édition !</span>
+    </p>
+    <a href="https://wa.me/33668295077" style="display: inline-block; margin-top: 24px; background: #16a34a; color: #3a2818; text-decoration: none; padding: 12px 22px; border-radius: 99px; font-weight: 700; font-size: 14px;">💬 Nous contacter</a>
+  </div>
+
+  <div class="hero" id="hero">
+    <div class="hero-eyebrow">🎁 Invitation privée · Édition 2026</div>
+    <h1 class="hero-title">Réservation<br><span class="accent">Invité(e)</span></h1>
+    <div class="hero-tagline" style="background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.4); border-radius: 12px; padding: 10px 14px; margin: 12px 0; display: inline-block;">
+      🎉 Tarif préférentiel <strong style="color:#fbbf24;">25€ / personne</strong> (au lieu de 35€)
+    </div>
+    <div class="hero-meta">
+      <div class="row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Samedi 22 août 2026 · dès 13h</span>
+      </div>
+      <div class="row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Lille
+          <a href="https://www.google.com/maps/search/?api=1&query=Lille+centre" target="_blank" rel="noopener" style="display:inline-block; margin-left:8px; background:rgba(255,255,255,0.15); color:white; text-decoration:none; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; vertical-align: middle;">🗺️ Itinéraire</a>
+        </span>
+      </div>
+    </div>
+    <div class="badge-warning" style="background: rgba(184,106,69,0.15); border-color: #b86a45; color: #8a4a2e;">🔒 Lien privé — merci de ne pas partager</div>
+  </div>
+
+  <form id="bookingForm" novalidate>
+
+    <div class="card">
+      <h2>🎁 Votre invitation</h2>
+      <!-- 🎁 PACK INVITÉ UNIQUE à 25€ (tarif préférentiel) -->
+      <div class="packs-grid" id="packsGrid" style="grid-template-columns: 1fr !important; max-width: 380px; margin: 0 auto;">
+        <div class="pack-card selected vip" data-pack="promo" data-price="25" style="cursor: default; transform: none;">
+          <span class="pack-badge">🎁 Tarif Invité</span>
+          <h3 class="pack-name">Invité</h3>
+          <div class="pack-price-wrap">
+            <span class="pack-currency">€</span>
+            <span class="pack-price">25</span>
+          </div>
+          <div class="pack-unit">par personne · au lieu de 35€</div>
+          <ul class="pack-features">
+            <li><span class="ok">✓</span> Buffet à volonté</li>
+            <li><span class="ok">✓</span> Boissons soft à volonté</li>
+            <li><span class="ok">✓</span> Animations culturelles incluses</li>
+            <li><span class="ok">✓</span> <strong>Tarif préférentiel exclusif</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="label" style="margin-top:18px;">
+        Nombre de personnes
+        <span style="font-weight: 500; color: #8a6648; font-size: 11px; margin-left: 4px;">(1 à 10, du pack sélectionné)</span>
+      </div>
+      <div class="qty">
+        <button type="button" id="qtyMinus" aria-label="Diminuer">−</button>
+        <input type="number" id="qtyValue" class="qty-value" value="1" min="1" max="10" inputmode="numeric" pattern="[0-9]*" aria-label="Nombre de places">
+        <button type="button" id="qtyPlus" aria-label="Augmenter">+</button>
+      </div>
+
+      <!-- 👥 Accompagnants (visible si qty >= 2) -->
+      <div id="accompagnantsSection" style="display:none; margin-top: 18px; padding: 16px; background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 14px;">
+        <div style="font-size: 13px; font-weight: 700; color: #c79270; margin-bottom: 4px;">👥 Tes accompagnants</div>
+        <div style="font-size: 12px; color: #8a4a2e; margin-bottom: 12px;">Pour la liste d'entrée, donne-nous les noms des personnes qui viennent avec toi.</div>
+        <div id="accompagnantsList"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p style="margin:0; font-size:14px; line-height:1.6; color:#8a4a2e;">
+        Un buffet africain généreux (thiep, méchoui, attiéké, aloko, mignardises…), des animations live — <strong style="color:#c79270;">DJ afro, percussions, danses, photobooth &amp; tombola</strong> 🌴
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>📝 Vos informations</h2>
+
+      <label class="label" for="prenom">Prénom</label>
+      <input type="text" id="prenom" name="prenom" autocomplete="given-name" required>
+      <div class="error" data-for="prenom">Votre prénom est requis</div>
+
+      <label class="label" for="nom">Nom</label>
+      <input type="text" id="nom" name="nom" autocomplete="family-name" required>
+      <div class="error" data-for="nom">Votre nom est requis</div>
+
+      <label class="label" for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required>
+      <div class="error" data-for="email">Email invalide</div>
+
+      <label class="label" for="telephone">Téléphone</label>
+      <input type="tel" id="telephone" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
+      <div class="error" data-for="telephone">Téléphone requis</div>
+
+      <label class="label" for="message">Allergies / régime alimentaire (optionnel)</label>
+      <textarea id="message" name="message" placeholder="Sans porc, sans alcool, allergies..."></textarea>
+
+      <label class="checkbox-row" id="cguRow">
+        <input type="checkbox" id="cgu" required>
+        <span class="custom-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="check-text">J'accepte les <a href="#" id="cguLink">conditions générales</a> et que mes informations soient utilisées uniquement pour la gestion du brunch</span>
+      </label>
+      <div class="error" data-for="cgu">Vous devez accepter les CGU</div>
+    </div>
+
+    <div class="total-bar">
+      <div class="total-row">
+        <div>
+          <div class="total-label">Total à payer</div>
+        </div>
+        <div class="total-amount" id="totalAmount">35,00 €</div>
+      </div>
+      <button type="submit" class="btn-primary" id="payBtn">Continuer vers le paiement →</button>
+    </div>
+  </form>
+
+  <!-- 🌐 RÉSEAUX SOCIAUX -->
+  <section class="socials">
+    <h2 class="socials-title">Suivez-nous</h2>
+    <p class="socials-subtitle">Rejoignez la communauté Ébène &amp; Saveurs 🌴</p>
+    <div class="socials-grid">
+      <a href="https://chat.whatsapp.com/GHADxG3qg9K3cHwyPWVwtt?s=cl&p=a&mlu=1" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-whatsapp.webp" alt="WhatsApp">
+        <span class="social-sub">WhatsApp</span>
+        <span class="social-name">Rejoindre le groupe</span>
+      </a>
+      <a href="https://fb.me/e/4UdP4gvVm" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-facebook.webp" alt="Facebook événement">
+        <span class="social-sub">Facebook</span>
+        <span class="social-name">Voir l'événement</span>
+      </a>
+      <a href="https://www.facebook.com/share/1BHxxpKudU/" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-facebook.webp" alt="Page Facebook">
+        <span class="social-sub">Facebook</span>
+        <span class="social-name">Notre page</span>
+      </a>
+      <a href="https://www.instagram.com/brunch_ebene_et_saveurs?igsh=MW9hOW94bjEydmdvaQ==" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-instagram.png" alt="Instagram">
+        <span class="social-sub">Instagram</span>
+        <span class="social-name">Notre compte</span>
+      </a>
+      <a href="https://vm.tiktok.com/ZNR7o7SKm/" target="_blank" rel="noopener" class="social-link">
+        <img src="logo-tiktok.webp" alt="TikTok">
+        <span class="social-sub">TikTok</span>
+        <span class="social-name">Suivez-nous</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ❤️ CTA "Je suis intéressé(e)" BAS — après les socials, avant contact -->
+  <button type="button" class="interested-btn" id="interestedBtnResaBas" data-source="resa_bas">
+    <span class="heart">❤️</span> Une question ? Restons en contact avant de réserver
+  </button>
+
+  <!-- ❤️ MODALE INTÉRESSÉ + EXIT INTENT -->
+  <div class="lead-modal-backdrop" id="leadModal" role="dialog" aria-label="Restez informé" aria-hidden="true">
+    <div class="lead-modal">
+      <button class="lead-modal-close" id="leadModalClose" aria-label="Fermer">✕</button>
+      <div id="leadFormWrap">
+        <div class="lead-modal-icon">❤️</div>
+        <h2 class="lead-modal-title">Restez informé<span class="em">(e)</span> !</h2>
+        <p class="lead-modal-desc" id="leadModalDesc">
+          Laissez-nous votre email ou numéro — on vous relancera avant que les places ne soient toutes prises 🌴
+        </p>
+        <form id="leadForm">
+          <div class="lead-form-field">
+            <label for="leadPrenom">Prénom <span style="color:#8a6648; font-weight:500;">(optionnel)</span></label>
+            <input type="text" id="leadPrenom" name="prenom" autocomplete="given-name" placeholder="Votre prénom">
+          </div>
+          <div class="lead-form-field">
+            <label for="leadEmail">Email</label>
+            <input type="email" id="leadEmail" name="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.com">
+          </div>
+          <div class="lead-form-field">
+            <label for="leadTel">Téléphone</label>
+            <input type="tel" id="leadTel" name="telephone" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78">
+          </div>
+          <p class="lead-form-note">Au moins email <strong>OU</strong> téléphone requis · zéro spam 🤞</p>
+          <button type="submit" class="lead-submit-btn" id="leadSubmitBtn">
+            ❤️ Oui, je veux les infos
+          </button>
+        </form>
+      </div>
+      <div id="leadSuccess" class="lead-success" style="display:none;">
+        <div class="emoji">🎉</div>
+        <h3>Merci !</h3>
+        <p>On garde le contact. Vous recevrez un email de confirmation bientôt 🌴</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="contact-footer">
+    <div class="contact-footer-title">📞 Pour plus d'infos, contactez-nous</div>
+    <div class="contact-footer-row">
+      <a href="https://wa.me/33668295077" class="contact-pill whatsapp">💬 WhatsApp +33 6 68 29 50 77</a>
+      <a href="tel:+33668295077" class="contact-pill">📞 Appeler</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE CGU -->
+<div class="cgu-overlay" id="cguOverlay">
+  <div class="cgu-modal">
+    <div class="cgu-header">
+      <h2>📄 Conditions générales</h2>
+      <button class="cgu-close" id="cguClose" aria-label="Fermer">✕</button>
+    </div>
+    <div class="cgu-body">
+      <h3>🌴 L'événement</h3>
+      <p>
+        <strong>Brunch Ébène &amp; Saveurs</strong> — Samedi 22 août 2026 à 13h00<br>
+        Lille (le lieu exact sera communiqué aux personnes inscrites).
+      </p>
+      <p>
+        Ta réservation te donne accès au buffet à volonté, aux animations (DJ afro, percussions live, danses, photobooth, tombola) et aux espaces communs durant toute la durée de l'événement.
+      </p>
+
+      <h3>💰 Tarifs</h3>
+      <p>
+        Standard : 35 € (1 place) · Duo : 70 € (2 places) · Trio : 105 € (3 places).<br>
+        Les tarifs sont indiqués TTC et n'incluent pas les frais bancaires éventuels selon ton moyen de paiement.
+      </p>
+
+      <h3>↩️ Annulation &amp; remboursement</h3>
+      <div class="highlight-box">
+        <strong>✓ Remboursement intégral</strong> possible <strong>jusqu'à 10 jours avant l'événement</strong>, soit avant le <strong>12 août 2026</strong>.<br>
+        Envoie une demande par WhatsApp au +33 6 68 29 50 77 ou par email avec ton numéro de réservation.
+      </div>
+      <div class="warning-box">
+        <strong>⚠️ Passé le 12 août 2026</strong>, aucun remboursement ne sera possible (commandes engagées auprès des fournisseurs).<br>
+        En revanche, ton billet est <strong>transférable</strong> : tu peux donner ta place à quelqu'un d'autre (préviens-nous du changement de nom).
+      </div>
+
+      <h3>🪪 Accès le jour J</h3>
+      <p>
+        Présente ton billet électronique (QR code reçu par email ou page de réservation) à l'entrée. Un bracelet te sera remis pour la durée de l'événement.<br>
+        Viens comme tu te sens bien — on est là pour passer un bon moment ensemble 🌴
+      </p>
+
+      <h3>🚫 Cas particuliers</h3>
+      <p>
+        L'organisateur se réserve le droit de refuser l'entrée en cas de comportement inapproprié, sans remboursement.<br>
+        L'événement peut être reporté ou annulé pour des raisons de force majeure (grève, météo extrême, restrictions sanitaires) : dans ce cas, tu seras intégralement remboursé(e) ou tu pourras conserver ta place pour la date de report.
+      </p>
+
+      <h3>🔐 Protection des données</h3>
+      <p>
+        Tes informations (nom, email, téléphone) sont collectées <strong>uniquement</strong> pour la gestion de ta réservation et la communication autour de l'événement.
+      </p>
+      <p>
+        Elles sont stockées de manière sécurisée (Supabase) et ne sont <strong>jamais cédées à des tiers</strong>. Elles seront supprimées dans les 3 mois après l'événement.
+      </p>
+      <p>
+        Tu peux à tout moment demander la suppression de tes données via WhatsApp ou par email.
+      </p>
+
+      <h3>📞 Contact</h3>
+      <p>
+        Une question sur ta réservation ?<br>
+        WhatsApp : <a href="https://wa.me/33668295077">+33 6 68 29 50 77</a><br>
+        Email : <a href="mailto:abayoassi@gmail.com">abayoassi@gmail.com</a>
+      </p>
+
+      <p style="font-size:12px; color:#8a6648; margin-top:24px; text-align:center;">
+        Dernière mise à jour : mai 2026
+      </p>
+    </div>
+    <div class="cgu-footer">
+      <button id="cguAccept">✓ J'ai lu et j'accepte</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 🔧 CONFIG : URL de ton API backend
+  const API_URL = 'https://brunch-eb-ne-saveurs.onrender.com/api';
+  const CAPACITY = 200;
+  // 🆕 UNIT_PRICE n'est plus une constante — il dépend du pack sélectionné.
+  //    Utilise getCurrentUnitPrice() (défini plus bas) pour récupérer le prix actuel.
+
+  // 📊 TRACKING — sessionId par onglet (sessionStorage) → permet de bien mesurer le rebond
+  //    (chaque ouverture de fenêtre/onglet = nouvelle session, comme Google Analytics)
+  function getSessionId() {
+    let s = sessionStorage.getItem('ebene_session_id');
+    if (!s) {
+      s = 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      sessionStorage.setItem('ebene_session_id', s);
+    }
+    return s;
+  }
+  function trackPageview(page) {
+    const sid = getSessionId();
+    console.log('[📊 tracking] pageview =', page, '· sessionId =', sid);
+    try {
+      fetch(API_URL + '/track/pageview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page, sessionId: sid, referrer: document.referrer || null })
+      })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok) console.log('[📊 tracking] ✅ enregistré :', page);
+        else console.error('[📊 tracking] ❌ ÉCHEC', r.status, page, '·', data.error || '');
+      })
+      .catch(e => console.warn('[📊 tracking] network failed', e.message));
+    } catch(e) { console.warn('[📊 tracking] error', e.message); }
+  }
+  // Envoie la vue dès le chargement
+  trackPageview('reservation');
+
+  // 🎁 (Promo Trio retirée — remplacée par le pack VIP qui est l'offre premium)
+
+  // 🔁 REBOND par engagement : si la personne ne fait RIEN pendant 5s
+  //    (pas de scroll, pas de clic, pas de touche) → c'est un rebond.
+  //    Toute interaction avant 5s = engagé (pas un rebond).
+  let engaged = false;
+  let bounceTimer = null;
+  function markEngaged() {
+    if (engaged) return;
+    engaged = true;
+    if (bounceTimer) { clearTimeout(bounceTimer); bounceTimer = null; }
+    // Retire les listeners (plus besoin)
+    ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
+      window.removeEventListener(ev, markEngaged)
+    );
+  }
+  ['scroll', 'click', 'touchstart', 'keydown', 'mousemove', 'pointerdown'].forEach(ev =>
+    window.addEventListener(ev, markEngaged, { passive: true })
+  );
+  // Au bout de 5s sans interaction → on enregistre le rebond
+  bounceTimer = setTimeout(() => {
+    if (!engaged) {
+      try {
+        fetch(API_URL + '/track/pageview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ page: 'reservation_left', sessionId: getSessionId() }),
+          keepalive: true
+        }).then(() => console.log('[📊 bounce] rebond enregistré (aucune interaction en 5s)')).catch(()=>{});
+      } catch(e) {}
+    }
+  }, 5000);
+  const EVENT_END = new Date('2026-08-23T00:00:00+02:00'); // l'événement est passé le 23 août
+
+  // 🎉 Mode "événement passé" : on cache tout et on affiche juste un merci
+  if (new Date() >= EVENT_END) {
+    document.getElementById('pastEventBanner').style.display = 'block';
+    document.getElementById('hero').style.display = 'none';
+    document.getElementById('bookingForm').style.display = 'none';
+    document.querySelector('.contact-footer').style.display = 'none';
+    // On stoppe l'exécution du reste du script
+    throw new Error('Event past — script stopped');
+  }
+
+  // 🎫 Catalogue des packs disponibles
+  const PACKS = {
+    normal: { id: 'normal', name: 'Normal', price: 35 },
+    enfant: { id: 'enfant', name: 'Enfant', price: 15 },
+    vip:    { id: 'vip',    name: 'VIP',    price: 45 },
+    // 🎁 Pack promo Invité — forcé sur cette page privée uniquement
+    promo:  { id: 'promo',  name: 'Invité', price: 25 }
+  };
+
+  const state = {
+    pack: 'promo',   // 🎁 Pack Invité forcé (tarif préférentiel 25€)
+    qty: 1,
+    max: 10
+  };
+  // Pas de lecture d'URL param ici — le pack "promo" est verrouillé.
+
+  // --- Sélection d'un pack (clic sur une carte) ---
+  function selectPack(packId) {
+    if (!PACKS[packId]) return;
+    state.pack = packId;
+    document.querySelectorAll('.pack-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.pack === packId);
+    });
+    updateTotal();
+  }
+  document.querySelectorAll('.pack-card').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      selectPack(el.dataset.pack);
+    });
+  });
+  // Sélection initiale
+  selectPack(state.pack);
+
+  // --- Boutons +/- ---
+  const qtyValueEl = document.getElementById('qtyValue');
+  document.getElementById('qtyMinus').addEventListener('click', () => {
+    if (state.qty > 1) setQty(state.qty - 1);
+  });
+  document.getElementById('qtyPlus').addEventListener('click', () => {
+    if (state.qty < state.max) setQty(state.qty + 1);
+  });
+
+  // 🆕 Saisie manuelle du nombre de personnes
+  qtyValueEl.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > state.max) val = state.max;
+    if (val !== parseInt(e.target.value, 10)) e.target.value = val;
+    state.qty = val;
+    updateTotal();
+    updateAccompagnantsFields();
+  });
+  // Au blur : si vide ou invalide, remet à 1
+  qtyValueEl.addEventListener('blur', () => {
+    let val = parseInt(qtyValueEl.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > state.max) val = state.max;
+    qtyValueEl.value = val;
+    setQty(val);
+  });
+
+  // 🆕 setQty ne change PLUS le pack — qty est indépendant du type de pack choisi
+  function setQty(n) {
+    state.qty = n;
+    qtyValueEl.value = n;
+    updateTotal();
+    updateAccompagnantsFields();
+  }
+
+  // 👥 Génère dynamiquement les champs accompagnants (qty - 1 invités)
+  function updateAccompagnantsFields() {
+    const section = document.getElementById('accompagnantsSection');
+    const list = document.getElementById('accompagnantsList');
+    const places = state.qty;
+    if (places <= 1) {
+      section.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+    section.style.display = 'block';
+    // Conserve les valeurs déjà saisies si possible
+    const existing = {};
+    list.querySelectorAll('input').forEach(inp => { existing[inp.name] = inp.value; });
+
+    let html = '';
+    for (let i = 1; i < places; i++) {
+      const pName = `acc${i}Prenom`, nName = `acc${i}Nom`;
+      const pVal = existing[pName] || '';
+      const nVal = existing[nName] || '';
+      html += `
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; padding: 10px; background: #f0e3c7; border-radius: 10px;">
+          <div style="font-size: 11px; color: #c79270; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">👤 Accompagnant ${i}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <input type="text" name="${pName}" placeholder="Prénom" value="${pVal}" autocomplete="off" style="background: #fef7e6; border: 1.5px solid #c4a878; color: #3a2818; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+            <input type="text" name="${nName}" placeholder="Nom" value="${nVal}" autocomplete="off" style="background: #fef7e6; border: 1.5px solid #c4a878; color: #3a2818; border-radius: 10px; padding: 10px 12px; font-size: 14px; font-family: inherit;">
+          </div>
+        </div>
+      `;
+    }
+    list.innerHTML = html;
+  }
+
+  // 🆕 Le total dépend désormais du PACK choisi (et plus de promo Trio)
+  function getCurrentPack() {
+    return PACKS[state.pack] || PACKS.normal;
+  }
+  function getCurrentUnitPrice() {
+    return getCurrentPack().price;
+  }
+  function updateTotal() {
+    const total = getCurrentUnitPrice() * state.qty;
+    const el = document.getElementById('totalAmount');
+    el.textContent = total.toFixed(2).replace('.', ',') + ' €';
+  }
+
+  function getCurrentFormulaName() {
+    return getCurrentPack().name;
+  }
+  function getCurrentFormulaId() {
+    return getCurrentPack().id;
+  }
+
+  // --- Capacité dynamique + badge "Le + populaire" ---
+  async function loadCapacity() {
+    let bookedPlaces = 0;
+    let formulas = null;
+    if (API_URL) {
+      try {
+        const r = await fetch(API_URL + '/stats');
+        const data = await r.json();
+        bookedPlaces = data.places || 0;
+        formulas = data.formulas || null;
+      } catch(e) { /* fallback ci-dessous */ }
+    }
+    if (!bookedPlaces) {
+      const local = JSON.parse(localStorage.getItem('reservations') || '[]');
+      bookedPlaces = local.reduce((s, r) => s + (r.qty || 0), 0);
+    }
+    // 🔒 Compteur de places retiré du public (visible uniquement dans le dashboard admin)
+    // bookedPlaces et formulas restent dispo pour le badge "Le + populaire" ci-dessous
+
+    // 🆕 L'ancien badge dynamique "le + populaire" est retiré.
+    //    Le pack VIP a maintenant un badge "⭐ Populaire" statique.
+    //    (Si tu veux réactiver un badge dynamique sur Normal/Enfant, on pourra ajouter.)
+  }
+  loadCapacity();
+
+  // --- Validation form ---
+  function showError(name, show) {
+    const err = document.querySelector(`.error[data-for="${name}"]`);
+    const input = document.getElementById(name);
+    if (err) err.classList.toggle('show', show);
+    if (input) input.classList.toggle('invalid', show);
+  }
+
+  // CGU checkbox visual feedback
+  const cguInput = document.getElementById('cgu');
+  const cguRow = cguInput.closest('.checkbox-row');
+  cguInput.addEventListener('change', () => {
+    cguRow.classList.toggle('checked', cguInput.checked);
+    if (cguInput.checked) showError('cgu', false);
+  });
+
+  // --- Modale CGU ---
+  const cguOverlay = document.getElementById('cguOverlay');
+  const openCgu = (e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    cguOverlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  };
+  const closeCgu = () => {
+    cguOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+  };
+  document.getElementById('cguLink').addEventListener('click', openCgu);
+  document.getElementById('cguClose').addEventListener('click', closeCgu);
+  document.getElementById('cguAccept').addEventListener('click', () => {
+    cguInput.checked = true;
+    cguRow.classList.add('checked');
+    showError('cgu', false);
+    closeCgu();
+  });
+  cguOverlay.addEventListener('click', (e) => {
+    if (e.target === cguOverlay) closeCgu();
+  });
+  // Échap pour fermer
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cguOverlay.classList.contains('show')) closeCgu();
+  });
+
+  document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const prenom = document.getElementById('prenom').value.trim();
+    const nom = document.getElementById('nom').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const telephone = document.getElementById('telephone').value.trim();
+    const cgu = document.getElementById('cgu').checked;
+    const message = document.getElementById('message').value.trim();
+
+    let ok = true;
+    showError('prenom', !prenom); if (!prenom) ok = false;
+    showError('nom', !nom); if (!nom) ok = false;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    showError('email', !emailOk); if (!emailOk) ok = false;
+    showError('telephone', telephone.length < 6); if (telephone.length < 6) ok = false;
+    showError('cgu', !cgu); if (!cgu) ok = false;
+
+    if (!ok) {
+      document.querySelector('.invalid')?.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+
+    // 👥 Récupère les accompagnants
+    const accompagnants = [];
+    for (let i = 1; i < state.qty; i++) {
+      const p = (document.querySelector(`[name="acc${i}Prenom"]`)?.value || '').trim();
+      const n = (document.querySelector(`[name="acc${i}Nom"]`)?.value || '').trim();
+      if (p || n) accompagnants.push(`${p} ${n}`.trim());
+    }
+    // Validation des accompagnants
+    if (state.qty > 1 && accompagnants.length < state.qty - 1) {
+      alert(`Merci de remplir le prénom + nom de tes ${state.qty - 1} accompagnant(s) — c'est important pour la liste d'entrée 🙏`);
+      document.querySelector('#accompagnantsList input').focus();
+      return;
+    }
+
+    // 🔍 Anti-doublon : vérifie si l'email a déjà une résa active
+    if (API_URL) {
+      try {
+        const r = await fetch(API_URL + '/check-email/' + encodeURIComponent(email));
+        if (r.ok) {
+          const data = await r.json();
+          if (data.exists) {
+            if (!confirm(`⚠️ Tu as déjà ${data.count} réservation${data.count>1?'s':''} active${data.count>1?'s':''} avec cet email (${email}).\n\nContinuer quand même ?`)) return;
+          }
+        }
+      } catch(e) { console.warn('Check email skipped', e); }
+    }
+
+    // 🆕 Le prix dépend du pack sélectionné (Normal 35€ / Enfant 15€ / VIP 45€)
+    const unitPrice = getCurrentUnitPrice();
+    const finalTotal = unitPrice * state.qty;
+
+    const booking = {
+      prenom, nom, email, telephone, message,
+      accompagnants: accompagnants.join(', ') || null,
+      ticketId: getCurrentFormulaId(),       // 'normal' | 'enfant' | 'vip'
+      ticketName: getCurrentFormulaName(),   // 'Normal' | 'Enfant' | 'VIP'
+      ticketPrice: unitPrice,                // 35 | 15 | 45
+      qty: state.qty,
+      total: finalTotal,
+      timestamp: new Date().toISOString(),
+      status: 'paiement non confirmé'  // draft : passera à "en attente vérification" au clic "J'ai payé"
+      // ⚠️ Pas de bookingId ici — il est généré côté serveur (séquentiel EBENE-NOM-Y{NNN})
+    };
+
+    // 🎯 Récupère JUSTE un N° de résa (PAS d'insert en BDD)
+    //    L'insert n'aura lieu que quand l'utilisateur cliquera "J'ai payé"
+    if (!API_URL) {
+      alert('Service indisponible — veuillez réessayer.');
+      return;
+    }
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const oldBtnText = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '⏳ Préparation de votre paiement...'; }
+
+    try {
+      const r = await fetch(API_URL + '/reservations/reserve-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      if (!data.bookingId) throw new Error('Pas de N° de résa');
+      booking.bookingId = data.bookingId;
+      localStorage.setItem('currentBooking', JSON.stringify(booking));
+      // 👍 Marqueur : on va vers paiement.html — pas un rebond
+      window.__navigatingToPaiement = true;
+      window.location.href = 'paiement.html';
+    } catch(err) {
+      console.error('Reserve ID échoué', err);
+      alert('Impossible de préparer votre paiement. Vérifiez votre connexion et réessayez.\n\n(' + (err.message || 'erreur réseau') + ')');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = oldBtnText; }
+    }
+  });
+
+  // ❤️ MODALE INTÉRESSÉ + EXIT INTENT sur reservation.html
+  (function initLeadCapture() {
+    const modal = document.getElementById('leadModal');
+    const closeBtn = document.getElementById('leadModalClose');
+    const form = document.getElementById('leadForm');
+    const submitBtn = document.getElementById('leadSubmitBtn');
+    const formWrap = document.getElementById('leadFormWrap');
+    const successEl = document.getElementById('leadSuccess');
+    const descEl = document.getElementById('leadModalDesc');
+    if (!modal || !form) return;
+
+    const STORAGE = { submitted: 'ebene_lead_submitted', exitShown: 'ebene_exit_intent_shown' };
+    const isSubmitted = () => localStorage.getItem(STORAGE.submitted) === '1';
+    const markSubmitted = () => localStorage.setItem(STORAGE.submitted, '1');
+    const isExitShown = () => sessionStorage.getItem(STORAGE.exitShown) === '1';
+    const markExitShown = () => sessionStorage.setItem(STORAGE.exitShown, '1');
+
+    // Pré-remplit depuis le formulaire de résa en cours si l'utilisateur a déjà commencé à taper
+    function prefillFromForm() {
+      const pEl = document.getElementById('leadPrenom');
+      const eEl = document.getElementById('leadEmail');
+      const tEl = document.getElementById('leadTel');
+      const resaPrenom = document.getElementById('prenom')?.value;
+      const resaEmail = document.getElementById('email')?.value;
+      const resaTel = document.getElementById('telephone')?.value;
+      if (pEl && !pEl.value && resaPrenom) pEl.value = resaPrenom;
+      if (eEl && !eEl.value && resaEmail) eEl.value = resaEmail;
+      if (tEl && !tEl.value && resaTel) tEl.value = resaTel;
+    }
+
+    function openModal(source, reason) {
+      prefillFromForm();
+      formWrap.style.display = 'block';
+      successEl.style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+      if (reason === 'exit') {
+        descEl.innerHTML = 'Attendez ! Ne partez pas sans réserver — laissez-nous vos coordonnées, on vous relancera 🌴';
+      } else {
+        descEl.innerHTML = 'Laissez-nous votre email ou numéro — on vous relancera avant que les places ne soient toutes prises 🌴';
+      }
+      form.dataset.source = source || 'resa';
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      try { fetch(API_URL + '/track/pageview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'resa_lead_modal_' + (reason || 'click'), sessionId: getSessionId() })
+      }).catch(()=>{}); } catch(e){}
+    }
+    function closeModal() {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.interested-btn').forEach(btn => {
+      btn.addEventListener('click', () => openModal(btn.dataset.source || 'resa', 'click'));
+    });
+    closeBtn?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prenom = document.getElementById('leadPrenom').value.trim();
+      const email  = document.getElementById('leadEmail').value.trim();
+      const tel    = document.getElementById('leadTel').value.trim();
+      if (!email && !tel) {
+        alert('Merci de renseigner au moins un email OU un numéro de téléphone 🙏');
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Enregistrement...';
+      try {
+        const r = await fetch(API_URL + '/interested', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prenom: prenom || null,
+            email: email || null,
+            telephone: tel || null,
+            source: form.dataset.source || 'resa'
+          })
+        });
+        if (r.ok) {
+          markSubmitted();
+          formWrap.style.display = 'none';
+          successEl.style.display = 'block';
+          setTimeout(closeModal, 2800);
+        } else {
+          const err = await r.json().catch(() => ({}));
+          alert(err.error || 'Erreur enregistrement — réessayez');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+        }
+      } catch(err) {
+        alert('Impossible de vous enregistrer.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '❤️ Oui, je veux les infos';
+      }
+    });
+
+    // Exit intent
+    let pageLoadedAt = Date.now();
+    function canShowExitIntent() {
+      if (isSubmitted()) return false;
+      if (isExitShown()) return false;
+      if (modal.classList.contains('show')) return false;
+      if (Date.now() - pageLoadedAt < 5000) return false;
+      return true;
+    }
+    function triggerExitIntent() {
+      if (!canShowExitIntent()) return;
+      markExitShown();
+      openModal('resa_exit_intent', 'exit');
+    }
+    document.addEventListener('mouseleave', (e) => {
+      if (e.clientY <= 5) triggerExitIntent();
+    });
+    let mobileExitTimer = null;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        mobileExitTimer = Date.now();
+      } else if (document.visibilityState === 'visible' && mobileExitTimer) {
+        const away = Date.now() - mobileExitTimer;
+        mobileExitTimer = null;
+        if (away > 800 && away < 30000) triggerExitIntent();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
