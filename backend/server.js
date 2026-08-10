@@ -1275,8 +1275,21 @@ app.post('/api/reservations', async (req, res) => {
     // Statut par défaut au moment de l'insert : "en attente vérification" (le client a cliqué "J'ai payé")
     if (!b.status) b.status = 'en attente vérification';
 
+    // 🔒 Sécurité : on FORCE le prix unitaire selon le ticketId — évite qu'un client
+    //    envoie ticketId=vip avec ticketPrice=1 pour payer 1€
+    const EXPECTED_PRICES = {
+      normal: 35, enfant: 15, vip: 45,
+      promo: 25,                          // 🎁 tarif invité (lien privé promo-invite.html)
+      standard: 35, duo: 70, trio: 105    // legacy
+    };
+    const expectedPrice = EXPECTED_PRICES[String(b.ticketId).toLowerCase()];
+    if (expectedPrice !== undefined && b.ticketPrice !== expectedPrice) {
+      console.warn(`🔒 ticketPrice forcé pour ${b.bookingId} : ${b.ticketPrice}€ → ${expectedPrice}€ (ticketId=${b.ticketId})`);
+      b.ticketPrice = expectedPrice;
+    }
+
     // 🎁 Vérifie le code promo côté serveur (sécurité)
-    //    Trio + code TRIO5 = -5€
+    //    Trio + code TRIO5 = -5€ (legacy, garde pour compat)
     if (b.promoCode === 'TRIO5' && b.ticketId === 'trio') {
       const expected = (b.ticketPrice || 35) * (b.qty || 0) - 5;
       if (b.total !== expected) {
@@ -1288,6 +1301,10 @@ app.post('/api/reservations', async (req, res) => {
       // Recalcule le total à partir du prix unitaire (sécurité)
       const safeTotal = (b.ticketPrice || 35) * (b.qty || 0);
       if (b.total !== safeTotal) b.total = safeTotal;
+    }
+    // 🎁 Log spécial pour les résa promo (tarif Invité 25€)
+    if (b.ticketId === 'promo') {
+      console.log(`🎁 Résa PROMO (Invité) : ${b.bookingId} · ${b.prenom} ${b.nom} · ${b.qty}× 25€ = ${b.total}€`);
     }
     // 🛟 On STRIP les champs promo avant l'insert — pas besoin de schéma BDD spécial
     //    L'info reste dispo dans le total réduit (105 → 100) et on la verra côté admin
