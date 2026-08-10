@@ -138,6 +138,7 @@
   .pay-logo.virement{ background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 22px; }
   .pay-logo.paypal  { background: #003087; font-size: 20px; color: #fff; }
   .pay-logo.paypal .pp-i { color: #009cde; }
+  .pay-logo.especes { background: linear-gradient(135deg, #059669, #047857); font-size: 24px; color: #fff; }
   .pay-info { flex: 1; min-width: 0; }
   .pay-name { font-weight: 800; font-size: 17px; color: #3a2818; }
   .pay-desc { font-size: 13px; color: #8a4a2e; margin-top: 3px; }
@@ -641,6 +642,29 @@
       </div>
     </div>
 
+    <!-- ESPÈCES (4e) -->
+    <label class="payment-option" data-method="especes">
+      <span class="pay-radio"></span>
+      <span class="pay-logo especes">💶</span>
+      <div class="pay-info">
+        <div class="pay-name">Espèces</div>
+        <div class="pay-desc">Payer en main propre · sur place ou avant l'événement</div>
+      </div>
+    </label>
+    <div class="pay-details" data-panel="especes">
+      <div class="row"><span class="k">Montant à préparer</span><span class="v" id="amt-especes"></span></div>
+      <div class="info-note">
+        <strong>💵 Comment faire :</strong><br>
+        1. Contactez-nous sur <strong>WhatsApp</strong> au +33 6 68 29 50 77 pour convenir d'un rendez-vous<br>
+        2. Préparez le montant exact en espèces<br>
+        3. Mentionnez votre <strong>référence</strong> ci-dessus lors du paiement<br>
+        4. Une fois payé, cliquez sur "J'ai payé" en bas — on confirmera de notre côté
+      </div>
+      <a href="https://wa.me/33668295077?text=Bonjour%2C%20je%20souhaite%20payer%20en%20esp%C3%A8ces%20pour%20le%20Brunch%20%C3%89b%C3%A8ne%20%26%20Saveurs.%20Ma%20r%C3%A9f%C3%A9rence%20est%20%3A%20" target="_blank" rel="noopener" class="pay-action-btn" id="especesBtn" style="background: linear-gradient(135deg, #16a34a, #059669);" onclick="trackEvent('payment_link_clicked', { method: 'especes' })">
+        💬 Contacter par WhatsApp →
+      </a>
+    </div>
+
     </div>
     <!-- 🔒 Fin wrapper verrouillé -->
   </div>
@@ -857,7 +881,7 @@
     <div class="recap-row recap-total"><span>Total</span><span>${fmt(booking.total)}</span></div>
   `;
 
-  ['revolut','wero','virement','paypal'].forEach(m => {
+  ['revolut','wero','virement','paypal','especes'].forEach(m => {
     const el = document.getElementById('amt-' + m);
     if (el) el.textContent = fmt(booking.total);
   });
