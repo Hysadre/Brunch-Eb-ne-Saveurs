@@ -905,11 +905,11 @@ app.get('/api/stats', async (req, res) => {
     // Exclut les corbeillées des stats publiques
     const list = (allList || []).filter(r => !r.deleted);
     const paid = list.filter(r => r.status === 'confirmé');
-    // 🆕 Compte par pack (Normal/Enfant/VIP) + anciennes formules legacy (compat).
-    //    Pour la popularité publique, on tolère les anciens IDs sans casser les nouveaux clients.
+    // 🆕 Compte par pack (Normal/Enfant/VIP/Promo) + anciennes formules legacy (compat).
     const formulas = {
       // Nouveaux packs
       normal: 0, enfant: 0, vip: 0,
+      promo: 0,                             // 🎁 Tarif Invité 25€ (lien privé)
       // Legacy
       standard: 0, duo: 0, trio: 0, groupe: 0
     };
