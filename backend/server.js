@@ -35,7 +35,7 @@ const EVENT = {
   name: 'Brunch Ébène & Saveurs',
   date: 'Samedi 22 août 2026',
   time: '13h00',
-  place: 'Lille'
+  place: 'Salle Alfred Colin'
 };
 
 const app = express();
@@ -1160,7 +1160,7 @@ app.post('/api/interested', async (req, res) => {
         </div>
         <div style="padding: 26px 24px; background: #fff;">
           <p style="margin: 0 0 14px; color: #3a2818; font-size: 15px; line-height: 1.6;">
-            On a bien enregistré ton intérêt pour le <strong>Brunch Ébène &amp; Saveurs</strong> du <strong>samedi 22 août 2026 à Lille</strong>.
+            On a bien enregistré ton intérêt pour le <strong>Brunch Ébène &amp; Saveurs</strong> du <strong>samedi 22 août 2026 à Salle Alfred Colin</strong>.
           </p>
           <p style="margin: 0 0 18px; color: #6b4a2e; font-size: 14px; line-height: 1.6;">
             On te tiendra au courant des nouveautés et te préviendra si les places commencent à se remplir 🎫
@@ -1178,14 +1178,14 @@ app.post('/api/interested', async (req, res) => {
           </p>
         </div>
         <div style="padding: 16px; text-align: center; background: #f0e3c7; color: #8a6648; font-size: 11px;">
-          Brunch Ébène &amp; Saveurs · Édition 2026 · Lille
+          Brunch Ébène &amp; Saveurs · Édition 2026 · Salle Alfred Colin
         </div>
       </div>`;
       resendSend({
         to: row.email,
         subject: `❤️ Merci ${displayName} — on garde le contact !`,
         html: clientHtml,
-        text: `Merci ${displayName} ! On a bien enregistré ton intérêt pour le Brunch Ébène & Saveurs du 22 août 2026 à Lille. Pour réserver dès maintenant : ${SITE_URL}/reservation.html`
+        text: `Merci ${displayName} ! On a bien enregistré ton intérêt pour le Brunch Ébène & Saveurs du 22 août 2026 à Salle Alfred Colin. Pour réserver dès maintenant : ${SITE_URL}/reservation.html`
       }).catch(err => console.warn('interested client email fail:', err.message));
     }
 
