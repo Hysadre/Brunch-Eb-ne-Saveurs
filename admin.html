@@ -778,6 +778,7 @@
           <option value="normal">Normal (35€)</option>
           <option value="enfant">Enfant (15€)</option>
           <option value="vip">VIP (45€)</option>
+          <option value="promo">🎁 Invité — Promo (25€)</option>
         </optgroup>
         <optgroup label="Anciennes formules (legacy)">
           <option value="standard">Standard</option>
@@ -3918,6 +3919,7 @@
       'Normal': 0,
       'Enfant': 0,
       'VIP': 0,
+      'Invité': 0,                 // 🎁 Promo — tarif préférentiel 25€
       // Legacy — conservés pour les anciennes résa, masqués si à 0
       'Standard': 0,
       'Duo': 0,
@@ -3926,6 +3928,7 @@
     };
     const idToLabel = {
       normal: 'Normal', enfant: 'Enfant', vip: 'VIP',
+      promo: 'Invité',              // 🎁 nouveau pack promo
       standard: 'Standard', duo: 'Duo', trio: 'Trio', groupe: 'Groupe'
     };
     data.forEach(r => {
@@ -3939,6 +3942,7 @@
       'Normal': '#b86a45',
       'Enfant': '#06b6d4',
       'VIP': '#fbbf24',
+      'Invité': '#ec4899',          // 🎁 rose vif pour bien distinguer
       'Standard': '#8a6648',
       'Duo': '#c79270',
       'Trio': '#22c55e',
